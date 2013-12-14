@@ -10,20 +10,23 @@ extern "C"{
 #include <stdlib.h> /* malloc, free, size_t */
 #include <math.h> /* pow */
 
-#define VECTOR_DIM 5
+#define VECTOR_DIM 2
 #define LBG_EPS 0.01
 #define CODE_VECTOR_DISPLACE 0.0001
 
-typedef struct _vectorset vectorset;
+typedef struct{
+	size_t size;
+	double (*v)[VECTOR_DIM];
+} vectorset;
 
-int init_vectorset(vectorset *vset, size_t size);
+vectorset *init_vectorset(size_t size);
 void destroy_vectorset(vectorset *v);
 void print_vectorset(vectorset *v);
 
 double dist(double *x, double *y);
 double nearest_neighbour(double *x, vectorset *c, int *idx);
-double centroid_update(vectorset *train, vectorset **c1, vectorset **c2, int *count);
-vectorset *lbgvq(vectorset *v, int nsplits);
+double centroid_update(vectorset *train, vectorset *c_old, vectorset *c_new, int *count);
+vectorset *lbgvq(vectorset *train, int nsplits);
 
 #ifdef __cplusplus
 }

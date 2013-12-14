@@ -1,11 +1,16 @@
 #include "vq.h"
 
 int main(int argc, char *argv[]){
-	int numtrain = 100;
-	vectorset train, *c;
+	int i, j;
+	int numtrain = 5;
+	vectorset *train, *c;
 
-	if(init_vectorset(&train, numtrain)){
-		c = lbgvq(&train, 3);
+	if((train = init_vectorset(numtrain))){
+		for(i = 0; i < numtrain; i++)
+			for(j = 0; j < VECTOR_DIM; j++)
+				train->v[i][j] = i*j;
+		print_vectorset(train);
+		c = lbgvq(train, 2);
 		print_vectorset(c);
 	}
 	else

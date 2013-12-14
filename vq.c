@@ -1,29 +1,29 @@
 #include "vq.h"
 
-struct _vectorset{
-	size_t size;
-	double *v[VECTOR_DIM];
-};
-
 // Initializes a vectorset for a given size. Returns 1 on success, otherwise 0
 // Remember to call destroy_vector when you are done
-int init_vectorset(vectorset *vset, size_t size){
+vectorset *init_vectorset(size_t size){
 	int i;
-	double *v;
+	vectorset *vset;
+	double (*v)[VECTOR_DIM];
 
-	v = (double*) malloc(size*VECTOR_DIM*sizeof(double));
-	if(v){
-		vset->size = size;
-		for(i = 0; i < VECTOR_DIM; i++)
-			vset->v[i] = v + VECTOR_DIM*i;
-		return 1;
+	vset = (vectorset*) malloc(sizeof(vectorset));
+	if(vset){
+		v = (double(*)[VECTOR_DIM]) malloc(size*VECTOR_DIM*sizeof(double));
+		if(v){
+			vset->size = size;
+			vset->v = v;
+			return vset;
+		}
+		free(vset);
 	}
-	return 0;
+	return NULL;
 }
 
 void destroy_vectorset(vectorset *vset){
 	free(vset->v);
 }
+
 // Prints a vectorset to standard output
 // One vector per row, tab delimited
 void print_vectorset(vectorset *vset){
@@ -77,18 +77,16 @@ double nearest_neighbour(double *x, vectorset *c, int *idx){
 // After computing the updating centroids, the new codebook is placed under *c1
 // The old codebook is placed under *c2
 // The average distortion between the training set and the new codebook is returned
-double centroid_update(vectorset *train, vectorset **c1, vectorset **c2, int *count){
+double centroid_update(vectorset *train, vectorset *c_old, vectorset *c_new, int *count){
 	int i, j, nn;
 	vectorset *tmp;
 	double d_avg = 0;
 
-	//We will place the new codebook in c2 and then swap c1 and c2 at the end
-	
 	// Initialize counts and new codebook to 0
-	for(i = 0; i < (*c2)->size; i++){
+	for(i = 0; i < c_new->size; i++){
 		count[i] = 0;
 		for(j = 0; j < VECTOR_DIM; j++)
-		       (*c2)->v[i][j] = 0;	
+		       c_new->v[i][j] = 0;
 	}
 
 	// For each training vector, we find the codevector of minimal distortion
@@ -96,21 +94,22 @@ double centroid_update(vectorset *train, vectorset **c1, vectorset **c2, int *co
 	// We want to place the new codevector at the mean of the training vectors that map to it
 	// That is sum of all code vectors / number of codevectors
 	for(i = 0; i < train->size; i++){
-		d_avg += nearest_neighbour( train->v[i], *c1, &nn);
+		d_avg += nearest_neighbour( train->v[i], c_old, &nn);
 		count[nn]++;
 		for(j = 0; j < VECTOR_DIM; j++)
-			(*c2)->v[nn][j] += train->v[i][j];
+			c_new->v[nn][j] += train->v[i][j];
 	}
 
 	// Here we divide the new codevectors by the number of mapped vectors to get the mean
-	for(i = 0; i < (*c2)->size; i++)
-		for(j = 0; j < VECTOR_DIM; j++)
-			(*c2)->v[i][j] /= count[i];	
+	for(i = 0; i < c_new->size; i++){
+		if(count[i] > 0)
+			for(j = 0; j < VECTOR_DIM; j++)
+				c_new->v[i][j] /= count[i];
+		else
+			for(j = 0; j < VECTOR_DIM; j++)
+				c_new->v[i][j] = NAN;
+	}
 
-	// Finally swap c1 and c2
-	tmp = *c1;
-	*c1 = *c2;
-	*c2= tmp;
 	// Get average distortion by dividing by the total training set size	
 	d_avg /= train->size;
 	return d_avg;
@@ -120,56 +119,61 @@ double centroid_update(vectorset *train, vectorset **c1, vectorset **c2, int *co
 // The training set should be provided, along with the number of times the codebook should split
 // Recall that the total codebook size is therefore 2^(nsplits)
 // A pointer to the new codebook is returned
-vectorset *lbgvq(vectorset *v, int nsplits){
-	vectorset *c1, *c2, *tmp;
+vectorset *lbgvq(vectorset *train, int nsplits){
+	vectorset *c_old, *c_new, *tmp;
 	int i, j, k, max_cv, *counts;
 	double d_old, d_new;
 
-	max_cv = 1<<nsplits; // Final codebook size
+	max_cv = 1<<nsplits; // Final codebook size (2^nsplits)
 
-	init_vectorset(c1, max_cv); // Initialize the codebook
-	if(c1){
-		init_vectorset(c2, max_cv);
-		if(c2){
+	if((c_old = init_vectorset(max_cv))){
+		if((c_new = init_vectorset(max_cv))){
 			counts = (int*) malloc(max_cv*sizeof(int));
 			if(counts){
 				// Everything initialized properly
-
 				//We first set the initial codevector at the centroid of the training data
+				c_new->size = 1;
 				for(i = 0; i < VECTOR_DIM; i++){
-					c1->v[0][i] = 0;
-					for(j = 0; j < v->size; j++)
-						c1->v[0][i] += v->v[j][i];
-					c1->v[0][i] = c1->v[0][i] / v->size;
+					c_new->v[0][i] = 0;
+					for(j = 0; j < train->size; j++)
+						c_old->v[0][i] += train->v[j][i];
+					c_new->v[0][i] = c_old->v[0][i] / train->size;
 				}
 				
 				// Iterate through the specified number of splits, doubling each time
 				for(i = 1; i <= nsplits; i++){
 					// Split each codevector, slightly displacing it
-					for(j = 0; j < c1->size; j++)
+					for(j = 0; j < c_new->size; j++)
 						for(k = 0; k < VECTOR_DIM; k++)
-							c1->v[j + (1<<i)][k] = c1->v[j][k] + CODE_VECTOR_DISPLACE;
-					
-					d_new = DBL_MAX; // We set this high to reset recorded distortion
+							c_new->v[j + c_new->size][k] = c_new->v[j][k] + CODE_VECTOR_DISPLACE;
+
 					// We set the size of the codevectors since we don't use all of them
-					c1->size = 1<<i; // 1<<i = 2^i
-					c2->size = 1<<i;
+					c_old->size = 1<<i; // 1<<i = 2^i
+					c_new->size = 1<<i;
+
+					d_new = DBL_MAX; // We set this high to reset recorded distortion
 					// Update codevectors until chenge in distortion is sufficiently small
 					do{
 						d_old = d_new;
-						d_new = centroid_update(v, &c1, &c2, counts);	
+
+						// Set old codebook to last codebook
+						tmp = c_old;
+						c_old = c_new;
+						c_new = c_old;
+
+						d_new = centroid_update(train, c_old, c_new, counts);	
 						// Remember, c1 points at the current codevectors after updating
-						// c2 points at the codevectors from the previous iteration
+						// c_new points at the codevectors from the previous iteration
 						// counts is used internally in centroid update
 					}while(d_old > (1 + LBG_EPS) * d_new);
 				}
-				free(c2);
+				destroy_vectorset(c_new);
 				free(counts);
-				return c1;
+				return c_old;
 			}
-			free(c2);
+			destroy_vectorset(c_new);
 		}
-		free(c1);
+		destroy_vectorset(c_old);
 	}
 	return NULL;
 }
