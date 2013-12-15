@@ -157,9 +157,10 @@ vectorset *lbgvq(vectorset *train, int nsplits){
 						d_old = d_new;
 
 						// Set old codebook to last codebook
+						// Old codebook from last iteration holds new codebook
 						tmp = c_old;
 						c_old = c_new;
-						c_new = c_old;
+						c_new = tmp;
 
 						d_new = centroid_update(train, c_old, c_new, counts);	
 						// Remember, c1 points at the current codevectors after updating
