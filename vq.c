@@ -40,7 +40,7 @@ double dist(double *x, double *y){
        int i;
        double d = 0;
        for(i = 0; i < VECTOR_DIM; i++)
-	       d += pow(x[i] - y[i],2);
+	       d += (x[i] - y[i])*(x[i] - y[i]);
        return d;
 }
 
@@ -107,7 +107,7 @@ double centroid_update(vectorset *train, vectorset *c_old, vectorset *c_new, int
 				c_new->v[i][j] /= count[i];
 		else
 			for(j = 0; j < VECTOR_DIM; j++)
-				c_new->v[i][j] = NAN;
+				c_new->v[i][j] = 0; //Codevectors that arn't mapped go to origin
 	}
 
 	// Get average distortion by dividing by the total training set size	
