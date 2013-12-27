@@ -8,7 +8,6 @@ extern "C"{
 #include <stdio.h> /* printf */
 #include <float.h> /* DBL_MAX */
 #include <stdlib.h> /* malloc, free, size_t */
-#include <math.h> /* pow */
 
 #define VECTOR_DIM 2
 #define LBG_EPS 0.01
