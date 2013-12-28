@@ -7,6 +7,7 @@ extern "C"{
 
 #include <math.h> /* log, sqrt */
 #include <stdlib.h> /* rand, srand, RAND_MAX */
+#include <time.h> /* time (for rand seed) */
 #include <stdio.h>
 
 double drand();
@@ -17,4 +18,4 @@ void gaussian_channel(double *vector, int dim, double mean, double var);
 }
 #endif
 
-#endif // CHANNEL_H
+#endif // CHANNEL_H  xsss

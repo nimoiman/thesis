@@ -9,6 +9,8 @@ int main(int argc, char *argv[]) {
 	train = init_vectorset(numtrain); // allocate training vector set
 
 	if (train) {
+		/* Reset random seed */
+		srand(time(NULL));
 		/* Initialize training set to Gaussian(0,10) distribution */
 		for (i = 0; i < numtrain; i++) {
 			gaussian_channel(train->v[i], VECTOR_DIM, 0, 10);
