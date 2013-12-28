@@ -10,7 +10,7 @@ double box_muller(double mean, double var) {
     r_1 = drand();
     // srand((int) r_1); // reset seed
     r_2 = drand();
-    return sqrt(var)*(sqrt(-2*log(r_1))*cos(2*PI*r_2)) + mean;
+    return sqrt(var)*(sqrt(-2*log(r_1))*cos(2*M_PI*r_2)) + mean;
 }
 
 void gaussian_channel(double *vector, int dim, double mean, double var) {

@@ -9,8 +9,6 @@ extern "C"{
 #include <stdlib.h> /* rand, srand, RAND_MAX */
 #include <stdio.h>
 
-#define PI 3.14159
-
 double drand();
 double box_muller(double mean, double var);
 void gaussian_channel(double *vector, int dim, double mean, double var);
