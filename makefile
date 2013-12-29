@@ -2,7 +2,7 @@ CC=gcc
 PROG=vector
 CFLAGS=-I.
 LDFLAGS=-lm
-OBJ=vector_main.o vq.o channel.o
+OBJ=vq_main.o vq.o channel.o vector.o
 
 
 $(PROG): $(OBJ)
