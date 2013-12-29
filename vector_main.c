@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
 	FILE *fp;
 
 	if(argc != 3){
-		fprintf(stderr, "Need to specify 2 inputs: codevector and codebook file\n");
+		fprintf(stderr, "Need to specify 2 inputs: training set and codebook file\n");
 		exit(1);
 	}
 	
@@ -28,16 +28,13 @@ int main(int argc, char *argv[]) {
 			gaussian_channel(train->v[i], VECTOR_DIM, 0, 1);
 		}
 
-		//printf("Training set:\n");
-		//print_vectorset(train);
-
 		/* Generate codebook from training set */
 		
 		c = lbgvq(train, nsplits);
 		
 		fp = fopen(argv[1], "w");
 		if(fp == NULL){
-			fprintf(stderr, "Unable to open codevector file %s\n", argv[1]);
+			fprintf(stderr, "Unable to open traing set file %s\n", argv[1]);
 			exit(1);
 		}
 		print_vectorset(fp, train);
