@@ -3,14 +3,15 @@
 
 int main(int argc, char *argv[]) {
 	int i, j;
-	int numtrain = 5;
+	int numtrain = 500;
+	int nsplits = 4;
 	vectorset *train, *c;
 
 	train = init_vectorset(numtrain); // allocate training vector set
 
 	if (train) {
 		/* Reset random seed */
-		srand(time(NULL));
+		srand(1234);
 		/* Initialize training set to Gaussian(0,10) distribution */
 		for (i = 0; i < numtrain; i++) {
 			gaussian_channel(train->v[i], VECTOR_DIM, 0, 10);
@@ -20,12 +21,12 @@ int main(int argc, char *argv[]) {
 			gaussian_channel(train->v[i], VECTOR_DIM, 0, 1);
 		}
 
-		printf("Training set:\n");
-		print_vectorset(train);
+		//printf("Training set:\n");
+		//print_vectorset(train);
 
 		/* Generate codebook from training set */
-		c = lbgvq(train, 2);
-		printf("Generated Codebook:\n");
+		c = lbgvq(train, nsplits);
+		//printf("Generated Codebook:\n");
 		print_vectorset(c);
 
 	}

@@ -8,9 +8,7 @@ double drand() {
 double box_muller(double mean, double var) {
     double r_1, r_2; // independent Uniform (0,1)
     r_1 = drand();
-    printf("random number: %f\n", r_1);
     r_2 = drand();
-    printf("random number: %f\n", r_2);
     return sqrt(var)*(sqrt(-2*log(r_1))*cos(2*M_PI*r_2)) + mean;
 }
 

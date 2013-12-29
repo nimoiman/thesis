@@ -28,10 +28,13 @@ void destroy_vectorset(vectorset *vset){
 // One vector per row, tab delimited
 void print_vectorset(vectorset *vset){
 	int i, j;
+	for(j = 0; j < VECTOR_DIM-1; j++)
+		printf("v%d\t", j+1);
+	printf("v%d\n", VECTOR_DIM);
 	for(i = 0; i < vset->size; i++){
-		for(j = 0; j < VECTOR_DIM; j++)
+		for(j = 0; j < VECTOR_DIM-1; j++)
 			printf("%f\t", vset->v[i][j]);
-		printf("\n");
+		printf("%f\n", vset->v[i][VECTOR_DIM-1]);
 	}
 }
 	
