@@ -26,15 +26,15 @@ void destroy_vectorset(vectorset *vset){
 
 // Prints a vectorset to standard output
 // One vector per row, tab delimited
-void print_vectorset(vectorset *vset){
+void print_vectorset(FILE *stream, vectorset *vset){
 	int i, j;
 	for(j = 0; j < VECTOR_DIM-1; j++)
-		printf("v%d\t", j+1);
-	printf("v%d\n", VECTOR_DIM);
+		fprintf(stream, "v%d\t", j+1);
+	fprintf(stream, "v%d\n", VECTOR_DIM);
 	for(i = 0; i < vset->size; i++){
 		for(j = 0; j < VECTOR_DIM-1; j++)
-			printf("%f\t", vset->v[i][j]);
-		printf("%f\n", vset->v[i][VECTOR_DIM-1]);
+			fprintf(stream, "%f\t", vset->v[i][j]);
+		fprintf(stream, "%f\n", vset->v[i][VECTOR_DIM-1]);
 	}
 }
 	

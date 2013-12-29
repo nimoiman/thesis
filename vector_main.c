@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "vq.h"
 #include "channel.h"
 
@@ -6,7 +7,13 @@ int main(int argc, char *argv[]) {
 	int numtrain = 500;
 	int nsplits = 4;
 	vectorset *train, *c;
+	FILE *fp;
 
+	if(argc != 3){
+		fprintf(stderr, "Need to specify 2 inputs: codevector and codebook file\n");
+		exit(1);
+	}
+	
 	train = init_vectorset(numtrain); // allocate training vector set
 
 	if (train) {
@@ -25,9 +32,27 @@ int main(int argc, char *argv[]) {
 		//print_vectorset(train);
 
 		/* Generate codebook from training set */
+		
 		c = lbgvq(train, nsplits);
-		//printf("Generated Codebook:\n");
-		print_vectorset(c);
+		
+		fp = fopen(argv[1], "w");
+		if(fp == NULL){
+			fprintf(stderr, "Unable to open codevector file %s\n", argv[1]);
+			exit(1);
+		}
+		print_vectorset(fp, train);
+		fclose(fp);
+
+		fp = fopen(argv[2], "w");
+		if(fp == NULL){
+			fprintf(stderr, "Unable to open codebook file %s\n", argv[2]);
+			exit(1);
+		}
+		print_vectorset(fp, c);
+		fclose(fp);
+
+		destroy_vectorset(c);
+		destroy_vectorset(train);
 
 	}
 	else {

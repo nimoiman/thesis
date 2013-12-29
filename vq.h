@@ -5,7 +5,7 @@
 extern "C"{
 #endif
 
-#include <stdio.h> /* printf */
+#include <stdio.h> /* sprintf */
 #include <float.h> /* DBL_MAX */
 #include <stdlib.h> /* malloc, free, size_t */
 
@@ -20,7 +20,7 @@ typedef struct{
 
 vectorset *init_vectorset(size_t size);
 void destroy_vectorset(vectorset *v);
-void print_vectorset(vectorset *v);
+void print_vectorset(FILE *stream, vectorset *v);
 
 double dist(double *x, double *y);
 double nearest_neighbour(double *x, vectorset *c, int *idx);
