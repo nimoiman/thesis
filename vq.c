@@ -9,7 +9,7 @@ vectorset *init_vectorset(size_t size){
 
 	vset = (vectorset*) malloc(sizeof(vectorset));
 	if(vset){
-		v = (double(*)[VECTOR_DIM]) malloc(size*VECTOR_DIM*sizeof(double));
+		v = (double(*)[VECTOR_DIM]) calloc(size*VECTOR_DIM,sizeof(double));
 		if(v){
 			vset->size = size;
 			vset->v = v;
