@@ -1,11 +1,14 @@
 CC=gcc
-CFLAGS =-I.
-DEPS=vq.h
+PROG=vector
+CFLAGS=-I.
+LDFLAGS=-lm
 OBJ=vector_main.o vq.o
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+$(PROG): $(OBJ)
+	$(CC) $(LDFLAGS) -o $@ $^
 
-vector_main: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS):w
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
+clean:
+	rm $(PROG) $(OBJ)
