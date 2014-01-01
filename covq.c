@@ -60,6 +60,10 @@ double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_i
     return total_distance / train->size;
 }
 
+double transition_probability(int i, int j, int length) {
+    return pow(BSC_ERROR_PROB, hamming_distance(i, j)) * pow(1-BSC_ERROR_PROB, length - hamming_distance(i, j));
+}
+
 /* count ought to be size of codebook: the count of vectors mapped to that
    codevector 
    partition_index is the codevector lookup for training set
@@ -108,12 +112,12 @@ void update_centroids(vectorset *train, vectorset *codebook, int *partition_inde
             partition_probability = (double) count[j] / train->size;
 
             for (dim = 0; dim < VECTOR_DIM; dim++) {
-                numerator[dim] += (BSC_ERROR_PROB * hamming_distance(k, j)) * partition_euclidean_centroid[dim];
+                numerator[dim] += transition_probability(k, j, log2(codebook->size)) * partition_euclidean_centroid[dim];
             }
             // fprintf(stderr, "BSC_ERROR_PROB: %f\n", BSC_ERROR_PROB);
             // fprintf(stderr, "hamming dist: %d\n", hamming_distance(k, j));
             // fprintf(stderr, "partition_probability: %f\n", partition_probability);
-            denominator += (BSC_ERROR_PROB * hamming_distance(k, j)) * partition_probability;
+            denominator += transition_probability(k, j, log2(codebook->size)) * partition_probability;
         }
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
