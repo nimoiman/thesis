@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         fclose(fp);
 
         /* Generate codebook from training set */
-        c = gaussian_covq(train, nsplits);
+        c = bsc_covq(train, nsplits);
 
         fp = fopen(argv[2], "w");
         if (fp == NULL) {

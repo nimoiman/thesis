@@ -3,17 +3,17 @@
 void print_int(int *array, int size) {
     int i;
     for (i = 0; i < size; i++) {
-        // fprintf(stderr, "%d, ", array[i]);
+        fprintf(stderr, "%d, ", array[i]);
     }
-    // fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
 }
 
 void print_double(double *array, int size) {
     int i;
     for (i = 0; i < size; i++) {
-        // fprintf(stderr, "%f, ", array[i]);
+        fprintf(stderr, "%f, ", array[i]);
     }
-    // fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
 }
 
 /* partition_index, count ought to be size of training set train
@@ -101,7 +101,7 @@ void update_centroids(vectorset *train, vectorset *codebook, int *partition_inde
                 partition_euclidean_centroid[dim] /= train->size;
             }
 
-            print_int(count, codebook->size);
+            // print_int(count, codebook->size);
             // fprintf(stderr, "j=%d\n", j);
             // fprintf(stderr, "count[j]=%d\n", count[j]);
 
@@ -118,7 +118,7 @@ void update_centroids(vectorset *train, vectorset *codebook, int *partition_inde
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
         }
-        print_double(numerator, VECTOR_DIM);
+        // print_double(numerator, VECTOR_DIM);
         // fprintf(stderr, "denominator: %f\n", denominator);
     }
 }
@@ -165,7 +165,7 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
             // satisfy nearest neighbour criterion on decoder's end
             d_new = nearest_neighbour(train, codebook, partition_index, count);
             // fprintf(stderr, "After nn\n");
-            print_int(partition_index, train->size);
+            // print_int(partition_index, train->size);
             // print_vectorset(stderr, codebook);
             // satisfy centroid criterion on encoder's end
             update_centroids(train, codebook, partition_index, count);
