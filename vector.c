@@ -38,11 +38,23 @@ void print_vectorset(FILE *stream, vectorset *vset){
     }
 }
     
-// Distortion function. Returns the distortion between vector x and vector y.
+/* Distortion function. Returns the mean-squared-error distortion between
+   vector x and vector y. */
 double dist(double *x, double *y){
        int i;
        double d = 0;
-       for(i = 0; i < VECTOR_DIM; i++)
+       for(i = 0; i < VECTOR_DIM; i++) {
            d += (x[i] - y[i])*(x[i] - y[i]);
+       }
        return d;
+}
+
+int hamming_distance(int v_1, int v_2) {
+    int i, count;
+    count = 0;
+    for (i = 0; i < sizeof(int)*8; i++) {
+        // count the different bits
+        count += ((v_1 & (1 << i)) ^ (v_2 & (1 << i))) >> i; // 1 or 0
+    }
+    return count;
 }

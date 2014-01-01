@@ -18,3 +18,22 @@ void gaussian_channel(double *vector, int dim, double mean, double var) {
         vector[i] += box_muller(mean, var);
     }
 }
+
+/* Return 1 on "success", 0 on "failure" */
+int bernoulli(double p) {
+    return rand() < p * RAND_MAX ? 1 : 0;
+}
+
+void binary_symmetric_channel(char *index, double error_prob, int fixed_length) {
+    int i;
+    for (i = 0; i < fixed_length; i++) {
+        if (bernoulli(BSC_ERROR_PROB)) {
+            // flip the bit
+            *index ^= (1 << (i % 8));
+        }
+        if (i % 8 == 7) {
+            // next byte
+            index++;
+        }
+    }
+}
