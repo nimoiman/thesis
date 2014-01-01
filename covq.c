@@ -16,6 +16,10 @@ void print_double(double *array, int size) {
     fprintf(stderr, "\n");
 }
 
+double transition_probability(int i, int j, int length) {
+    return pow(BSC_ERROR_PROB, hamming_distance(i, j)) * pow(1-BSC_ERROR_PROB, length - hamming_distance(i, j));
+}
+
 /* partition_index, count ought to be size of training set train
    
    for x in *train, ensures j := partition_index(x) minimizes:
@@ -44,7 +48,7 @@ double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_i
             new_distance = 0;
 
             for (k = 0; k < codebook->size; k++) {
-                new_distance += BSC_ERROR_PROB * hamming_distance(k, j) * dist(train->v[i], codebook->v[j]);
+                new_distance += transition_probability(k, j, log2(codebook->size)) * dist(train->v[i], codebook->v[j]);
             }
             
             if (new_distance < best_distance) {
@@ -60,9 +64,6 @@ double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_i
     return total_distance / train->size;
 }
 
-double transition_probability(int i, int j, int length) {
-    return pow(BSC_ERROR_PROB, hamming_distance(i, j)) * pow(1-BSC_ERROR_PROB, length - hamming_distance(i, j));
-}
 
 /* count ought to be size of codebook: the count of vectors mapped to that
    codevector 
