@@ -18,7 +18,7 @@ void print_double(double *array, int size) {
 
 double transition_probability(int i, int j, int length) {
     return pow(BSC_ERROR_PROB, hamming_distance(i, j)) *
-        pow(1-BSC_ERROR_PROB, length - hamming_distance(i, j));
+        pow(1 - BSC_ERROR_PROB, length - hamming_distance(i, j));
 }
 
 /* partition_index, count ought to be size of training set train
@@ -111,27 +111,19 @@ void update_centroids(vectorset *train, vectorset *codebook,
                 partition_euclidean_centroid[dim] /= train->size;
             }
 
-            // print_int(count, codebook->size);
-            // fprintf(stderr, "j=%d\n", j);
-            // fprintf(stderr, "count[j]=%d\n", count[j]);
-
             partition_probability = (double) count[j] / train->size;
 
             for (dim = 0; dim < VECTOR_DIM; dim++) {
-                numerator[dim] += transition_probability(k, j,
+                numerator[dim] += transition_probability(i, j,
                     log2(codebook->size)) * partition_euclidean_centroid[dim];
             }
-            // fprintf(stderr, "BSC_ERROR_PROB: %f\n", BSC_ERROR_PROB);
-            // fprintf(stderr, "hamming dist: %d\n", hamming_distance(k, j));
-            // fprintf(stderr, "partition_probability: %f\n", partition_probability);
-            denominator += transition_probability(k, j, log2(codebook->size))
+
+            denominator += transition_probability(i, j, log2(codebook->size))
                 * partition_probability;
         }
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
         }
-        // print_double(numerator, VECTOR_DIM);
-        // fprintf(stderr, "denominator: %f\n", denominator);
     }
 }
 
@@ -162,12 +154,6 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
         codebook->v[0][i] = 0;
     }
 
-    // for (i = 0; i < train->size; i++) {
-    //     partition_index[i] = 0;
-    // }
-
-    // count[0] = train->size;
-
     d_new = DBL_MAX; // iteration minimizes d_new
 
     // iterate through n_splits
@@ -176,15 +162,8 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
             d_old = d_new;
             // satisfy nearest neighbour criterion on decoder's end
             d_new = nearest_neighbour(train, codebook, partition_index, count);
-            // fprintf(stderr, "After nn\n");
-            // print_int(partition_index, train->size);
-            // print_vectorset(stderr, codebook);
             // satisfy centroid criterion on encoder's end
             update_centroids(train, codebook, partition_index, count);
-            // fprintf(stderr, "After centroids\n");
-            // print_vectorset(stderr, codebook);
-            // print_vectorset(stderr, codebook);
-
 
         } while (d_old > (1 + LBG_EPS) * d_new);
 
@@ -199,10 +178,6 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
         }
         // set codebook size
         codebook->size = 1 << (i+1); // 2^(i+1)
-        // fprintf(stderr, "just split\n");
-        // print_vectorset(stderr, codebook);
-
-        
     }
     free(partition_index);
     free(count);
