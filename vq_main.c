@@ -3,7 +3,7 @@
 #include "channel.h"
 
 int main(int argc, char *argv[]) {
-	int i, j;
+	int i, j, idx;
 	int numtrain = 500;
 	int nsplits = 4;
 	vectorset *train, *c;
@@ -37,7 +37,16 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Unable to open training set file %s\n", argv[1]);
 			exit(1);
 		}
-		print_vectorset(fp, train);
+
+		for(j = 0; j < VECTOR_DIM; j++)
+			fprintf(fp, "v%d\t", j+1);
+		fprintf(fp, "map\n");
+		for(i = 0; i < train->size; i++){
+			for(j = 0; j < VECTOR_DIM; j++)
+				fprintf(fp, "%f\t", train->v[i][j]);
+			nearest_neighbour(train->v[i], c, &idx);
+			fprintf(fp, "%d\n", idx);
+		}
 		fclose(fp);
 
 		fp = fopen(argv[2], "w");
@@ -45,9 +54,10 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Unable to open codebook file %s\n", argv[2]);
 			exit(1);
 		}
+
 		print_vectorset(fp, c);
 		fclose(fp);
-
+		
 		destroy_vectorset(c);
 		destroy_vectorset(train);
 

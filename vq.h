@@ -10,7 +10,7 @@ extern "C"{
 #include <stdlib.h> /* malloc, free, size_t */
 #include "vector.h"
 
-#define LBG_EPS 0.01
+#define LBG_EPS 0.0001
 #define CODE_VECTOR_DISPLACE 0.0001
 
 double nearest_neighbour(double *x, vectorset *c, int *idx);
