@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 		
 		fp = fopen(argv[1], "w");
 		if(fp == NULL){
-			fprintf(stderr, "Unable to open traing set file %s\n", argv[1]);
+			fprintf(stderr, "Unable to open training set file %s\n", argv[1]);
 			exit(1);
 		}
 

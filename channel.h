@@ -18,4 +18,4 @@ void gaussian_channel(double *vector, int dim, double mean, double var);
 }
 #endif
 
-#endif // CHANNEL_H  xsss
+#endif // CHANNEL_H
