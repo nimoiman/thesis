@@ -24,7 +24,8 @@ int bernoulli(double p) {
     return rand() < p * RAND_MAX ? 1 : 0;
 }
 
-void binary_symmetric_channel(char *index, double error_prob, int fixed_length) {
+void binary_symmetric_channel(char *index, double error_prob,
+                              int fixed_length) {
     int i;
     for (i = 0; i < fixed_length; i++) {
         if (bernoulli(BSC_ERROR_PROB)) {

@@ -15,9 +15,12 @@ extern "C"{
 #define CODE_VECTOR_DISPLACE 0.001
 #define EMPIRICAL_GRANULARITY 100
 
-double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_index, int *count);
-void update_centroids(vectorset *train, vectorset *codebook, int *partition_index, int *count);
-double average_distortion(vectorset *train, vectorset *codebook, int *partition_index);
+double nearest_neighbour(vectorset *train, vectorset *codebook,
+    int *partition_index, int *count);
+void update_centroids(vectorset *train, vectorset *codebook,
+    int *partition_index, int *count);
+double average_distortion(vectorset *train, vectorset *codebook,
+    int *partition_index);
 vectorset *bsc_covq(vectorset *train, int n_splits);
 
 #ifdef __cplusplus

@@ -17,7 +17,8 @@ void print_double(double *array, int size) {
 }
 
 double transition_probability(int i, int j, int length) {
-    return pow(BSC_ERROR_PROB, hamming_distance(i, j)) * pow(1-BSC_ERROR_PROB, length - hamming_distance(i, j));
+    return pow(BSC_ERROR_PROB, hamming_distance(i, j)) *
+        pow(1-BSC_ERROR_PROB, length - hamming_distance(i, j));
 }
 
 /* partition_index, count ought to be size of training set train
@@ -28,7 +29,8 @@ double transition_probability(int i, int j, int length) {
    note: Pr(k received|j sent) = BSC_ERROR_PROB * hamming_distance(k, j),
    MSE(x, codebook[j]) = dist(x, codebook[j])
 */
-double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_index, int *count) {
+double nearest_neighbour(vectorset *train, vectorset *codebook,
+                         int *partition_index, int *count) {
     int i, j, k;
     double new_distance, best_distance, total_distance;
     // initialize partition indices to "arbitrary" codebook vector
@@ -48,7 +50,8 @@ double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_i
             new_distance = 0;
 
             for (k = 0; k < codebook->size; k++) {
-                new_distance += transition_probability(k, j, log2(codebook->size)) * dist(train->v[i], codebook->v[j]);
+                new_distance += transition_probability(k, j,
+                    log2(codebook->size)) * dist(train->v[i], codebook->v[j]);
             }
             
             if (new_distance < best_distance) {
@@ -75,9 +78,11 @@ double nearest_neighbour(vectorset *train, vectorset *codebook, int *partition_i
    
    note: Pr(i received|j sent) = BSC_ERROR_PROB * hamming_distance(i, j)
  */
-void update_centroids(vectorset *train, vectorset *codebook, int *partition_index, int *count) {
+void update_centroids(vectorset *train, vectorset *codebook,
+                      int *partition_index, int *count) {
     int i, j, k, dim;
-    double partition_euclidean_centroid[VECTOR_DIM], partition_probability, numerator[VECTOR_DIM], denominator;
+    double partition_euclidean_centroid[VECTOR_DIM], partition_probability;
+    double numerator[VECTOR_DIM], denominator;
 
     // zero codebook for reconstruction
     for (i = 0; i < codebook->size; i++) {
@@ -113,12 +118,14 @@ void update_centroids(vectorset *train, vectorset *codebook, int *partition_inde
             partition_probability = (double) count[j] / train->size;
 
             for (dim = 0; dim < VECTOR_DIM; dim++) {
-                numerator[dim] += transition_probability(k, j, log2(codebook->size)) * partition_euclidean_centroid[dim];
+                numerator[dim] += transition_probability(k, j,
+                    log2(codebook->size)) * partition_euclidean_centroid[dim];
             }
             // fprintf(stderr, "BSC_ERROR_PROB: %f\n", BSC_ERROR_PROB);
             // fprintf(stderr, "hamming dist: %d\n", hamming_distance(k, j));
             // fprintf(stderr, "partition_probability: %f\n", partition_probability);
-            denominator += transition_probability(k, j, log2(codebook->size)) * partition_probability;
+            denominator += transition_probability(k, j, log2(codebook->size))
+                * partition_probability;
         }
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
@@ -186,7 +193,8 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
         for (j = 0; j < codebook->size; j++) {
             // iterate through vector components
             for (k = 0; k < VECTOR_DIM; k++) {
-                codebook->v[j + codebook->size][k] = codebook->v[j][k] + CODE_VECTOR_DISPLACE;
+                codebook->v[j + codebook->size][k] = codebook->v[j][k]
+                    + CODE_VECTOR_DISPLACE;
             }
         }
         // set codebook size
