@@ -19,12 +19,13 @@ typedef struct{
 vectorset *init_vectorset(size_t size);
 void destroy_vectorset(vectorset *v);
 void print_vectorset(FILE *stream, vectorset *v);
+int hamming_distance(int v_1, int v_2);
 
 double dist(double *x, double *y);
 
 #ifdef __cplusplus
 }
 #endif
-
+    
 #endif /* VECTOR_H */
 

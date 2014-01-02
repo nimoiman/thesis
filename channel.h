@@ -10,6 +10,8 @@ extern "C"{
 #include <time.h> /* time (for rand seed) */
 #include <stdio.h>
 
+#define BSC_ERROR_PROB 0.1
+
 double drand();
 double box_muller(double mean, double var);
 void gaussian_channel(double *vector, int dim, double mean, double var);
