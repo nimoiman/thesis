@@ -5,6 +5,7 @@
 extern "C"{
 #endif
 
+#include <string.h> /* memset */
 #include <stdio.h> /* sprintf */
 #include <float.h> /* DBL_MAX */
 #include <stdlib.h> /* malloc, free, size_t */

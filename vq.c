@@ -22,16 +22,15 @@ double nearest_neighbour(double *x, vectorset *c, int *idx){
 	return bestsofar;
 }
 
-// Updates the centroids in a signle iteration of the LBG-VQ scheme
+// Updates the centroids in a single iteration of the LBG-VQ scheme
 // This function re-adjusts the codevectors based on the centroid condition
 // This function does not do any splitting
 // A training set should be provided
-// **c1 should initially point to the current codebook
-// **c2 should point to a vectorset the same size as c1
+// **c_old should initially point to the current codebook
+// **c_new should point to a vectorset the same size as c1
 // *count should point to an integer array the same size as the codebook
-// *count is used internally, and it passed to prevent excessive malloc and free calls on each function call
-// After computing the updating centroids, the new codebook is placed under *c1
-// The old codebook is placed under *c2
+// *count is used internally
+// After computing the updating centroids, the new codebook is placed under *c_new
 // The average distortion between the training set and the new codebook is returned
 double centroid_update(vectorset *train, vectorset *c_old, vectorset *c_new, int *count){
 	int i, j, nn;
@@ -39,11 +38,8 @@ double centroid_update(vectorset *train, vectorset *c_old, vectorset *c_new, int
 	double d_avg = 0;
 
 	// Initialize counts and new codebook to 0
-	for(i = 0; i < c_new->size; i++){
-		count[i] = 0;
-		for(j = 0; j < VECTOR_DIM; j++)
-		       c_new->v[i][j] = 0;
-	}
+	memset(count, 0, c_new->size * sizeof(int));
+	memset(c_new->v, 0, c_new->size * VECTOR_DIM * sizeof(float));
 
 	// For each training vector, we find the codevector of minimal distortion
 	// i.e. the codevector for that training vector's encoding region
@@ -61,9 +57,7 @@ double centroid_update(vectorset *train, vectorset *c_old, vectorset *c_new, int
 		if(count[i] > 0)
 			for(j = 0; j < VECTOR_DIM; j++)
 				c_new->v[i][j] /= count[i];
-		else
-			for(j = 0; j < VECTOR_DIM; j++)
-				c_new->v[i][j] = 0; //Codevectors that arn't mapped go to origin
+		//Note: if count[i] = 0, (no mapping training vectors), then codevector v[i] maps to origin
 	}
 
 	// Get average distortion by dividing by the total training set size	
