@@ -33,7 +33,7 @@ extern "C"{
 
 typedef double (*vec_x)[DIM_X];
 typedef double (*vec_y)[DIM_Y];
-typedef int (q_vec)[Q_LEVELS_X][Q_LEVELS_Y];
+// typedef int (q_vec)[Q_LEVELS_X][Q_LEVELS_Y];
 typedef double (c_book_x)[C_SIZE_X][C_SIZE_Y][DIM_X];
 typedef double (c_book_y)[C_SIZE_X][C_SIZE_Y][DIM_Y];
 
@@ -45,11 +45,16 @@ typedef struct covq {
     c_book_x *c_x;
     c_book_y *c_y;
 
-    int *enc_x;
-    int *enc_y;
+    int *enc_x[DIM_X]; // maps training vectors to quantized levels
+    int *enc_y[DIM_Y]; // e.g. a low vector might have value {0,...,0}
 
-    q_vec *q_tr;
+    double sigma_x[DIM_X];
+    double sigma_y[DIM_Y];
+    double mean_x[DIM_X];
+    double mean_y[DIM_Y]; // means and std devs of vector components
 };
+
+void print(FILE *stream, int thing);
 
 int bsc_2_source_covq(covq *everything);
 
