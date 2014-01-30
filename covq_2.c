@@ -70,6 +70,12 @@ double dist(int q_lvl, int index, int src) {
  * level should be passed, along with a pointer which will point to the nearest
  * code vector index, and the source. */
 double nearest_neighbour(int q_lvl, int *index, int src) {
+	int y[C_SIZE_Y];
+	int x[C_SIZE_X];
+	int i;
+
+	for(i = 0; i < DIM_Y
+	return 0;
 }
 
 /* Updates the centroids for a given source by applying the centroid condition. */
