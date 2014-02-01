@@ -18,6 +18,7 @@ extern "C"{
 #define LBG_EPS 0.001
 #define CODE_VECTOR_DISPLACE 0.001
 
+#define Q_LEVELS 25
 #define Q_LEVELS_X 500 // number of quantized levels
 #define Q_LEVELS_Y 500
 #define Q_LENGTH 2 // length of quantized vector components
@@ -33,7 +34,7 @@ extern "C"{
 
 typedef double (*vec_x)[DIM_X];
 typedef double (*vec_y)[DIM_Y];
-typedef int (q_vec)[Q_LEVELS_X][Q_LEVELS_Y];
+typedef int (*q_vec)[Q_LEVELS_Y];
 typedef double (c_book_x)[C_SIZE_X][C_SIZE_Y][DIM_X];
 typedef double (c_book_y)[C_SIZE_X][C_SIZE_Y][DIM_Y];
 
