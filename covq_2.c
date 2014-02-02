@@ -1,15 +1,12 @@
 #include "covq_2.h"
 
-#define C_SIZE_X (1 << split_x)
-#define C_SIZE_Y (1 << split_y)
-
 /* GLOBAL VARIABLES */
 size_t tr_size;
-vec_x *tr_x;
-vec_y *tr_y;
+int *tr_x;
+int *tr_y;
 
-c_book_x *c_x;
-c_book_y *c_y;
+c_book c_x;
+c_book c_y;
 
 int split_x = 0;
 int split_y = 0;
@@ -17,9 +14,7 @@ int split_y = 0;
 int *enc_x;
 int *enc_y;
 
-q_vec *q_tr;
-int *q_marg_x;
-int *q_marg_y;
+q_vec q_tr;
 
 void print_training_set() {
     
@@ -52,8 +47,8 @@ double trans_prob(int i, int j, int src) {
 	int len, k, diff;
 
 	diff = i ^ j;
-	len = (src == X) ? split_x : split_y;
-	prob = (src == X) ? TRANS_PROB_X : TRANS_PROB_Y;
+	len = (src == SRC_X) ? split_x : split_y;
+	prob = (src == SRC_X) ? TRANS_PROB_X : TRANS_PROB_Y;
 	for(k = 0; k < len; k++)
 		p *= (diff>>i & 1) ? prob : (1-prob);
 	return p;
@@ -64,26 +59,51 @@ double trans_prob(int i, int j, int src) {
  * level should be passed, along with a pointer which will point to the nearest
  * code vector index, and the source. */
 double nearest_neighbour(int q_lvl, int *index, int src) {
-	int src_count[C_SIZE_Y];
-	double src_sum[C_SIZE_Y], rcv_prob[C_SIZE_Y], rcv_avg[C_SIZE_Y];
-	double p, d, d_best, var, val_x, val_y, d_term, *dist;
-	int i, j, k, l, num, c, count, i_best;
+	int src_count[C_SIZE_MAX];
+	double src_sum[C_SIZE_MAX], rcv_prob[C_SIZE_MAX], rcv_avg[C_SIZE_MAX];
+	double p, d, d_best, var, val, d_term, *dist;
+	int i, j, k, l, src1, src2, num, c, count, i_best, c_size1, c_size2, *enc2;
+	c_book *c1, *c2;
 
-	for(i = 0; i < Q_LEVELS_Y; i++){
-		num = q_tr[q_lvl][i];
-		c = enc_y[i];
-		val_y = quant_to_vec(i, Y);
+	// set primary and secondary source parameters
+	if(src == SRC_X){
+		c_size1 = C_SIZE_X;
+		c_size2 = C_SIZE_Y;
+		c1 = &c_x;
+		c2 = &c_y;
+		src1 = SRC_X;
+		src2 = SRC_Y;
+		enc2 = enc_y;
+	}else{
+
+	}
+	
+	// for src1 == SRC_X, compute:
+	// E[Y^2 | X = x] (var)
+	// number of points that map to each J index (src_count)
+	// sum of points that map to each J index (src_sum)
+	for(i = 0; i < Q_LEVELS; i++){
+		if(src1 == SRC_X)
+			num = q_tr[q_lvl][i];
+		else
+			num = q_tr[i][q_lvl];
+		c = enc2[i];
+		val = quant_to_vec(i, src2);
 
 		count += num;
 		src_count[c] += num;
-		src_sum[c] += num * val_y;
-		var += num * val_y * val_y;
+		src_sum[c] += num * val;
+		var += num * val * val;
 	}
 	var /= count;
 	
-	for(l = 0; l < C_SIZE_Y; l++){
-		for(j = 0; j < C_SIZE_Y; j++){
-			p = trans_prob(j,l, Y);
+	// for src1 == SRC_X, compute:
+	// P(L = l | X = x) for all l (rcv_prob)
+	// E[Y | L = l, X = x] for all l (rcv_avg)
+	// TODO check above (rcv_avg)
+	for(l = 0; l < c_size2; l++){
+		for(j = 0; j < c_size2; j++){
+			p = trans_prob(j,l, src2);
 			rcv_prob[l] += p * src_count[j];
 			rcv_avg[l] += p * src_sum[j];
 		}
@@ -91,22 +111,22 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 		rcv_avg[l] /= count;
 	}
 
-	val_x = quant_to_vec(q_lvl, X);
-	dist = src_sum;
-	for(k = 0; k < C_SIZE_X; k++){
+	val = quant_to_vec(q_lvl, src1); //Get x value from quantizer index
+	dist = src_sum; // reuse src_sum for new array, dist
+	for(k = 0; k < c_size1; k++){
 		dist[k] = 0;
-		for(l = 0; l < C_SIZE_Y; l++){
-			d_term = (val_x-c_x[k][l]) * (val_x-c_x[k][l])
-				+ c_y[k][l] * c_y[k][l]
-				- 2 * c_y[k][l] * rcv_avg[l];
+		for(l = 0; l < c_size2; l++){
+			d_term = (val-(*c1)[k][l]) * (val-(*c1)[k][l])
+				+ (*c2)[k][l] * (*c2)[k][l]
+				- 2 * (*c2)[k][l] * rcv_avg[l];
 			dist[k] += rcv_prob[l] * d_term;
 		}
 	}
 
-	for(i = 0; i < C_SIZE_X; i++){
+	for(i = 0; i < c_size1; i++){
 		d = 0;
-		for(k = 0; k < C_SIZE_X; k++)
-			d += trans_prob(i,k,X) * dist[k];
+		for(k = 0; k < c_size1; k++)
+			d += trans_prob(i,k,src1) * dist[k];
 		if( d < d_best ){
 			d_best = d;
 			i_best = i;
@@ -121,8 +141,9 @@ double nn_update(){
 	double d_total, d;
 	int i, j, num;
 	
+	//TODO check dist. equation
 	for(i = 0; i < Q_LEVELS; i++){
-		d = nearest_neighbour(i, enc_x + i, X);
+		d = nearest_neighbour(i, enc_x + i, SRC_X);
 		num = 0;
 		for(j = 0; j < Q_LEVELS; j++)
 			num += q_tr[i][j];
@@ -130,7 +151,7 @@ double nn_update(){
 	}
 
 	for(j = 0; j < Q_LEVELS; j++){
-		d = nearest_neighbour(j, enc_y + j, Y);
+		d = nearest_neighbour(j, enc_y + j, SRC_Y);
 		num = 0;
 		for(i = 0; i < Q_LEVELS; i++)
 			num += q_tr[i][j];
@@ -170,9 +191,9 @@ void centroid_update(int src) {
 			numer = 0;
 			denom = 0;
 			for(i = 0; i < C_SIZE_X; i++){
-				p_x = trans_prob(i,k,X);
+				p_x = trans_prob(i,k,SRC_X);
 				for(j = 0; j < C_SIZE_Y; j++){
-					p_y = trans_prob(j,l,Y);
+					p_y = trans_prob(j,l,SRC_Y);
 					numer += p_x * p_y * sum[i][j];
 					denom += p_x * p_y * count[i][j];
 				}
