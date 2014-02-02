@@ -16,6 +16,44 @@ int *enc_y;
 
 q_vec q_tr;
 
+double sigma_x;
+double sigma_y;
+double mean_x;
+double mean_y; // means and std devs of vector components
+
+void print_vector(FILE *stream, double *v, int src) {
+    int i;
+    int max_dim = (src == SRC_X) ? DIM_X : DIM_Y;
+    fprintf(stream, "(");
+    for (i = 0; i < max_dim; i++) {
+        fprintf(stream, "%f", v[i]);
+        if (i != max_dim - 1) {
+            fprintf(stream, ", ");
+        }
+    }
+    fprintf(stderr, ")");
+}
+
+/* prints various things to stream in human-readable format */
+void print(FILE *stream, int thing) {
+    if (thing == 0) { // training set
+        int i;
+        fprintf(stream, "X\tY\n");
+        for (i = 0; i < tr_size; i++) {
+            print_vector(stream, tr_x[i], SRC_X);
+            fprintf(stream, "\t");
+            print_vector(stream, tr_y[i], SRC_Y);
+            fprintf(stream, "\n");
+        }
+    }
+    else if (thing == 1) { // X codebook
+
+    }
+    else if (thing == 2) { // quantized bin counts
+
+    }
+}
+
 void print_training_set() {
     
 }
@@ -28,15 +66,82 @@ void print_quant_levels() {
     
 }
 
-int init(covq *everything) {
+int init(struct covq *c) {
     // unpack everything
-    // mallocs everything
+    tr_size = c->tr_size;
+    tr_x = c->tr_x;
+    tr_y = c->tr_y;
+
+    c_x = c->c_x;
+    c_y = c->c_y;
+
+    split_x = c->split_x;
+    split_y = c->split_y;
+
+    enc_x = c->enc_x;
+    enc_y = c->enc_y;
+
+    sigma_x = c->sigma_x;
+    sigma_y = c->sigma_y;
+    mean_x = c->mean_x;
+    mean_y = c->mean_y;
+
+    c_x = malloc(sizeof(c_book_x));
+    c_y = malloc(sizeof(c_book_y));
+    enc_x = malloc(sizeof(int) * tr_size);
+    enc_y = malloc(sizeof(int) * tr_size);
+
     // quantize
+    quantize();
 }
 
-/* return number of vectors outside quantize region */
+/* return number of vectors outside quantize region (3 std devs from mean)
+ * & puts vectors outside of 3 standard deviations in nearest bin
+ * for DIM=N, Gaussian components, this is ~0.001*(1-0.999^N)/0.999
+ * fraction of the vectors
+ * i.e. (Vector is outlier) ~ Geometric(0.001, N)
+ */
 int quantize() {
-
+    int i, dim; // iteration variables
+    int outlier = 0;
+    int outlier_count = 0;
+    double normalized;
+    // iterate through X and Y jointly
+    for (i = 0; i < tr_size; i++) {
+        for (dim = 0; dim < DIM_X; dim++) {
+            if (tr_x[i][dim] - mean_x[dim] < -3*sigma_x[dim]) {
+                enc_x[i][dim] = 0;
+                outlier = 1;
+            }
+            else if(tr_x[i][dim] - mean_x[dim] > 3*sigma_x[dim]) {
+                enc_x[i][dim] = Q_LEVELS_X - 1;
+                outlier = 1;
+            }
+            else {
+                normalized = 0.5 * (((tr_x[i][dim] - mean_x[dim]) / (3*sigma_x[dim])) + 1);
+                enc_x[i][dim] = (int) (Q_LEVELS_X * normalized);
+            }
+        }
+        for (dim = 0; dim < DIM_Y; dim++) {
+            if (tr_y[i][dim] - mean_y[dim] < -3*sigma_y[dim]) {
+                enc_y[i][dim] = 0;
+                outlier = 1;
+            }
+            else if(tr_y[i][dim] - mean_y[dim] > 3*sigma_y[dim]) {
+                enc_y[i][dim] = Q_LEVELS_Y - 1;
+                outlier = 1;
+            }
+            else {
+                normalized = 0.5 * (((tr_y[i][dim] - mean_y[dim]) / (3*sigma_y[dim])) + 1);
+                enc_y[i][dim] = (int) (Q_LEVELS_Y * normalized);
+            }
+        }
+        if (outlier) {
+            outlier_count++;
+            outlier = 0;
+        }
+    }
+    return outlier_count;
 }
 
 /* Computes the channel transition probability from index i to index j for a
@@ -52,7 +157,6 @@ double trans_prob(int i, int j, int src) {
 	for(k = 0; k < len; k++)
 		p *= (diff>>i & 1) ? prob : (1-prob);
 	return p;
-}
 
 /* for a given source vector, returns the nearest code vector and respective
  * distortion with respect to the dist() function. The source quantization
@@ -207,8 +311,8 @@ void split(int src) {
 
 }
 
-int bsc_2_source_covq(covq *everything) {
-    init(everything);
+int bsc_2_source_covq(covq *params) {
+    init(params);
     // centroid_update
     // split
 

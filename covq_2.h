@@ -42,16 +42,23 @@ typedef struct covq {
     int *tr_x;
     int *tr_y;
 
-    c_book_x *c_x;
-    c_book_y *c_y;
+    c_book *c_x;
+    c_book *c_y;
 
-    int *enc_x;
-    int *enc_y;
+    int *enc_x; // maps training vectors to quantized levels
+    int *enc_y; // e.g. a low vector might have value {0,...,0}
 
-    q_vec *q_tr;
+    int split_x;
+    int split_y;
+
+    double sigma_x;
+    double sigma_y;
+    double mean_x;
+    double mean_y; // means and std devs of vector components
 };
 
 int bsc_2_source_covq(covq *params);
+void print(FILE *stream, int thing);
 
 #ifdef __cplusplus
 }
