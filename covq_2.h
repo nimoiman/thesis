@@ -18,7 +18,11 @@ extern "C"{
 #define CODE_VECTOR_DISPLACE 0.001
 
 #define Q_LEVELS 25
-#define Q_LENGTH 2 // length of quantized vector components
+#define Q_LEVELS_X 25
+#define Q_LEVELS_Y 25
+
+#define DIM_X 1
+#define DIM_Y 1
 
 #define SPLITS_X 3
 #define SPLITS_Y 5
@@ -34,30 +38,40 @@ extern "C"{
 #define C_SIZE_MAX (1 << SPLITS_Y)
 #endif
 
-typedef int (*q_vec)[Q_LEVELS];
-typedef double (c_book)[FINAL_C_SIZE_X][FINAL_C_SIZE_Y];
+typedef int q_vec[Q_LEVELS_X][Q_LEVELS_Y];
+typedef double c_book[FINAL_C_SIZE_X][FINAL_C_SIZE_Y];
 
 typedef struct covq {
     int tr_size;
-    int *tr_x;
-    int *tr_y;
+    double *tr_x;
+    double *tr_y;
 
-    c_book *c_x;
-    c_book *c_y;
+    c_book c_x;
+    c_book c_y;
 
-    int *enc_x; // maps training vectors to quantized levels
-    int *enc_y; // e.g. a low vector might have value {0,...,0}
+    // maps quantized levels to codebook scalars
+    int *enc_x;
+    int *enc_y;
 
+    // holds the number of the current split in the LBGVQ iteration
+    // i.e. the size of the codebooks are (1 << split_x) and (1 << split_y)
+    // respectively.
     int split_x;
     int split_y;
 
-    double sigma_x;
-    double sigma_y;
-    double mean_x;
-    double mean_y; // means and std devs of vector components
-};
+    // holds the bin counts for each quantization level - for now, there
+    // are exactly Q_LEVELS_X*Q_LEVELS_Y joint quantization levels,
+    // i.e. X and Y are scalar valued
+    q_vec q_tr;
 
-int bsc_2_source_covq(covq *params);
+    // means and std devs of vector components
+    double sigma_x[DIM_X];
+    double sigma_y[DIM_Y];
+    double mean_x[DIM_X];
+    double mean_y[DIM_Y];
+} covq;
+
+int bsc_2_source_covq(struct covq *params);
 void print(FILE *stream, int thing);
 
 #ifdef __cplusplus
