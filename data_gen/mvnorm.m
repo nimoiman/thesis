@@ -28,20 +28,22 @@ endfunction
 function [file_name, data_size, cov_matrix, means] = parse_args()
     global defaults;
 
-    if (length(argv()) == 1 && argv(){1} == "help")
+    args = argv();
+
+    if (length(args) == 1 && strcmp(args{1}, "help"))
         print_help();
         exit(0);
     endif
-    if (length(argv()) == 1)
-        file_name = argv(){1};
+    if (length(args) == 1)
+        file_name = args{1};
         data_size = defaults.data_size;
         cov_matrix = defaults.cov_matrix;
         means = defaults.means;
-    elseif (length(argv()) == 4)
-        file_name = argv(){1};
-        data_size = eval(argv(){2});
-        cov_matrix = eval(argv(){3});
-        means = eval(argv(){4});
+    elseif (length(args) == 4)
+        file_name = args{1};
+        data_size = eval(args{2});
+        cov_matrix = eval(args{3});
+        means = eval(args{4});
     else
         print_help();
         exit(1);
