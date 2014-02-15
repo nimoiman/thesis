@@ -21,4 +21,20 @@ $ octave mvnorm.m out_file.csv 200 '[1 0;0 1]' '[0;0]'
 $ octave mvnorm.m help
 ```
 
+## Plot the data
+
+Open an interactive octave prompt
+
+```bash
+$ octave
+octave:1> data = csvread("out_file.csv");
+octave:2> h = plot(data(:,1), data(:,2), ".");
+octave:3> title("My bivariate data")
+octave:4> xlabel("X")
+octave:5> ylabel("Y")
+octave:6> saveas(h, "my_plot")
+octave:6> exit
+$
+```
+
 [1]: https://www.gnu.org/software/octave/download.html
