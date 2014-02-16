@@ -27,6 +27,9 @@ covq_2: $(addprefix $(covq_2_DIR),$(covq_2_OBJS))
 .PHONY : clean
 clean:
 	rm $(addprefix $(vq_DIR),$(vq_OBJS)) \
+	   $(addprefix $(vq_DIR),vq) \
 	   $(addprefix $(covq_DIR),$(covq_OBJS)) \
-	   $(addprefix $(covq_2_DIR),$(covq_2_OBJS))
+	   $(addprefix $(covq_DIR),covq) \
+	   $(addprefix $(covq_2_DIR),$(covq_2_OBJS)) \
+	   $(addprefix $(covq_2_DIR),covq_2) \
 
