@@ -5,7 +5,7 @@ size_t tr_size;
 double *tr_x;
 double *tr_y;
 
-double (*c_x)[FINAL_C_SIZE_X]; // c_book
+double (*c_x)[FINAL_C_SIZE_Y]; // c_book
 double (*c_y)[FINAL_C_SIZE_Y]; // c_book
 
 int split_x = 0;
@@ -22,157 +22,157 @@ double *mean_x;
 double *mean_y; // means and std devs of vector components
 
 void print_vector(FILE *stream, double *v, int src) {
-    int i;
-    int max_dim = (src == SRC_X) ? DIM_X : DIM_Y;
-    fprintf(stream, "(");
-    for (i = 0; i < max_dim; i++) {
-        fprintf(stream, "%f", v[i]);
-        if (i != max_dim - 1) {
-            fprintf(stream, ", ");
-        }
-    }
-    fprintf(stderr, ")");
+	int i;
+	int max_dim = (src == SRC_X) ? DIM_X : DIM_Y;
+	fprintf(stream, "(");
+	for (i = 0; i < max_dim; i++) {
+		fprintf(stream, "%f", v[i]);
+		if (i != max_dim - 1) {
+			fprintf(stream, ", ");
+		}
+	}
+	fprintf(stderr, ")");
 }
 
 /* prints various things to stream in human-readable format */
 void print_h(FILE *stream, int thing) {
-    if (thing == 0) { // training set
-        int i;
-        fprintf(stream, "X\tY\n");
-        for (i = 0; i < tr_size; i++) {
-            print_vector(stream, &tr_x[i], SRC_X);
-            fprintf(stream, "\t");
-            print_vector(stream, &tr_y[i], SRC_Y);
-            fprintf(stream, "\n");
-        }
-    }
-    else if (thing == 1) { // X codebook
+	if (thing == 0) { // training set
+		int i;
+		fprintf(stream, "X\tY\n");
+		for (i = 0; i < tr_size; i++) {
+			print_vector(stream, &tr_x[i], SRC_X);
+			fprintf(stream, "\t");
+			print_vector(stream, &tr_y[i], SRC_Y);
+			fprintf(stream, "\n");
+		}
+	}
+	else if (thing == 1) { // X codebook
 
-    }
-    else if (thing == 2) { // quantized bin counts
-        int i, j;
-        for (i = 0; i < Q_LEVELS_X; i++) {
-            for (j = 0; j < Q_LEVELS_Y; j++) {
-                fprintf(stream, "%d", q_tr[i][j]);
-                if (j != Q_LEVELS_Y - 1) {
-                    fprintf(stream, "  ");
-                }
-            }
-            if (i != Q_LEVELS_X - 1) {
-                fprintf(stream, "\n");
-            }
-        }
-        fprintf(stream, "\n");
-    }
+	}
+	else if (thing == 2) { // quantized bin counts
+		int i, j;
+		for (i = 0; i < Q_LEVELS_X; i++) {
+			for (j = 0; j < Q_LEVELS_Y; j++) {
+				fprintf(stream, "%d", q_tr[i][j]);
+				if (j != Q_LEVELS_Y - 1) {
+					fprintf(stream, "  ");
+				}
+			}
+			if (i != Q_LEVELS_X - 1) {
+				fprintf(stream, "\n");
+			}
+		}
+		fprintf(stream, "\n");
+	}
 }
 
 /* prints various things to stream in csv format */
 void print(FILE *stream, int thing) {
-    if (thing == 0) { // training set
+	if (thing == 0) { // training set
 
-    }
-    else if (thing == 1) { // X codebook
+	}
+	else if (thing == 1) { // X codebook
 
-    }
-    else if (thing == 2) { // quantized bin counts
-        // fprintf(stderr, "about to print q_tr\n");
-        int i, j;
-        for (i = 0; i < Q_LEVELS_X; i++) {
-            for (j = 0; j < Q_LEVELS_Y; j++) {
-                fprintf(stream, "%d", q_tr[i][j]);
-                if (j != Q_LEVELS_Y - 1) {
-                    fprintf(stream, ",");
-                }
-            }
-            if (i != Q_LEVELS_X - 1) {
-                fprintf(stream, ";");
-            }
-        }
-        fprintf(stream, "\n");
-    }
+	}
+	else if (thing == 2) { // quantized bin counts
+		// fprintf(stderr, "about to print q_tr\n");
+		int i, j;
+		for (i = 0; i < Q_LEVELS_X; i++) {
+			for (j = 0; j < Q_LEVELS_Y; j++) {
+				fprintf(stream, "%d", q_tr[i][j]);
+				if (j != Q_LEVELS_Y - 1) {
+					fprintf(stream, ",");
+				}
+			}
+			if (i != Q_LEVELS_X - 1) {
+				fprintf(stream, ";");
+			}
+		}
+		fprintf(stream, "\n");
+	}
 }
 
 void print_training_set() {
-    
+	
 }
 
 void print_codebook() {
-    
+	
 }
 
 void print_quant_levels() {
-    
+	
 }
 
 int init(struct covq *c) {
-    // unpack everything
-    tr_size = c->tr_size;
-    tr_x = c->tr_x;
-    tr_y = c->tr_y;
+	// unpack everything
+	tr_size = c->tr_size;
+	tr_x = c->tr_x;
+	tr_y = c->tr_y;
 
-    q_tr = c->q_tr;
+	q_tr = c->q_tr;
 
-    c_x = c->c_x;
-    c_y = c->c_y;
+	c_x = c->c_x;
+	c_y = c->c_y;
 
-    split_x = c->split_x;
-    split_y = c->split_y;
+	split_x = c->split_x;
+	split_y = c->split_y;
 
-    enc_x = c->enc_x;
-    enc_y = c->enc_y;
+	enc_x = c->enc_x;
+	enc_y = c->enc_y;
 
-    sigma_x = c->sigma_x;
-    sigma_y = c->sigma_y;
-    mean_x = c->mean_x;
-    mean_y = c->mean_y;
+	sigma_x = c->sigma_x;
+	sigma_y = c->sigma_y;
+	mean_x = c->mean_x;
+	mean_y = c->mean_y;
 
-    enc_x = malloc(sizeof(int) * tr_size);
-    enc_y = malloc(sizeof(int) * tr_size);
+	enc_x = malloc(sizeof(int) * Q_LEVELS_X);
+	enc_y = malloc(sizeof(int) * Q_LEVELS_Y);
 
-    // quantize
-    quantize();
+	// quantize
+	quantize();
 }
 
 /* Convert 'vector' x to quantization level */
 int vec_to_quant(double x, int *outlier, int src) {
-    double normalized;
-    int q_lvls;
-    double mean, sigma;
+	double normalized;
+	int q_lvls;
+	double mean, sigma;
 
-    if (src == SRC_X) {
-        q_lvls = Q_LEVELS_X;
-        mean = mean_x[0];
-        sigma = sigma_x[0];
-    }
-    else { // src == SRC_Y
-        q_lvls = Q_LEVELS_Y;
-        mean = mean_y[0];
-        sigma = sigma_y[0];
-    }
+	if (src == SRC_X) {
+		q_lvls = Q_LEVELS_X;
+		mean = mean_x[0];
+		sigma = sigma_x[0];
+	}
+	else { // src == SRC_Y
+		q_lvls = Q_LEVELS_Y;
+		mean = mean_y[0];
+		sigma = sigma_y[0];
+	}
 
-    normalized = 0.5 * (((x - mean) / (3*sigma)) + 1);
-    if (x - mean < -3*sigma) {
-        *outlier = 1;
-        return 0;
-    }
-    else if (x - mean > 3*sigma) {
-        *outlier = 1;
-        return (q_lvls - 1);
-    }
-    else {
-        normalized = 0.5 * (((x - mean) / (3*sigma)) + 1);
-        return (int) (q_lvls * normalized);
-    }
+	normalized = 0.5 * (((x - mean) / (3*sigma)) + 1);
+	if (x - mean < -3*sigma) {
+		*outlier = 1;
+		return 0;
+	}
+	else if (x - mean > 3*sigma) {
+		*outlier = 1;
+		return (q_lvls - 1);
+	}
+	else {
+		normalized = 0.5 * (((x - mean) / (3*sigma)) + 1);
+		return (int) (q_lvls * normalized);
+	}
 }
 
 /* Return center of quantization region indexed by x */
 double quant_to_vec(int x, int src) {
-    if (src == SRC_X) {
-        return 3 * sigma_x[0] * ((((double) (2 * x) + 1) / Q_LEVELS_X) - 1) + mean_x[0];
-    }
-    else { // src == SRC_Y
-        return 3 * sigma_y[0] * ((((double) (2 * x) + 1) / Q_LEVELS_Y) - 1) + mean_y[0];
-    }
+	if (src == SRC_X) {
+		return 3 * sigma_x[0] * ((((double) (2 * x) + 1) / Q_LEVELS_X) - 1) + mean_x[0];
+	}
+	else { // src == SRC_Y
+		return 3 * sigma_y[0] * ((((double) (2 * x) + 1) / Q_LEVELS_Y) - 1) + mean_y[0];
+	}
 }
 
 /* Store quantize bin counts of quantized training vectors into q_tr
@@ -184,31 +184,31 @@ double quant_to_vec(int x, int src) {
  * i.e. (Vector is outlier) ~ Geometric(0.001, N)
  */
 int quantize() {
-    int i, j, dim; // iteration variables
-    int x_bin, y_bin;
-    int outlier = 0;
-    int outlier_count = 0;
+	int i, j, dim; // iteration variables
+	int x_bin, y_bin;
+	int outlier = 0;
+	int outlier_count = 0;
 
-    // initialize quantized bin counts to 0
-    for (i = 0; i < Q_LEVELS_X; i++) {
-        for (j = 0; j < Q_LEVELS_Y; j++) {
-            q_tr[i][j] = 0;
-        }
-    }
+	// initialize quantized bin counts to 0
+	for (i = 0; i < Q_LEVELS_X; i++) {
+		for (j = 0; j < Q_LEVELS_Y; j++) {
+			q_tr[i][j] = 0;
+		}
+	}
 
-    // iterate through X and Y jointly
-    for (i = 0; i < tr_size; i++) {
-        x_bin = vec_to_quant(tr_x[i], &outlier, SRC_X);
-        y_bin = vec_to_quant(tr_y[i], &outlier, SRC_Y);
-        q_tr[x_bin][y_bin] += 1;
+	// iterate through X and Y jointly
+	for (i = 0; i < tr_size; i++) {
+		x_bin = vec_to_quant(tr_x[i], &outlier, SRC_X);
+		y_bin = vec_to_quant(tr_y[i], &outlier, SRC_Y);
+		q_tr[x_bin][y_bin] += 1;
 
-        if (outlier) {
-            outlier_count++;
-            outlier = 0;
-        }
-    }
+		if (outlier) {
+			outlier_count++;
+			outlier = 0;
+		}
+	}
 
-    return outlier_count;
+	return outlier_count;
 }
 
 /* Computes the channel transition probability from index i to index j for a
@@ -256,11 +256,11 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 	// sum of points that map to each J index (src_sum)
 	for(i = 0; i < Q_LEVELS; i++){
 		if (src1 == SRC_X) {
-            num = q_tr[q_lvl][i];
-        }
+			num = q_tr[q_lvl][i];
+		}
 		else {
-            num = q_tr[i][q_lvl];
-        }
+			num = q_tr[i][q_lvl];
+		}
 		c = enc2[i];
 		val = quant_to_vec(i, src2);
 
@@ -375,11 +375,11 @@ void split(int src) {
 }
 
 int bsc_2_source_covq(struct covq *params) {
-    init(params);
-    // print quantized bin counts
-    print_h(stderr, 2);
-    // centroid_update
-    // split
+	init(params);
+	// print quantized bin counts
+	print_h(stderr, 2);
+	// centroid_update
+	// split
 
-    return 0; // yay
+	return 0; // yay
 }

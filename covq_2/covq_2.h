@@ -42,33 +42,33 @@ typedef int q_vec[Q_LEVELS_X][Q_LEVELS_Y];
 typedef double c_book[FINAL_C_SIZE_X][FINAL_C_SIZE_Y];
 
 typedef struct covq {
-    int tr_size;
-    double *tr_x;
-    double *tr_y;
+	int tr_size;
+	double *tr_x;
+	double *tr_y;
 
-    c_book c_x;
-    c_book c_y;
+	c_book c_x;
+	c_book c_y;
 
-    // maps quantized levels to codebook scalars
-    int *enc_x;
-    int *enc_y;
+	// maps quantized levels to codebook scalars
+	int *enc_x;
+	int *enc_y;
 
-    // holds the number of the current split in the LBGVQ iteration
-    // i.e. the size of the codebooks are (1 << split_x) and (1 << split_y)
-    // respectively.
-    int split_x;
-    int split_y;
+	// holds the number of the current split in the LBGVQ iteration
+	// i.e. the size of the codebooks are (1 << split_x) and (1 << split_y)
+	// respectively.
+	int split_x;
+	int split_y;
 
-    // holds the bin counts for each quantization level - for now, there
-    // are exactly Q_LEVELS_X*Q_LEVELS_Y joint quantization levels,
-    // i.e. X and Y are scalar valued
-    q_vec q_tr;
+	// holds the bin counts for each quantization level - for now, there
+	// are exactly Q_LEVELS_X*Q_LEVELS_Y joint quantization levels,
+	// i.e. X and Y are scalar valued
+	q_vec q_tr;
 
-    // means and std devs of vector components
-    double sigma_x[DIM_X];
-    double sigma_y[DIM_Y];
-    double mean_x[DIM_X];
-    double mean_y[DIM_Y];
+	// means and std devs of vector components
+	double sigma_x[DIM_X];
+	double sigma_y[DIM_Y];
+	double mean_x[DIM_X];
+	double mean_y[DIM_Y];
 } covq;
 
 int bsc_2_source_covq(struct covq *params);
