@@ -5,7 +5,7 @@ size_t tr_size;
 double *tr_x;
 double *tr_y;
 
-double (*c_x)[FINAL_C_SIZE_Y]; // c_book
+double (*c_x)[FINAL_C_SIZE_X]; // c_book
 double (*c_y)[FINAL_C_SIZE_Y]; // c_book
 
 int split_x = 0;
