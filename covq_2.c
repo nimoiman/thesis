@@ -1,5 +1,5 @@
 #include "covq_2.h"
-
+#define POW2(x) (x * x)
 /* GLOBAL VARIABLES */
 size_t tr_size;
 int *tr_x;
@@ -165,7 +165,7 @@ double trans_prob(int i, int j, int src) {
 double nearest_neighbour(int q_lvl, int *index, int src) {
 	int src_count[C_SIZE_MAX];
 	double src_sum[C_SIZE_MAX], rcv_prob[C_SIZE_MAX], rcv_avg[C_SIZE_MAX];
-	double p, d, d_best, var, val, d_term, *dist;
+	double p, d, d_best, var, val, *dist;
 	int i, j, k, l, src1, src2, num, c, count, i_best, c_size1, c_size2, *enc2;
 	c_book *c1, *c2;
 
@@ -179,20 +179,32 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 		src2 = SRC_Y;
 		enc2 = enc_y;
 	}else{
-
+		c_size1 = C_SIZE_Y;
+		c_size2 = C_SIZE_X;
+		c1 = &c_y;
+		c2 = &c_x;
+		src1 = SRC_Y;
+		src2 = SRC_X;
+		enc2 = enc_x;
 	}
 	
-	// for src1 == SRC_X, compute:
+	// Rest of comments assume primary source is X.
+	// Roles are swapped when the primary source is Y.
+
+	// Compute:
 	// E[Y^2 | X = x] (var)
-	// number of points that map to each J index (src_count)
-	// sum of points that map to each J index (src_sum)
+	// number of points that map to each J source index (src_count)
+	// used to compute probabilities of sending J index: P(J = j | X = x)
+	// sum of points that map to each J source index (src_sum)
 	for(i = 0; i < Q_LEVELS; i++){
+		// Iterate across Y vals when src1 == SRC_X
+		// Iterate across X vals when src1 == SRC_Y
 		if(src1 == SRC_X)
 			num = q_tr[q_lvl][i];
 		else
 			num = q_tr[i][q_lvl];
-		c = enc2[i];
-		val = quant_to_vec(i, src2);
+		c = enc2[i]; // Encoding index
+		val = quant_to_vec(i, src2); // value
 
 		count += num;
 		src_count[c] += num;
@@ -203,8 +215,9 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 	
 	// for src1 == SRC_X, compute:
 	// P(L = l | X = x) for all l (rcv_prob)
-	// E[Y | L = l, X = x] for all l (rcv_avg)
-	// TODO check above (rcv_avg)
+	// That is, probability of receiving l from the secondary source.
+	// P(L = l | X = x) = sum_j( p(j,l) * P(J = j | X = x) )
+	// Also compute E[Y | L = l, X = x] * P(J = j | X = x) for all l (rcv_avg)
 	for(l = 0; l < c_size2; l++){
 		for(j = 0; j < c_size2; j++){
 			p = trans_prob(j,l, src2);
@@ -217,16 +230,22 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 
 	val = quant_to_vec(q_lvl, src1); //Get x value from quantizer index
 	dist = src_sum; // reuse src_sum for new array, dist
+	// Compute E[(X-X_hat)^2 + (Y-Y_hat)^2 | X = x, K = k] - E[Y^2|X=x,K=k]
+	// That is, expected distortion given that k was received for primary source.
+	// Minus E[Y^2|X=x,K=k] because it is independent of K
+	// It is added later by the variable var which was computed earlier.
 	for(k = 0; k < c_size1; k++){
 		dist[k] = 0;
 		for(l = 0; l < c_size2; l++){
-			d_term = (val-(*c1)[k][l]) * (val-(*c1)[k][l])
-				+ (*c2)[k][l] * (*c2)[k][l]
+			dist[k] += rcv_prob[l] * (
+				POW2( (val-(*c1)[k][l]) )
+				+ POW2( (*c2)[k][l] ) )
 				- 2 * (*c2)[k][l] * rcv_avg[l];
-			dist[k] += rcv_prob[l] * d_term;
 		}
 	}
 
+	// Iterate through each index i that can be sent for primary source.
+	// Save the one which results in lowest expected distortion at receiver.
 	for(i = 0; i < c_size1; i++){
 		d = 0;
 		for(k = 0; k < c_size1; k++)
