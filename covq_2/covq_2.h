@@ -7,6 +7,7 @@ extern "C"{
 
 #include <stdio.h> /* sprintf */
 #include <stdlib.h> /* malloc, free, size_t */
+#include <math.h> /* pow, exp */
 
 #define SRC_X 0
 #define SRC_Y 1
