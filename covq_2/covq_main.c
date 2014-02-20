@@ -1,4 +1,4 @@
-#include "covq_2.h"
+#include "covq.h"
 #include <math.h> /* log, sqrt, M_PI*/
 
 /* Uniform(0,1] */

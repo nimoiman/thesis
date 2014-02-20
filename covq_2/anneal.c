@@ -1,4 +1,5 @@
 #include "covq.h"
+#define POW2(x) (x*x)
 
 /* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
 void transmission_prob(prob_ij p_ij) {
