@@ -1,31 +1,47 @@
 #include "covq_2.h"
 
-/* Helper function to simulated annealing
- * Return distance between codevectors represented by the two
- * respective pairs (x_1, y_1), (x_2, y_2) */
-double eucl_dist(int x_1, int x_2, int y_1, int y_2) {
-    return pow(c_x[x_1][y_1] - c_y[x_2][y_2], 2);
-}
+/* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
+void transmission_prob(prob_ij p_ij) {
+    int i, j, q_x, q_y;
 
-/* get energy difference of current codebook with index i and j swapped
- * for src for simulated annealing process 
- * positive value means energy went up */
-double potential_diff(int x_1, int x_2, int y_1, int y_2) {
-    int k, el;
-    double diff = 0;
-    for (k = 0; k < FINAL_C_SIZE_X; k++) {
-        for (el = 0; el < FINAL_C_SIZE_Y; el++) {
-            diff -= trans_prob(x_1, k, SRC_X) * trans_prob(y_1, el, SRC_Y) *
-                eucl_dist(x_1, k, y_1, el);
-            diff += trans_prob(x_1, k, SRC_X) * trans_prob(y_1, el, SRC_Y) *
-                eucl_dist(x_2, k, y_2, el);
-            diff -= trans_prob(x_2, k, SRC_X) * trans_prob(y_2, el, SRC_Y) *
-                eucl_dist(x_2, k, y_2, el);
-            diff += trans_prob(x_2, k, SRC_X) * trans_prob(y_2, el, SRC_Y) *
-                eucl_dist(x_1, k, y_1, el);
+    // loop through quantization levels q_trset
+    for (q_x = 0; q_x < Q_LEVELS; q_x++) {
+        for (q_y = 0; q_y < Q_LEVELS; q_y++) {
+            // lookup which index is transmitted for that level in enc_x, enc_y
+            i = enc_x[q_x][q_y];
+            j = enc_y[q_x][q_y];
+            // add bin count to p_ij[i][j]
+            p_ij[i][j] += q_trset[q_x][q_y];
         }
     }
-    return diff;
+}
+
+/* Helper function to simulated annealing
+ * Return distance between codevectors (centroids) represented by the two
+ * respective pairs (i, j), (k, el) */
+double eucl_dist(int i, int j, int k, int el) {
+    return pow(c_x[i][j] - c_x[k][el], 2) + pow(c_y[i][j] - c_y[k][el], 2);
+}
+
+/* get energy of current binary index assignment */
+double energy() {
+    int i, j, k, el;
+    double sum = 0;
+    double inner_sum;
+    prob_ij p_ij;
+    transmission_prob(p_ij);
+    for (i = 0; i < CODE_BOOK_SIZE_X; i++) {
+        for (j = 0; j < CODE_BOOK_SIZE_Y; j++) {
+            inner_sum = 0;
+            for (k = 0; k < CODE_BOOK_SIZE_X; k++) {
+                for (el = 0; el < CODE_BOOK_SIZE_Y; el++) {
+                    inner_sum += channel_prob(i, j, k, el) * eucl_dist(i, j, k, el);
+                }
+            }
+            sum += inner_sum * p_ij[i][j];
+        }
+    }
+    return sum;
 }
 
 /* return a random number between 0 and limit-1 inclusive.
@@ -47,33 +63,38 @@ void anneal() {
     int iter = 0, max_iterations = 50000;
     int phi = 5, drop_count = 0, psi = 200, fail_count = 0;
     
-    int x_1, x_2, y_1, y_2;
+    int i_1, j_1, i_2, j_2;
     do {
         // randomly choose two indices between 0 and FINAL_C_SIZE_X-1
-        x_1 = rand_lim(FINAL_C_SIZE_X);
-        x_2 = rand_lim(FINAL_C_SIZE_X);
+        i_1 = rand_lim(FINAL_C_SIZE_X);
+        i_2 = rand_lim(FINAL_C_SIZE_X);
         // randomly choose two indices between 0 and FINAL_C_SIZE_Y-1
-        y_1 = rand_lim(FINAL_C_SIZE_Y);
-        y_2 = rand_lim(FINAL_C_SIZE_Y);
-        // measure energy drop/rise from swap
-        pot_diff = potential_diff(x_1, x_2, y_1, y_2);
+        j_1 = rand_lim(FINAL_C_SIZE_Y);
+        j_2 = rand_lim(FINAL_C_SIZE_Y);
+
+        // measure current energy
+        pot_diff = energy();
+        // swap i_1 <-> i_2 & j_1 <-> j_2 temporarily
+        tmp = bin_cw_x[i_1];
+        bin_cw_x[i_1] = bin_cw_x[i_2];
+        bin_cw_x[i_2] = bin_cw_x[i_1];
+        // find the difference in new state's energy from old energy
+        pot_diff -= energy();
         
-        // swap if energy drop
-        // else swap with probability e^{-rise/T}
+        // keep swap if energy drop
+        // else keep swap with probability e^{-rise/T}
         if (pot_diff <= 0) {
             drop_count++;
-            tmp = c_x[x_1][y_1];
-            c_x[x_1][y_1] = c_x[x_2][y_2];
-            c_x[x_2][y_2] = tmp;
         }
         else if ((rand() / (double) RAND_MAX) < exp(-pot_diff/T)) {
             fail_count++;
-            tmp = c_x[x_1][y_1];
-            c_x[x_1][y_1] = c_x[x_2][y_2];
-            c_x[x_2][y_2] = tmp;
         }
         else {
             fail_count++;
+            // don't keep swap i.e. swap back
+            tmp = bin_cw_x[i_1];
+            bin_cw_x[i_1] = bin_cw_x[i_2];
+            bin_cw_x[i_2] = bin_cw_x[i_1];
         }
 
         iter++;
