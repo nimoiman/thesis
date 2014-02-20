@@ -16,6 +16,8 @@ extern "C"{
 #define TRANS_PROB_Y 0.2
 
 #define Q_LEVELS 25
+#define Q_LENGTH_X 1
+#define Q_LENGTH_Y 1
 
 #define CODEWORD_LEN_X 3
 #define CODEWORD_LEN_Y 5
@@ -31,31 +33,10 @@ extern "C"{
 
 typedef int quant[Q_LEVELS][Q_LEVELS];
 typedef double codevectors[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
+typedef int prob_ij[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 
-typedef struct covq {
-    int tr_size;
-    double *tr_x;
-    double *tr_y;
-
-    c_book c_x;
-    c_book c_y;
-
-    // maps quantized levels to codebook scalars
-    int *enc_x;
-    int *enc_y;
-
-    // holds the bin counts for each quantization level - for now, there
-    // are exactly Q_LEVELS_X*Q_LEVELS_Y joint quantization levels,
-    // i.e. X and Y are scalar valued
-    quant q_tr;
-
-    // means and quantization intervals of vector components
-    double range_x[DIM_X];
-    double range_y[DIM_Y];
-    double mean_x[DIM_X];
-    double mean_y[DIM_Y];
-} covq;
-
+extern trset_size;
+double *trset_x, *trset_y;
 extern quant q_trset;
 extern int encoder_x[Q_LEVELS];
 extern int encoder_y[Q_LEVELS];
@@ -64,6 +45,9 @@ extern codevectors cv_y;
 extern int bin_cw_x[CODE_BOOK_SIZE_X];
 extern int bin_cw_y[CODE_BOOK_SIZE_Y];
 
+int vec_to_quant(double x, int *outlier, int src);
+double quant_to_vec(int x, int src);
+int quantize();
 int bsc_2_source_covq(struct covq *params);
 void print(FILE *stream, int thing);
 
