@@ -1,5 +1,8 @@
 #include "covq.h"
 
+int trset_size;
+double *trset_x, *trset_y;
+
 void print_test(void){
     int i;
     int int_arr[25];

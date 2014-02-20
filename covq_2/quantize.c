@@ -56,7 +56,7 @@ int quantize() {
     }
 
     // iterate through X and Y jointly
-    for (i = 0; i < tr_size; i++) {
+    for (i = 0; i < trset_size; i++) {
         // check if training vector an outlier
         if (trset_x[i] < Q_LENGTH_X || Q_LENGTH_X <= trset_x[i] ||
             trset_y[i] < Q_LENGTH_Y || Q_LENGTH_Y <= trset_y[i]) {

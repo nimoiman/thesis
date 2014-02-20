@@ -4,4 +4,6 @@ int init(void) {
 
     // quantize
     quantize();
+    return 1;
 }
+

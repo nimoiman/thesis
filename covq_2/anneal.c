@@ -9,8 +9,8 @@ void transmission_prob(prob_ij p_ij) {
     for (q_x = 0; q_x < Q_LEVELS; q_x++) {
         for (q_y = 0; q_y < Q_LEVELS; q_y++) {
             // lookup which index is transmitted for that level in enc_x, enc_y
-            i = enc_x[q_x][q_y];
-            j = enc_y[q_x][q_y];
+            i = encoder_x[q_x];
+            j = encoder_y[q_y];
             // add bin count to p_ij[i][j]
             p_ij[i][j] += q_trset[q_x][q_y];
         }
@@ -21,7 +21,7 @@ void transmission_prob(prob_ij p_ij) {
  * Return distance between codevectors (centroids) represented by the two
  * respective pairs (i, j), (k, el) */
 double eucl_dist(int i, int j, int k, int el) {
-    return POW2(c_x[i][j] - c_x[k][el]) + POW2(c_y[i][j] - c_y[k][el]);
+    return POW2(cv_x[i][j] - cv_x[k][el]) + POW2(cv_y[i][j] - cv_y[k][el]);
 }
 
 /* get energy of current binary index assignment */
@@ -31,11 +31,11 @@ double energy() {
     double inner_sum;
     prob_ij p_ij;
     transmission_prob(p_ij);
-    for (i = 0; i < CODE_BOOK_SIZE_X; i++) {
-        for (j = 0; j < CODE_BOOK_SIZE_Y; j++) {
+    for (i = 0; i < CODEBOOK_SIZE_X; i++) {
+        for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
             inner_sum = 0;
-            for (k = 0; k < CODE_BOOK_SIZE_X; k++) {
-                for (el = 0; el < CODE_BOOK_SIZE_Y; el++) {
+            for (k = 0; k < CODEBOOK_SIZE_X; k++) {
+                for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
                     inner_sum += channel_prob(i, j, k, el) * eucl_dist(i, j, k, el);
                 }
             }
@@ -67,11 +67,11 @@ void anneal() {
     int i_1, j_1, i_2, j_2;
     do {
         // randomly choose two indices between 0 and FINAL_C_SIZE_X-1
-        i_1 = rand_lim(FINAL_C_SIZE_X);
-        i_2 = rand_lim(FINAL_C_SIZE_X);
+        i_1 = rand_lim(CODEBOOK_SIZE_X);
+        i_2 = rand_lim(CODEBOOK_SIZE_X);
         // randomly choose two indices between 0 and FINAL_C_SIZE_Y-1
-        j_1 = rand_lim(FINAL_C_SIZE_Y);
-        j_2 = rand_lim(FINAL_C_SIZE_Y);
+        j_1 = rand_lim(CODEBOOK_SIZE_Y);
+        j_2 = rand_lim(CODEBOOK_SIZE_Y);
 
         // measure current energy
         pot_diff = energy();

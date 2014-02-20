@@ -1,6 +1,14 @@
 #include "covq.h"
 #define POW2(x) (x*x)
 
+quant q_trset;
+int encoder_x[Q_LEVELS];
+int encoder_y[Q_LEVELS];
+codevectors cv_x;
+codevectors cv_y; 
+int bin_cw_x[CODEBOOK_SIZE_X];
+int bin_cw_y[CODEBOOK_SIZE_Y];
+
 double channel_prob(int i, int j, int k, int l) {
     double p = 1;
     int n, diff;
