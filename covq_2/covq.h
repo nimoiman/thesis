@@ -45,8 +45,8 @@ typedef double codevectors[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 typedef int prob_ij[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 
 // Input Global Variables
-extern trset_size;
-double *trset_x, *trset_y;
+extern int trset_size;
+extern double *trset_x, *trset_y;
 
 // Output Global Variables
 extern quant q_trset;
@@ -54,8 +54,8 @@ extern int encoder_x[Q_LEVELS];
 extern int encoder_y[Q_LEVELS];
 extern codevectors cv_x;
 extern codevectors cv_y; 
-extern int bin_cw_x[CODE_BOOK_SIZE_X];
-extern int bin_cw_y[CODE_BOOK_SIZE_Y];
+extern int bin_cw_x[CODEBOOK_SIZE_X];
+extern int bin_cw_y[CODEBOOK_SIZE_Y];
 
 // Simulated Annealing (anneal.c)
 void anneal();
