@@ -33,27 +33,27 @@ typedef int quant[Q_LEVELS][Q_LEVELS];
 typedef double codevectors[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 
 typedef struct covq {
-	int tr_size;
-	double *tr_x;
-	double *tr_y;
+    int tr_size;
+    double *tr_x;
+    double *tr_y;
 
-	c_book c_x;
-	c_book c_y;
+    c_book c_x;
+    c_book c_y;
 
-	// maps quantized levels to codebook scalars
-	int *enc_x;
-	int *enc_y;
+    // maps quantized levels to codebook scalars
+    int *enc_x;
+    int *enc_y;
 
-	// holds the bin counts for each quantization level - for now, there
-	// are exactly Q_LEVELS_X*Q_LEVELS_Y joint quantization levels,
-	// i.e. X and Y are scalar valued
-	quant q_tr;
+    // holds the bin counts for each quantization level - for now, there
+    // are exactly Q_LEVELS_X*Q_LEVELS_Y joint quantization levels,
+    // i.e. X and Y are scalar valued
+    quant q_tr;
 
-	// means and std devs of vector components
-	double sigma_x[DIM_X];
-	double sigma_y[DIM_Y];
-	double mean_x[DIM_X];
-	double mean_y[DIM_Y];
+    // means and std devs of vector components
+    double sigma_x[DIM_X];
+    double sigma_y[DIM_Y];
+    double mean_x[DIM_X];
+    double mean_y[DIM_Y];
 } covq;
 
 extern quant q_trset;
