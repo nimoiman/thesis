@@ -1,2 +1,5 @@
 *.o
 vector_main
+__pycache__
+*.sublime*
+*.csv

@@ -16,11 +16,6 @@ void print_double(double *array, int size) {
     fprintf(stderr, "\n");
 }
 
-double transition_probability(int i, int j, int length) {
-    return pow(BSC_ERROR_PROB, hamming_distance(i, j)) *
-        pow(1 - BSC_ERROR_PROB, length - hamming_distance(i, j));
-}
-
 /* partition_index, count ought to be size of training set train
    
    for x in *train, ensures j := partition_index(x) minimizes:
@@ -48,9 +43,8 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
         for (j = 0; j < codebook->size; j++) {
             // linear search for nearest neighbour for now
             new_distance = 0;
-
             for (k = 0; k < codebook->size; k++) {
-                new_distance += transition_probability(k, j,
+                new_distance += transition_probability(k, j, BSC_ERROR_PROB,
                     log2(codebook->size)) * dist(train->v[i], codebook->v[j]);
             }
             
@@ -84,13 +78,6 @@ void update_centroids(vectorset *train, vectorset *codebook,
     double partition_euclidean_centroid[VECTOR_DIM], partition_probability;
     double numerator[VECTOR_DIM], denominator;
 
-    // zero codebook for reconstruction
-    for (i = 0; i < codebook->size; i++) {
-        for (j = 0; j < VECTOR_DIM; j++) {
-            codebook->v[i][j] = 0;
-        }
-    }
-
     for (i = 0; i < codebook->size; i++) {
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             numerator[dim] = 0;
@@ -114,12 +101,12 @@ void update_centroids(vectorset *train, vectorset *codebook,
             partition_probability = (double) count[j] / train->size;
 
             for (dim = 0; dim < VECTOR_DIM; dim++) {
-                numerator[dim] += transition_probability(i, j,
+                numerator[dim] += transition_probability(i, j, BSC_ERROR_PROB,
                     log2(codebook->size)) * partition_euclidean_centroid[dim];
             }
 
-            denominator += transition_probability(i, j, log2(codebook->size))
-                * partition_probability;
+            denominator += transition_probability(i, j, BSC_ERROR_PROB,
+                log2(codebook->size)) * partition_probability;
         }
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
@@ -172,6 +159,9 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
         for (j = 0; j < codebook->size; j++) {
             // iterate through vector components
             for (k = 0; k < VECTOR_DIM; k++) {
+                // note that, since codebook->size is a power of 2,
+                // and codebook->size > j,
+                // hamming_distance(j, j + codebook) == 1 (i.e. minimal)
                 codebook->v[j + codebook->size][k] = codebook->v[j][k]
                     + CODE_VECTOR_DISPLACE;
             }
