@@ -1,4 +1,4 @@
-#include "covq_2.h"
+#include "covq.h"
 
 void print_vector(FILE *stream, double *v, int src) {
     int i;
