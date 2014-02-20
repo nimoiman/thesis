@@ -1,72 +1,34 @@
-#include "covq_2.h"
+#include "covq.h"
 
-void print_vector(FILE *stream, double *v, int src) {
+void print_int_array(FILE *stream, int *arr, int len){
     int i;
-    int max_dim = (src == SRC_X) ? DIM_X : DIM_Y;
-    fprintf(stream, "(");
-    for (i = 0; i < max_dim; i++) {
-        fprintf(stream, "%f", v[i]);
-        if (i != max_dim - 1) {
-            fprintf(stream, ", ");
-        }
-    }
-    fprintf(stderr, ")");
+
+    for(i = 0; i < len - 1; i++)
+        fprintf(stream, "%d%s", arr[i], IO_DELIM);
+    fprintf(stream, "%d", arr[len - 1]);
 }
 
-/* prints various things to stream in human-readable format */
-void print_h(FILE *stream, int thing) {
-    if (thing == 0) { // training set
-        int i;
-        fprintf(stream, "X\tY\n");
-        for (i = 0; i < tr_size; i++) {
-            print_vector(stream, &tr_x[i], SRC_X);
-            fprintf(stream, "\t");
-            print_vector(stream, &tr_y[i], SRC_Y);
-            fprintf(stream, "\n");
-        }
-    }
-    else if (thing == 1) { // X codebook
+void print_double_array(FILE *stream, double *arr, int len){
+    int i;
 
-    }
-    else if (thing == 2) { // quantized bin counts
-        int i, j;
-        for (i = 0; i < Q_LEVELS_X; i++) {
-            for (j = 0; j < Q_LEVELS_Y; j++) {
-                fprintf(stream, "%d", q_tr[i][j]);
-                if (j != Q_LEVELS_Y - 1) {
-                    fprintf(stream, "  ");
-                }
-            }
-            if (i != Q_LEVELS_X - 1) {
-                fprintf(stream, "\n");
-            }
-        }
+    for(i = 0; i < len - 1; i++)
+        fprintf(stream, "%f%s", arr[i], IO_DELIM);
+    fprintf(stream, "%f", arr[len - 1]);
+}
+
+void print_int_array_2d(FILE *stream, int *arr, int n, int m){
+    int i;
+    for(i = 0; i < m; i++){
         fprintf(stream, "\n");
+        print_int_array(stream, arr + m*i, n);
     }
 }
 
-/* prints various things to stream in csv format */
-void print(FILE *stream, int thing) {
-    if (thing == 0) { // training set
 
-    }
-    else if (thing == 1) { // X codebook
-
-    }
-    else if (thing == 2) { // quantized bin counts
-        // fprintf(stderr, "about to print q_tr\n");
-        int i, j;
-        for (i = 0; i < Q_LEVELS_X; i++) {
-            for (j = 0; j < Q_LEVELS_Y; j++) {
-                fprintf(stream, "%d", q_tr[i][j]);
-                if (j != Q_LEVELS_Y - 1) {
-                    fprintf(stream, ",");
-                }
-            }
-            if (i != Q_LEVELS_X - 1) {
-                fprintf(stream, ";");
-            }
-        }
+void print_double_array_2d(FILE *stream, double *arr, int n, int m){
+    int i;
+    for(i = 0; i < m; i++){
         fprintf(stream, "\n");
+        print_double_array(stream, arr + m*i, n);
     }
 }
