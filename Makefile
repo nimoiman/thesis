@@ -9,6 +9,7 @@ covq_2_DIR=covq_2/
 vq_OBJS=vq_main.o vq.o vector.o channel.o
 covq_OBJS=covq_main.o covq.o channel.o vector.o
 covq_2_OBJS=covq_main.o covq.o io.o quantize.o anneal.o running.o
+test_OBJS=covq.o io.o quantize.o anneal.o running.o
 
 all: vq covq covq_2
 
@@ -24,7 +25,7 @@ covq: $(addprefix $(covq_DIR),$(covq_OBJS))
 covq_2: $(addprefix $(covq_2_DIR),$(covq_2_OBJS))
 	$(CC) -o $(addprefix $(covq_2_DIR),$@) $^ $(LDFLAGS) $(CFLAGS)
 
-test: covq_2
+test: $(addprefix $(covq_2_DIR),$(test_OBJS))
 	$(CC) -o $(addprefix $covq_2_DIR,$@) $^ $(LDFLAGS) $(CFLAGS)
 
 .PHONY : clean
