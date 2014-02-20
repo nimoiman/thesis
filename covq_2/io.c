@@ -70,15 +70,3 @@ void print(FILE *stream, int thing) {
         fprintf(stream, "\n");
     }
 }
-
-void print_training_set() {
-    
-}
-
-void print_codebook() {
-    
-}
-
-void print_quant_levels() {
-    
-}

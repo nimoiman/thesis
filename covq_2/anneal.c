@@ -1,4 +1,4 @@
-#include "covq_2.h"
+#include "covq.h"
 
 /* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
 void transmission_prob(prob_ij p_ij) {
