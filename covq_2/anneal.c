@@ -20,7 +20,7 @@ void transmission_prob(prob_ij p_ij) {
  * Return distance between codevectors (centroids) represented by the two
  * respective pairs (i, j), (k, el) */
 double eucl_dist(int i, int j, int k, int el) {
-    return pow(c_x[i][j] - c_x[k][el], 2) + pow(c_y[i][j] - c_y[k][el], 2);
+    return POW2(c_x[i][j] - c_x[k][el]) + POW2(c_y[i][j] - c_y[k][el]);
 }
 
 /* get energy of current binary index assignment */
