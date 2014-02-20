@@ -146,16 +146,16 @@ int quantize() {
 
 /* Computes the channel transition probability from index i to index j for a
  * given source (src). */
-double trans_prob(int i, int j, int src) {
+double trans_prob(int i, int j, int k, int l) {
 	double p = 1;
-	double prob;
-	int len, k, diff;
+	int n, diff;
 
-	diff = i ^ j;
-	len = (src == SRC_X) ? split_x : split_y;
-	prob = (src == SRC_X) ? TRANS_PROB_X : TRANS_PROB_Y;
-	for(k = 0; k < len; k++)
-		p *= (diff>>i & 1) ? prob : (1-prob);
+	diff = i ^ k;
+	for(n = 0; n < split_x; n++)
+		p *= (diff>>n & 1) ? TRANS_PROB_X: (1-TRANS_PROB_X);
+	diff = j ^ l;
+	for(n = 0; n < split_y; n++)
+		p *= (diff>>n & 1) ? TRANS_PROB_Y: (1-TRANS_PROB_Y);
 	return p;
 
 /* for a given source vector, returns the nearest code vector and respective
@@ -164,10 +164,12 @@ double trans_prob(int i, int j, int src) {
  * code vector index, and the source. */
 double nearest_neighbour(int q_lvl, int *index, int src) {
 	int src_count[C_SIZE_MAX];
-	double src_sum[C_SIZE_MAX], rcv_prob[C_SIZE_MAX], rcv_avg[C_SIZE_MAX];
-	double p, d, d_best, var, val, *dist;
-	int i, j, k, l, src1, src2, num, c, count, i_best, c_size1, c_size2, *enc2;
+	double src_prob[C_SIZE_MAX], src_expected_val[C_SIZE_MAX];
+	double p, d, d_best, var, val;
+	int i, j, k, l, src1, src2, num, count, i_best, c_size1, c_size2, *enc2;
 	c_book *c1, *c2;
+
+	val = quant_to_vec(q_lvl, src);
 
 	// set primary and secondary source parameters
 	if(src == SRC_X){
@@ -188,76 +190,42 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 		enc2 = enc_x;
 	}
 	
-	// Rest of comments assume primary source is X.
-	// Roles are swapped when the primary source is Y.
-
-	// Compute:
-	// E[Y^2 | X = x] (var)
-	// number of points that map to each J source index (src_count)
-	// used to compute probabilities of sending J index: P(J = j | X = x)
-	// sum of points that map to each J source index (src_sum)
 	for(i = 0; i < Q_LEVELS; i++){
-		// Iterate across Y vals when src1 == SRC_X
-		// Iterate across X vals when src1 == SRC_Y
 		if(src1 == SRC_X)
 			num = q_tr[q_lvl][i];
 		else
 			num = q_tr[i][q_lvl];
-		c = enc2[i]; // Encoding index
+		j = enc2[i]; // Encoding index
 		val = quant_to_vec(i, src2); // value
 
 		count += num;
-		src_count[c] += num;
-		src_sum[c] += num * val;
-		var += num * val * val;
+		src_prob[j] += num;
+		src_expected_val[j] += num * val;
+		src_var += num * val * val;
 	}
 	var /= count;
-	
-	// for src1 == SRC_X, compute:
-	// P(L = l | X = x) for all l (rcv_prob)
-	// That is, probability of receiving l from the secondary source.
-	// P(L = l | X = x) = sum_j( p(j,l) * P(J = j | X = x) )
-	// Also compute E[Y | L = l, X = x] * P(J = j | X = x) for all l (rcv_avg)
-	for(l = 0; l < c_size2; l++){
-		for(j = 0; j < c_size2; j++){
-			p = trans_prob(j,l, src2);
-			rcv_prob[l] += p * src_count[j];
-			rcv_avg[l] += p * src_sum[j];
-		}
-		rcv_prob[l] /= count;
-		rcv_avg[l] /= count;
+	for(j = 0; j < c_size2; j++){
+		src_expected_val[j] /= src_prob[j];
+		src_prob[j] /= count;
 	}
 
-	val = quant_to_vec(q_lvl, src1); //Get x value from quantizer index
-	dist = src_sum; // reuse src_sum for new array, dist
-	// Compute E[(X-X_hat)^2 + (Y-Y_hat)^2 | X = x, K = k] - E[Y^2|X=x,K=k]
-	// That is, expected distortion given that k was received for primary source.
-	// Minus E[Y^2|X=x,K=k] because it is independent of K
-	// It is added later by the variable var which was computed earlier.
-	for(k = 0; k < c_size1; k++){
-		dist[k] = 0;
-		for(l = 0; l < c_size2; l++){
-			dist[k] += rcv_prob[l] * (
-				POW2( (val-(*c1)[k][l]) )
-				+ POW2( (*c2)[k][l] ) )
-				- 2 * (*c2)[k][l] * rcv_avg[l];
-		}
-	}
-
-	// Iterate through each index i that can be sent for primary source.
-	// Save the one which results in lowest expected distortion at receiver.
+	d_best = -1;
+	*idx = 0;	
 	for(i = 0; i < c_size1; i++){
-		d = 0;
-		for(k = 0; k < c_size1; k++)
-			d += trans_prob(i,k,src1) * dist[k];
-		if( d < d_best ){
+		d = var;
+		for(j = 0; j < c_size1; j++)
+			for(k = 0; k < c_size1; k++)
+				for(l = 0; l < c_size1; l++)
+					d += (POW2(val - (*c1)[k][l])
+							-2 * (*c2)[k][l] * src_expected_val[j]
+							+ POW2((*c2)[k][l]))
+						*src_prob[j] * trans_prob(i,j,k,l);
+		if(d_best < 0 || d < d_best){
 			d_best = d;
-			i_best = i;
+			*idx = i;
 		}
 	}
-
-	*index = i_best;
-	return var + d_best;
+	return d_best;
 }
 
 double nn_update(){
