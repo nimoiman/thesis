@@ -49,9 +49,9 @@ typedef struct covq {
     // i.e. X and Y are scalar valued
     quant q_tr;
 
-    // means and std devs of vector components
-    double sigma_x[DIM_X];
-    double sigma_y[DIM_Y];
+    // means and quantization intervals of vector components
+    double range_x[DIM_X];
+    double range_y[DIM_Y];
     double mean_x[DIM_X];
     double mean_y[DIM_Y];
 } covq;
