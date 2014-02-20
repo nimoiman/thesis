@@ -1,128 +1,21 @@
-#include "covq_2.h"
+#include "covq.h"
 
-/* GLOBAL VARIABLES */
-size_t tr_size;
-double *tr_x;
-double *tr_y;
-
-double (*c_x)[FINAL_C_SIZE_Y]; // c_book
-double (*c_y)[FINAL_C_SIZE_Y]; // c_book
-
-int split_x = 0;
-int split_y = 0;
-
-int *enc_x;
-int *enc_y;
-
-int (*q_tr)[Q_LEVELS_Y]; // q_vec
-
-double *sigma_x;
-double *sigma_y;
-double *mean_x;
-double *mean_y; // means and std devs of vector components
-
-/* Convert 'vector' x to quantization level */
-int vec_to_quant(double x, int *outlier, int src) {
-	double normalized;
-	int q_lvls;
-	double mean, sigma;
-
-	if (src == SRC_X) {
-		q_lvls = Q_LEVELS_X;
-		mean = mean_x[0];
-		sigma = sigma_x[0];
-	}
-	else { // src == SRC_Y
-		q_lvls = Q_LEVELS_Y;
-		mean = mean_y[0];
-		sigma = sigma_y[0];
-	}
-
-	normalized = 0.5 * (((x - mean) / (3*sigma)) + 1);
-	if (x - mean < -3*sigma) {
-		*outlier = 1;
-		return 0;
-	}
-	else if (x - mean > 3*sigma) {
-		*outlier = 1;
-		return (q_lvls - 1);
-	}
-	else {
-		normalized = 0.5 * (((x - mean) / (3*sigma)) + 1);
-		return (int) (q_lvls * normalized);
-	}
-}
-
-/* Return center of quantization region indexed by x */
-double quant_to_vec(int x, int src) {
-	if (src == SRC_X) {
-		return 3 * sigma_x[0] * ((((double) (2 * x) + 1) / Q_LEVELS_X) - 1) + mean_x[0];
-	}
-	else { // src == SRC_Y
-		return 3 * sigma_y[0] * ((((double) (2 * x) + 1) / Q_LEVELS_Y) - 1) + mean_y[0];
-	}
-}
-
-/* Store quantize bin counts of quantized training vectors into q_tr
- *
- * return number of vectors outside quantize region (3 std devs from mean)
- * & puts vectors outside of 3 standard deviations in nearest bin
- * for DIM=N, Gaussian components, this is ~0.001*(1-0.999^N)/0.999
- * fraction of the vectors
- * i.e. (Vector is outlier) ~ Geometric(0.001, N)
- */
-int quantize() {
-	int i, j, dim; // iteration variables
-	int x_bin, y_bin;
-	int outlier = 0;
-	int outlier_count = 0;
-
-	// initialize quantized bin counts to 0
-	for (i = 0; i < Q_LEVELS_X; i++) {
-		for (j = 0; j < Q_LEVELS_Y; j++) {
-			q_tr[i][j] = 0;
-		}
-	}
-
-	// iterate through X and Y jointly
-	for (i = 0; i < tr_size; i++) {
-		x_bin = vec_to_quant(tr_x[i], &outlier, SRC_X);
-		y_bin = vec_to_quant(tr_y[i], &outlier, SRC_Y);
-		q_tr[x_bin][y_bin] += 1;
-
-		if (outlier) {
-			outlier_count++;
-			outlier = 0;
-		}
-	}
-
-	return outlier_count;
-}
-
-/* Computes the channel transition probability from index i to index j for a
- * given source (src). Assumes sources transmitted independently over BSC*/
-double trans_prob(int i, int j, int src) {
+double trans_prob(int i, int j, int k, int l) {
 	double p = 1;
-	double prob;
-	int len, k, diff;
-
-	diff = i ^ j;
-	len = (src == SRC_X) ? split_x : split_y;
-	prob = (src == SRC_X) ? TRANS_PROB_X : TRANS_PROB_Y;
-	for(k = 0; k < len; k++)
-		p *= (diff>>i & 1) ? prob : (1-prob);
+	int n, diff;
+	int i_cw, j_cw, k_cw, l_cw;
+	i_cw = bin_cw_x[i];
+	j_cw = bin_cw_y[j];
+	k_cw = bin_cw_x[k];
+	l_cw = bin_cw_y[l];
+	
+	diff = i_cw ^ k_cw;
+	for(n = 0; n < CODEWORD_LEN_X; n++)
+		p *= (diff>>n & 1) ? TRANS_PROB_X: (1-TRANS_PROB_X);
+	diff = j_cw ^ l_cw;
+	for(n = 0; n < CODEWORD_LEN_Y; n++)
+		p *= (diff>>n & 1) ? TRANS_PROB_Y: (1-TRANS_PROB_Y);
 	return p;
-}
-
-/* Compute the channel transition probability from index (x_i,y_i) to 
- * (x_j,y_j) - assumes an Additive White Gaussian Channel
- */
-double trans_prob_2(int x_i, int y_i, int x_j, int y_j) {
-	// TODO
-	// note change to AWGN will affect:
-	// potential_diff()
-	// nearest_neighbour()
-	// centroid_update()
 }
 
 /* for a given source vector, returns the nearest code vector and respective
@@ -130,8 +23,8 @@ double trans_prob_2(int x_i, int y_i, int x_j, int y_j) {
  * level should be passed, along with a pointer which will point to the nearest
  * code vector index, and the source. */
 double nearest_neighbour(int q_lvl, int *index, int src) {
-	int src_count[C_SIZE_MAX];
-	double src_sum[C_SIZE_MAX], rcv_prob[C_SIZE_MAX], rcv_avg[C_SIZE_MAX];
+	int src_count[CODEBOOK_SIZE_MAX];
+	double src_sum[CODEBOOK_SIZE_MAX], rcv_prob[CODEBOOK_SIZE_MAX], rcv_avg[CODEBOOK_SIZE_MAX];
 	double p, d, d_best, var, val, d_term, *dist;
 	int i, j, k, l, src1, src2, num, c, count, i_best, c_size1, c_size2, *enc2;
 	double (*c1)[FINAL_C_SIZE_Y], (*c2)[FINAL_C_SIZE_Y];
@@ -267,18 +160,4 @@ void centroid_update(int src) {
 			c_x[k][l] = numer / denom;
 		}
 	}
-}
-
-void split(int src) {
-
-}
-
-int bsc_2_source_covq(struct covq *params) {
-	init(params);
-	// print quantized bin counts
-	print_h(stderr, 2);
-	// centroid_update
-	// split
-
-	return 0; // yay
 }
