@@ -1,3 +1,4 @@
+#include "covq.h"
 
 /* Convert 'vector' x to quantization level */
 int vec_to_quant(double x, int *outlier, int src) {
