@@ -20,21 +20,6 @@ void transmission_prob(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     }
 }
 
-/* Helper function to simulated annealing
- * Return distance between codevectors (centroids) represented by the two
- * respective pairs (i, j), (k, el) */
-double eucl_dist(int i, int j, int k, int el) {
-    double d = POW2(cv_x[i][j] - cv_x[k][el]) + POW2(cv_y[i][j] - cv_y[k][el]);
-    assert( -Q_LENGTH_X <= cv_x[i][j]);
-    assert( Q_LENGTH_X >= cv_x[i][j]);
-    assert( -Q_LENGTH_Y <= cv_y[k][el]);
-    assert( Q_LENGTH_X >= cv_y[k][el]);
-    assert( d >= 0);
-    assert( d >= 0);
-    assert( d <= 10);
-    return d;
-}
-
 void swap(int *i, int *j){
     int tmp;
     tmp = *i;
@@ -45,6 +30,7 @@ void swap(int *i, int *j){
 /* get energy of current binary index assignment */
 double energy(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     int i, j, k, el;
+    double eucl_dist;
     double sum = 0;
     double inner_sum;
     for (i = 0; i < CODEBOOK_SIZE_X; i++) {
@@ -52,7 +38,9 @@ double energy(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
             inner_sum = 0;
             for (k = 0; k < CODEBOOK_SIZE_X; k++) {
                 for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
-                    inner_sum += channel_prob(i, j, k, el) * eucl_dist(i, j, k, el);
+                    eucl_dist = POW2(cv_x[i][j] - cv_x[k][el]) +
+                                POW2(cv_y[i][j] - cv_y[k][el]);
+                    inner_sum += channel_prob(i, j, k, el) * eucl_dist;
                 }
             }
             assert(1000000000000000 >= inner_sum);
