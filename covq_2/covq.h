@@ -22,7 +22,7 @@ extern "C"{
 #define TRANS_PROB_Y 0.2
 
 // Uniform Quantizer Parameters
-#define Q_LEVELS 25
+#define Q_LEVELS 10 
 #define Q_LENGTH_X 1
 #define Q_LENGTH_Y 1
 
@@ -59,6 +59,7 @@ extern int bin_cw_x[CODEBOOK_SIZE_X];
 extern int bin_cw_y[CODEBOOK_SIZE_Y];
 
 // Simulated Annealing (anneal.c)
+int rand_lim(int limit);
 void anneal();
 
 // Printing and IO (io.c)

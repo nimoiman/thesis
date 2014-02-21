@@ -7,9 +7,9 @@ void transmission_prob(prob_ij p_ij) {
 
     // loop through quantization levels q_trset
     for (q_x = 0; q_x < Q_LEVELS; q_x++) {
+        i = encoder_x[q_x];
         for (q_y = 0; q_y < Q_LEVELS; q_y++) {
             // lookup which index is transmitted for that level in enc_x, enc_y
-            i = encoder_x[q_x];
             j = encoder_y[q_y];
             // add bin count to p_ij[i][j]
             p_ij[i][j] += q_trset[q_x][q_y];
@@ -39,7 +39,7 @@ double energy() {
                     inner_sum += channel_prob(i, j, k, el) * eucl_dist(i, j, k, el);
                 }
             }
-            sum += inner_sum * p_ij[i][j];
+            sum += inner_sum * p_ij[i][j] / trset_size;
         }
     }
     return sum;

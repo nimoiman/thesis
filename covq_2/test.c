@@ -111,6 +111,7 @@ void quantize_test() {
     assert(quantize() == outlier_count);
     printf("passed.\n");
 
+    print_int_array_2d(stdout, (int*) q_trset, Q_LEVELS, Q_LEVELS);
 }
 
 void csv_io_test() {
@@ -131,11 +132,11 @@ void csv_io_test() {
 }
 
 int main( int argc, const char* argv[] ){
-    init_binary_codewords();
-    channel_test();
-    print_test();
-    quantize_test();
-    csv_io_test();
+    // init_binary_codewords();
+    // channel_test();
+    // print_test();
+    
+    // csv_io_test();
 }
 
 
