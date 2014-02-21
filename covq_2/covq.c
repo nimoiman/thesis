@@ -1,5 +1,4 @@
 #include "covq.h"
-#define POW2(x) (x*x)
 
 quant q_trset;
 int encoder_x[Q_LEVELS];
@@ -91,7 +90,6 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
                 }
             }
         }
-        printf("d = %lf\n",d);
 		if(d_best < 0 || d < d_best){
 			d_best = d;
 			*index = i;
@@ -165,7 +163,6 @@ double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
                 }
             }
         }
-        printf("d = %lf\n",d);
 		if(d_best < 0 || d < d_best){
 			d_best = d;
 			*index = j;

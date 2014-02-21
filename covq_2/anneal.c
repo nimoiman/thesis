@@ -1,5 +1,4 @@
 #include "covq.h"
-#define POW2(x) (x*x)
 
 /* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
 void transmission_prob(prob_ij p_ij) {
@@ -24,13 +23,18 @@ double eucl_dist(int i, int j, int k, int el) {
     return POW2(cv_x[i][j] - cv_x[k][el]) + POW2(cv_y[i][j] - cv_y[k][el]);
 }
 
+void swap(int *i, int *j){
+    int tmp;
+    tmp = *i;
+    *i = *j;
+    *j = tmp;
+}
+
 /* get energy of current binary index assignment */
-double energy() {
+double energy(prob_ij p_ij) {
     int i, j, k, el;
     double sum = 0;
     double inner_sum;
-    prob_ij p_ij;
-    transmission_prob(p_ij);
     for (i = 0; i < CODEBOOK_SIZE_X; i++) {
         for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
             inner_sum = 0;
@@ -39,10 +43,14 @@ double energy() {
                     inner_sum += channel_prob(i, j, k, el) * eucl_dist(i, j, k, el);
                 }
             }
-            sum += inner_sum * p_ij[i][j] / trset_size;
+            assert(1000000000000000 >= inner_sum);
+            assert(65000 >= inner_sum);
+            assert(inner_sum >= 0);
+            sum += inner_sum * p_ij[i][j];
         }
     }
-    return sum;
+    printf("energy = %f\n", sum / trset_size);
+    return sum / trset_size;
 }
 
 /* return a random number between 0 and limit-1 inclusive.
@@ -59,12 +67,16 @@ int rand_lim(int limit) {
 }
 
 void anneal() {
-    double pot_diff, tmp;
+    double new_energy, old_energy;
+    double tmp;
     double T = 10.0, cooling_rate = 0.8, T_final = 0.025;
-    int iter = 0, max_iterations = 50000;
     int phi = 5, drop_count = 0, psi = 200, fail_count = 0;
-    
+    prob_ij p_ij; 
     int i_1, j_1, i_2, j_2;
+
+    transmission_prob(p_ij);
+    old_energy = energy(p_ij);
+    printf("initial energy = %f\n", old_energy);
     do {
         // randomly choose two indices between 0 and FINAL_C_SIZE_X-1
         i_1 = rand_lim(CODEBOOK_SIZE_X);
@@ -73,38 +85,28 @@ void anneal() {
         j_1 = rand_lim(CODEBOOK_SIZE_Y);
         j_2 = rand_lim(CODEBOOK_SIZE_Y);
 
-        // measure current energy
-        pot_diff = energy();
         // swap i_1 <-> i_2 & j_1 <-> j_2 temporarily
-        tmp = bin_cw_x[i_1];
-        bin_cw_x[i_1] = bin_cw_x[i_2];
-        bin_cw_x[i_2] = tmp;
-        tmp = bin_cw_y[j_1];
-        bin_cw_y[j_1] = bin_cw_y[j_2];
-        bin_cw_y[j_2] = tmp;
+        swap(bin_cw_x + i_1, bin_cw_x + i_2);
+        swap(bin_cw_y + j_1, bin_cw_y + j_2);
         // find the difference in new state's energy from old energy
-        pot_diff -= energy();
+        new_energy = energy(p_ij);
         
         // keep swap if energy drop
         // else keep swap with probability e^{-rise/T}
-        if (pot_diff <= 0) {
+        if (new_energy <= old_energy) {
+            old_energy = new_energy;
             drop_count++;
         }
-        else if ((rand() / (double) RAND_MAX) < exp(-pot_diff/T)) {
+        else if ((rand() / (double) RAND_MAX) < exp(-(new_energy-old_energy)/T)) {
+            old_energy = new_energy;
             fail_count++;
         }
         else {
             fail_count++;
             // don't keep swap i.e. swap back
-            tmp = bin_cw_x[i_1];
-            bin_cw_x[i_1] = bin_cw_x[i_2];
-            bin_cw_x[i_2] = tmp;
-            tmp = bin_cw_y[j_1];
-            bin_cw_y[j_1] = bin_cw_y[j_2];
-            bin_cw_y[j_2] = tmp;
+        swap(bin_cw_x + i_1, bin_cw_x + i_2);
+        swap(bin_cw_y + j_1, bin_cw_y + j_2);
         }
-
-        iter++;
 
         if (drop_count == phi || fail_count == psi) {
             // lower the temperature
@@ -113,6 +115,6 @@ void anneal() {
             drop_count = 0;
             fail_count = 0;
         }
-    } while (T > T_final && iter < max_iterations);
+    } while (T > T_final);
 
 }

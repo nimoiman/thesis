@@ -30,6 +30,12 @@ void init(void) {
     init_binary_codewords();
     printf("init codevectors...\n");
     init_codevectors();
+
+    printf("X codevectors:\n");
+    print_double_array_2d(stdout, (double*) cv_x, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
+    printf("\nY codevectors:\n");
+    print_double_array_2d(stdout, (double*) cv_y, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
+    printf("\n");
     printf("init encoder...\n");
     nn_update( 1 ); // Set encoders, init flag set to 1
 

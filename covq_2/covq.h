@@ -5,7 +5,10 @@
 extern "C"{
 #endif
 
+#define POW2(x) ((x)*(x))
+
 // Includes
+#include <assert.h>
 #include <stdio.h> /* sprintf */
 #include <stdlib.h> /* malloc, free, size_t */
 #include <math.h> /* pow, exp */
@@ -59,7 +62,6 @@ extern int bin_cw_x[CODEBOOK_SIZE_X];
 extern int bin_cw_y[CODEBOOK_SIZE_Y];
 
 // Simulated Annealing (anneal.c)
-int rand_lim(int limit);
 void anneal();
 
 // Printing and IO (io.c)

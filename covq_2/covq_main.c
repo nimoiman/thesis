@@ -5,10 +5,8 @@ double *trset_x, *trset_y;
 
 int main( int argc, const char* argv[] ){
     int i,j;
+    srand(0);
     trset_size = 1000;
-    for( i = 0; i < 50; i++ )
-        printf("%d\n", rand_lim(100));
-    return 1;
     printf("reading csv...\n");
     read_csv_trset(stdin);
     quantize();
