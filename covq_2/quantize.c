@@ -54,6 +54,7 @@ int quantize() {
     int i, j, dim; // iteration variables
     int x_bin, y_bin;
     int outlier_count = 0;
+    int outlier = 0;
 
     // initialize quantized bin counts to 0
     for (i = 0; i < Q_LEVELS; i++) {
@@ -64,18 +65,21 @@ int quantize() {
 
     // iterate through X and Y jointly
     for (i = 0; i < trset_size; i++) {
-        // check if training vector an outlier
-        if (trset_x[i] < -(((double) Q_LENGTH_X)/2) ||
-            (((double) Q_LENGTH_X)/2) <= trset_x[i] ||
-            trset_y[i] < -(((double) Q_LENGTH_Y)/2) ||
-            (((double) Q_LENGTH_Y)/2) <= trset_y[i]) {
-            // discard this training vector
+        outlier = 0;
+        x_bin = vec_to_quant(trset_x[i], &outlier, SRC_X);
+        if (outlier) {
             outlier_count++;
-            continue;
         }
-        x_bin = vec_to_quant(trset_x[i], NULL, SRC_X);
-        y_bin = vec_to_quant(trset_y[i], NULL, SRC_Y);
-        q_trset[x_bin][y_bin] += 1;
+        else {
+            y_bin = vec_to_quant(trset_y[i], &outlier, SRC_Y);
+            if (outlier) {
+                outlier_count++;
+            }
+            else {
+                q_trset[x_bin][y_bin] += 1;
+            }
+        }
+        
     }
     trset_size -= outlier_count;
     return outlier_count;
