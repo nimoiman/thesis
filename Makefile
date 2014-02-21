@@ -36,4 +36,5 @@ clean:
 	   $(addprefix $(covq_DIR),covq) \
 	   $(addprefix $(covq_2_DIR),$(covq_2_OBJS)) \
 	   $(addprefix $(covq_2_DIR),covq_2) \
+	   $(addprefix $(covq_2_DIR),$(test_OBJS)) \
 	   $(addprefix $(covq_2_DIR),test)
