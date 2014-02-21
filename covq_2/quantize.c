@@ -11,15 +11,22 @@ int vec_to_quant(double x, int *outlier, int src) {
     // normalize to [0, 1)
     normalized = (x / q_length) + 0.5;
     if (normalized < 0) {
-        *outlier = 1;
+        if (outlier) {
+            *outlier = 1;
+        }
         return 0;
     }
     else if (normalized >= 1) {
-        *outlier = 1;
+        if (outlier) {
+            *outlier = 1;
+        }
         return (Q_LEVELS - 1);
     }
     else {
         // within range [0, Q_LEVELS-1]
+        if (outlier) {
+            *outlier = 0;
+        }
         return (int) (Q_LEVELS * normalized);
     }
 }
@@ -27,12 +34,12 @@ int vec_to_quant(double x, int *outlier, int src) {
 /* Return vector centroid of quantization region indexed by x */
 double quant_to_vec(int x, int src) {
     double normalized;
-    normalized = ((double) x + 0.5) / Q_LEVELS;
+    normalized = ((double) x + 0.5) / Q_LEVELS; // [0, 1)
     if (src == SRC_X) {
-        return Q_LENGTH_X * normalized;
+        return Q_LENGTH_X * (normalized - 0.5); // [-Q_LENGTH_X/2, Q_LENGTH_X/2)
     }
     else { // src == SRC_Y
-        return Q_LENGTH_Y * normalized;
+        return Q_LENGTH_Y * (normalized - 0.5); // [-Q_LENGTH_Y/2, Q_LENGTH_Y/2)
     }
 }
 
@@ -58,8 +65,10 @@ int quantize() {
     // iterate through X and Y jointly
     for (i = 0; i < trset_size; i++) {
         // check if training vector an outlier
-        if (trset_x[i] < Q_LENGTH_X || Q_LENGTH_X <= trset_x[i] ||
-            trset_y[i] < Q_LENGTH_Y || Q_LENGTH_Y <= trset_y[i]) {
+        if (trset_x[i] < -(((double) Q_LENGTH_X)/2) ||
+            (((double) Q_LENGTH_X)/2) <= trset_x[i] ||
+            trset_y[i] < -(((double) Q_LENGTH_Y)/2) ||
+            (((double) Q_LENGTH_Y)/2) <= trset_y[i]) {
             // discard this training vector
             outlier_count++;
             continue;
