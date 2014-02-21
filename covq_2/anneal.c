@@ -4,6 +4,10 @@
 void transmission_prob(prob_ij p_ij) {
     int i, j, q_x, q_y;
 
+    for(i = 0; i < CODEBOOK_SIZE_X; i++)
+        for(j = 0; j < CODEBOOK_SIZE_Y; j++)
+            p_ij[i][j] = 0;
+
     // loop through quantization levels q_trset
     for (q_x = 0; q_x < Q_LEVELS; q_x++) {
         i = encoder_x[q_x];
@@ -57,7 +61,6 @@ double energy(prob_ij p_ij) {
             sum += inner_sum * p_ij[i][j];
         }
     }
-    printf("energy = %f\n", sum / trset_size);
     return sum / trset_size;
 }
 
@@ -77,7 +80,7 @@ int rand_lim(int limit) {
 void anneal() {
     double new_energy, old_energy;
     double tmp;
-    double T = 10.0, cooling_rate = 0.8, T_final = 0.025;
+    double T = 10.0, cooling_rate = 0.8, T_final = 0.00025;
     int phi = 5, drop_count = 0, psi = 200, fail_count = 0;
     prob_ij p_ij; 
     int i_1, j_1, i_2, j_2;
@@ -125,4 +128,5 @@ void anneal() {
         }
     } while (T > T_final);
 
+    printf("final energy = %f\n", old_energy);
 }
