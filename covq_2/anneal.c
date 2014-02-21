@@ -1,12 +1,12 @@
 #include "covq.h"
 
 /* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
-void transmission_prob(prob_ij p_ij) {
+void transmission_prob(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     int i, j, q_x, q_y;
 
     for(i = 0; i < CODEBOOK_SIZE_X; i++)
         for(j = 0; j < CODEBOOK_SIZE_Y; j++)
-            p_ij[i][j] = 0;
+            codebook_count[i][j] = 0;
 
     // loop through quantization levels q_trset
     for (q_x = 0; q_x < Q_LEVELS; q_x++) {
@@ -14,8 +14,8 @@ void transmission_prob(prob_ij p_ij) {
         for (q_y = 0; q_y < Q_LEVELS; q_y++) {
             // lookup which index is transmitted for that level in enc_x, enc_y
             j = encoder_y[q_y];
-            // add bin count to p_ij[i][j]
-            p_ij[i][j] += q_trset[q_x][q_y];
+            // add bin count to codebook_count[i][j]
+            codebook_count[i][j] += q_trset[q_x][q_y];
         }
     }
 }
@@ -43,7 +43,7 @@ void swap(int *i, int *j){
 }
 
 /* get energy of current binary index assignment */
-double energy(prob_ij p_ij) {
+double energy(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     int i, j, k, el;
     double sum = 0;
     double inner_sum;
@@ -58,7 +58,7 @@ double energy(prob_ij p_ij) {
             assert(1000000000000000 >= inner_sum);
             assert(65000 >= inner_sum);
             assert(inner_sum >= 0);
-            sum += inner_sum * p_ij[i][j];
+            sum += inner_sum * codebook_count[i][j];
         }
     }
     return sum / trset_size;
@@ -82,11 +82,11 @@ void anneal() {
     double tmp;
     double T = 10.0, cooling_rate = 0.8, T_final = 0.00025;
     int phi = 5, drop_count = 0, psi = 200, fail_count = 0;
-    prob_ij p_ij; 
+    int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
     int i_1, j_1, i_2, j_2;
 
-    transmission_prob(p_ij);
-    old_energy = energy(p_ij);
+    transmission_prob(codebook_count);
+    old_energy = energy(codebook_count);
     printf("initial energy = %f\n", old_energy);
     do {
         // randomly choose two indices between 0 and FINAL_C_SIZE_X-1
@@ -100,7 +100,7 @@ void anneal() {
         swap(bin_cw_x + i_1, bin_cw_x + i_2);
         swap(bin_cw_y + j_1, bin_cw_y + j_2);
         // find the difference in new state's energy from old energy
-        new_energy = energy(p_ij);
+        new_energy = energy(codebook_count);
         
         // keep swap if energy drop
         // else keep swap with probability e^{-rise/T}
