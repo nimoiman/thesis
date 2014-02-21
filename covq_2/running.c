@@ -21,7 +21,7 @@ void init_binary_codewords(void){
         bin_cw_y[i] = i;
 }
 
-int init(void) {
+void init(void) {
     // quantize
     quantize();
 
@@ -34,5 +34,20 @@ int init(void) {
     centroid_update( SRC_Y );
 
     anneal();
-    return 1;
+}
+
+void run(void){
+    int i, j;
+    double d;
+    for( j = 0; j < 10; j++ ){
+        for( i = 0; i < 250; i++ ){
+            d = nn_update( 1 );
+            centroid_update( SRC_X );
+            centroid_update( SRC_Y );
+            printf("j=%d,i=%d,d=%f\n",j,i,d);
+        }
+        printf("annealing...\n");
+        anneal();
+    }
+    printf("finished. d = %f\n", d);
 }

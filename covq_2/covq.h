@@ -12,6 +12,7 @@ extern "C"{
 
 // IO
 #define IO_DELIM "\t"
+
 // Source Indicators
 #define SRC_X 0
 #define SRC_Y 1
@@ -77,6 +78,10 @@ double nearest_neighbour(int q_lvl, int *index, int src, int init);
 double nn_update();
 void centroid_update(int src);
 int bsc_2_source_covq();
+
+// Running (running.c)
+void init(void);
+void run(void);
 
 #ifdef __cplusplus
 }
