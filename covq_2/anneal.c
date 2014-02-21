@@ -78,10 +78,10 @@ void anneal() {
         // swap i_1 <-> i_2 & j_1 <-> j_2 temporarily
         tmp = bin_cw_x[i_1];
         bin_cw_x[i_1] = bin_cw_x[i_2];
-        bin_cw_x[i_2] = bin_cw_x[i_1];
+        bin_cw_x[i_2] = tmp;
         tmp = bin_cw_y[j_1];
         bin_cw_y[j_1] = bin_cw_y[j_2];
-        bin_cw_y[j_2] = bin_cw_y[j_1];
+        bin_cw_y[j_2] = tmp;
         // find the difference in new state's energy from old energy
         pot_diff -= energy();
         
@@ -98,10 +98,10 @@ void anneal() {
             // don't keep swap i.e. swap back
             tmp = bin_cw_x[i_1];
             bin_cw_x[i_1] = bin_cw_x[i_2];
-            bin_cw_x[i_2] = bin_cw_x[i_1];
+            bin_cw_x[i_2] = tmp;
             tmp = bin_cw_y[j_1];
             bin_cw_y[j_1] = bin_cw_y[j_2];
-            bin_cw_y[j_2] = bin_cw_y[j_1];
+            bin_cw_y[j_2] = tmp;
         }
 
         iter++;
