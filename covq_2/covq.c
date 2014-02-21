@@ -27,7 +27,7 @@ double channel_prob(int i, int j, int k, int l) {
     return p;
 }
 
-double nearest_neighbour(int q_lvl, int *index, int src) {
+double nearest_neighbour(int q_lvl, int *index, int src, int init) {
 	double src_prob[CODEBOOK_SIZE_MAX], src_expected_val[CODEBOOK_SIZE_MAX];
 	double d, d_best, src_var, val;
 	int i, j, k, l, src1, src2, num, count, c_size1, c_size2, *enc2;
@@ -54,24 +54,44 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 		enc2 = encoder_x;
 	}
 	
-	for(i = 0; i < Q_LEVELS; i++){
-		if(src1 == SRC_X)
-			num = q_trset[q_lvl][i];
-		else
-			num = q_trset[i][q_lvl];
-		j = enc2[i]; // Encoding index
-		val = quant_to_vec(i, src2); // value
+    if(!init){
+        for(i = 0; i < Q_LEVELS; i++){
+            if(src1 == SRC_X)
+                num = q_trset[q_lvl][i];
+            else
+                num = q_trset[i][q_lvl];
+            j = enc2[i]; // Encoding index
+            val = quant_to_vec(i, src2); // value
 
-		count += num;
-		src_prob[j] += num;
-		src_expected_val[j] += num * val;
-		src_var += num * val * val;
-	}
-	src_var /= count;
-	for(j = 0; j < c_size2; j++){
-		src_expected_val[j] /= src_prob[j];
-		src_prob[j] /= count;
-	}
+            count += num;
+            src_prob[j] += num;
+            src_expected_val[j] += num * val;
+            src_var += num * val * val;
+        }
+        src_var /= count;
+        for(j = 0; j < c_size2; j++){
+            src_expected_val[j] /= src_prob[j];
+            src_prob[j] /= count;
+        }
+    }
+    else{
+        for(i = 0; i < Q_LEVELS; i++){
+            if(src1 == SRC_X)
+                num = q_trset[q_lvl][i];
+            else
+                num = q_trset[i][q_lvl];
+            val = quant_to_vec(i, src2); // value
+
+            count += num;
+            src_expected_val[0] += num * val;
+            src_var += num * val * val;
+        }
+        src_var /= count;
+        for(j = 0; j < c_size2; j++){
+            src_expected_val[j] = src_expected_val[0] / count;
+            src_prob[j] = 1 / c_size2;
+        }
+    }
 
 	d_best = -1;
 	*index = 0;	
@@ -92,13 +112,13 @@ double nearest_neighbour(int q_lvl, int *index, int src) {
 	return d_best;
 }
 
-double nn_update(){
+double nn_update(int init){
 	double d_total, d;
 	int i, j, num;
 	
 	//TODO check dist. equation
 	for(i = 0; i < Q_LEVELS; i++){
-		d = nearest_neighbour(i, encoder_x + i, SRC_X);
+		d = nearest_neighbour(i, encoder_x + i, SRC_X, init);
 		num = 0;
 		for(j = 0; j < Q_LEVELS; j++)
 			num += q_trset[i][j];
@@ -106,7 +126,7 @@ double nn_update(){
 	}
 
 	for(j = 0; j < Q_LEVELS; j++){
-		d = nearest_neighbour(j, encoder_y + j, SRC_Y);
+		d = nearest_neighbour(j, encoder_y + j, SRC_Y, init);
 		num = 0;
 		for(i = 0; i < Q_LEVELS; i++)
 			num += q_trset[i][j];

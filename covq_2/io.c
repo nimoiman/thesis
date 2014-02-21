@@ -40,19 +40,19 @@ void print_double_array(FILE *stream, double *arr, int len){
     fprintf(stream, "%f", arr[len - 1]);
 }
 
-void print_int_array_2d(FILE *stream, int *arr, int n, int m){
+void print_int_array_2d(FILE *stream, int *arr, int rows, int cols){
     int i;
-    for(i = 0; i < m; i++){
+    for(i = 0; i < rows; i++){
         fprintf(stream, "\n");
-        print_int_array(stream, arr + m*i, n);
+        print_int_array(stream, arr + cols*i, cols);
     }
 }
 
 
-void print_double_array_2d(FILE *stream, double *arr, int n, int m){
+void print_double_array_2d(FILE *stream, double *arr, int rows, int cols){
     int i;
-    for(i = 0; i < m; i++){
+    for(i = 0; i < rows; i++){
         fprintf(stream, "\n");
-        print_double_array(stream, arr + m*i, n);
+        print_double_array(stream, arr + cols*i, cols);
     }
 }

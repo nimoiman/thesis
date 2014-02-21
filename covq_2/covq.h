@@ -29,8 +29,8 @@ extern "C"{
 #define CODEWORD_LEN_X 3
 #define CODEWORD_LEN_Y 5
 
-#define CODEBOOK_SIZE_X 1 << CODEWORD_LEN_X
-#define CODEBOOK_SIZE_Y 1 << CODEWORD_LEN_Y
+#define CODEBOOK_SIZE_X (1 << CODEWORD_LEN_X)
+#define CODEBOOK_SIZE_Y (1 << CODEWORD_LEN_Y)
 
 // Maximum codebook size
 #if CODEBOOK_SIZE_X > CODEBOOK_SIZE_Y 
@@ -63,8 +63,8 @@ void anneal();
 // Printing and IO (io.c)
 void print_int_array(FILE *stream, int *arr, int len);
 void print_double_array(FILE *stream, double *arr, int len);
-void print_int_array_2d(FILE *stream, int *arr, int n, int m);
-void print_double_array_2d(FILE *stream, double *arr, int n, int m);
+void print_int_array_2d(FILE *stream, int *arr, int rows, int cols);
+void print_double_array_2d(FILE *stream, double *arr, int rows, int cols);
 void read_csv_trset(FILE *stream);
 
 // Quantization (quantize.c)
@@ -74,7 +74,7 @@ int quantize();
 
 // COVQ (covq.c)
 double channel_prob(int i, int j, int k, int l);
-double nearest_neighbour(int q_lvl, int *index, int src);
+double nearest_neighbour(int q_lvl, int *index, int src, int init);
 double nn_update();
 void centroid_update(int src);
 int bsc_2_source_covq();
