@@ -9,6 +9,18 @@
 int trset_size;
 double *trset_x, *trset_y;
 
+void channel_test(void){
+    int i,j,k,l;
+    for(i = 0; i < CODEBOOK_SIZE_X; i++){
+        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
+            for(k = 0; k < CODEBOOK_SIZE_X; k++){
+                for(l = 0; l < CODEBOOK_SIZE_Y; l++){
+                    printf("i=%d,j=%d,k=%d,l=%d,i_cw=%d,j_cw=%d,k_cw=%d,l_cw=%d,p(i,j,k,l)=%lf\n",i,j,k,l,bin_cw_x[i],bin_cw_y[j],bin_cw_x[k],bin_cw_y[l],channel_prob(i,j,k,l));
+                }
+            }
+        }
+    }
+}
 void print_test(void){
     int i, j;
     int int_arr[ARR_COLS];
@@ -119,6 +131,8 @@ void csv_io_test() {
 }
 
 int main( int argc, const char* argv[] ){
+    init_binary_codewords();
+    channel_test();
     print_test();
     quantize_test();
     csv_io_test();

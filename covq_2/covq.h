@@ -28,7 +28,7 @@ extern "C"{
 
 // Length of binary codewords (in bits), should be less than 8
 #define CODEWORD_LEN_X 3
-#define CODEWORD_LEN_Y 5
+#define CODEWORD_LEN_Y 4
 
 #define CODEBOOK_SIZE_X (1 << CODEWORD_LEN_X)
 #define CODEBOOK_SIZE_Y (1 << CODEWORD_LEN_Y)
@@ -81,6 +81,7 @@ void centroid_update(int src);
 int bsc_2_source_covq();
 
 // Running (running.c)
+void init_binary_codewords(void);
 void init(void);
 void run(void);
 

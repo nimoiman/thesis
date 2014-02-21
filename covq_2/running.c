@@ -23,25 +23,33 @@ void init_binary_codewords(void){
 
 void init(void) {
     // quantize
+    printf("quantizing...\n");
     quantize();
 
+    printf("init codewords...\n");
     init_binary_codewords();
+    printf("init codevectors...\n");
     init_codevectors();
+    printf("init encoder...\n");
     nn_update( 1 ); // Set encoders, init flag set to 1
 
+    printf("first encoder...\n");
     nn_update( 0 ); // First real nearest neighbour update
+    printf("centroid X...\n");
     centroid_update( SRC_X ); // First real centroid update
+    printf("centroid Y...\n");
     centroid_update( SRC_Y );
 
+    printf("init anneal...\n");
     anneal();
 }
 
 void run(void){
     int i, j;
     double d;
-    for( j = 0; j < 10; j++ ){
-        for( i = 0; i < 250; i++ ){
-            d = nn_update( 1 );
+    for( j = 0; j < 4; j++ ){
+        for( i = 0; i < 20; i++ ){
+            d = nn_update( 0 );
             centroid_update( SRC_X );
             centroid_update( SRC_Y );
             printf("j=%d,i=%d,d=%f\n",j,i,d);

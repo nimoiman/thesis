@@ -60,7 +60,7 @@ int rand_lim(int limit) {
 
 void anneal() {
     double pot_diff, tmp;
-    double T = 10.0, cooling_rate = 0.8, T_final = 0.00025;
+    double T = 10.0, cooling_rate = 0.8, T_final = 0.025;
     int iter = 0, max_iterations = 50000;
     int phi = 5, drop_count = 0, psi = 200, fail_count = 0;
     
