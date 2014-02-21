@@ -88,9 +88,27 @@ void quantize_test() {
 
 }
 
+void csv_io_test() {
+    FILE *stream = fopen("lalala.csv", "w");
+    fprintf(stream, "1.00,2.34\n1.23,2.56\n");
+    fclose(stream);
+    stream = fopen("lalala.csv", "r");
+    read_csv_trset(stream);
+    printf("\n");
+    printf("X training set:\n");
+    print_double_array(stdout, trset_x, trset_size);
+    printf("\n");
+    printf("Y training set:\n");
+    print_double_array(stdout, trset_y, trset_size);
+    printf("\n");
+    fclose(stream);
+
+}
+
 int main( int argc, const char* argv[] ){
     print_test();
     quantize_test();
+    csv_io_test();
 }
 
 

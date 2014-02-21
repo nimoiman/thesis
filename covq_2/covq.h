@@ -65,6 +65,7 @@ void print_int_array(FILE *stream, int *arr, int len);
 void print_double_array(FILE *stream, double *arr, int len);
 void print_int_array_2d(FILE *stream, int *arr, int n, int m);
 void print_double_array_2d(FILE *stream, double *arr, int n, int m);
+void read_csv_trset(FILE *stream);
 
 // Quantization (quantize.c)
 int vec_to_quant(double x, int *outlier, int src);

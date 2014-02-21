@@ -1,4 +1,28 @@
 #include "covq.h"
+#include <string.h>
+int trset_size;
+
+/* Read csv file into trset_x, trset_y 
+ * Assumes two colums delimited by commas, each line delimited by newline
+ */
+void read_csv_trset(FILE *stream) {
+    int i;
+    char line[1024];
+    // count the lines
+    for (i = 0; fgets(line, 1024, stream); i++);
+    printf("num lines=%d\n", i);
+    trset_size = i;
+    trset_x = malloc(trset_size * sizeof(double));
+    trset_y = malloc(trset_size * sizeof(double));
+    
+    // read file again, line by line:
+    rewind(stream);
+    i = 0;
+    while (fgets(line, 1024, stream) != NULL) {
+        sscanf(line, "%lf,%lf", trset_x+i, trset_y+i);
+        i++;
+    }
+}
 
 void print_int_array(FILE *stream, int *arr, int len){
     int i;
