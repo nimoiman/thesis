@@ -79,6 +79,9 @@ void anneal() {
         tmp = bin_cw_x[i_1];
         bin_cw_x[i_1] = bin_cw_x[i_2];
         bin_cw_x[i_2] = bin_cw_x[i_1];
+        tmp = bin_cw_y[j_1];
+        bin_cw_y[j_1] = bin_cw_y[j_2];
+        bin_cw_y[j_2] = bin_cw_y[j_1];
         // find the difference in new state's energy from old energy
         pot_diff -= energy();
         
@@ -96,6 +99,9 @@ void anneal() {
             tmp = bin_cw_x[i_1];
             bin_cw_x[i_1] = bin_cw_x[i_2];
             bin_cw_x[i_2] = bin_cw_x[i_1];
+            tmp = bin_cw_y[j_1];
+            bin_cw_y[j_1] = bin_cw_y[j_2];
+            bin_cw_y[j_2] = bin_cw_y[j_1];
         }
 
         iter++;
