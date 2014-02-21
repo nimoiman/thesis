@@ -23,6 +23,8 @@ double channel_prob(int i, int j, int k, int l) {
     diff = j_cw ^ l_cw;
     for(n = 0; n < CODEWORD_LEN_Y; n++)
         p *= (diff>>n & 1) ? TRANS_PROB_Y: (1-TRANS_PROB_Y);
+    assert(0 < p);
+    assert(p < 1);
     return p;
 }
 
@@ -210,16 +212,29 @@ void centroid_update_x() {
 	int num, i, j, k, l, q_val_x, q_val_y;
 	double val_x, p, numer, denom;
 
+    for(i = 0; i < CODEBOOK_SIZE_X; i++){
+        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
+            count[i][j] = 0;
+            sum[i][j] = 0;
+        }
+    }
+
     for(q_val_x = 0; q_val_x < Q_LEVELS; q_val_x++){
         i = encoder_x[q_val_x];
+        assert( 0 <= i );
+        assert( CODEBOOK_SIZE_X > i );
         val_x = quant_to_vec(q_val_x, SRC_X);
         for(q_val_y = 0; q_val_y < Q_LEVELS; q_val_y++){
             j = encoder_y[q_val_y];
+            assert( 0 <= j );
+            assert( CODEBOOK_SIZE_Y > j );
             num = q_trset[q_val_x][q_val_y];
             count[i][j] += num;
             sum[i][j] += num * val_x;
         }
     }
+
+    print_int_array_2d(stdout, (int*) count, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y );
 
 	for(k = 0; k < CODEBOOK_SIZE_X; k++){
 		for(l = 0; l < CODEBOOK_SIZE_Y; l++){
@@ -232,6 +247,7 @@ void centroid_update_x() {
 					denom += p * count[i][j];
 				}
 			}
+            assert( denom > 0 );
 			cv_x[k][l] = numer / denom;
 		}
 	}
@@ -243,16 +259,30 @@ void centroid_update_y() {
 	int num, i, j, k, l, q_val_x, q_val_y;
 	double val_y, p, numer, denom;
 
+
+    for(i = 0; i < CODEBOOK_SIZE_X; i++){
+        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
+            count[i][j] = 0;
+            sum[i][j] = 0;
+        }
+    }
+
     for(q_val_y = 0; q_val_y < Q_LEVELS; q_val_y++){
         j = encoder_y[q_val_y];
+        assert( 0 <= j );
+        assert( CODEBOOK_SIZE_Y > j );
         val_y = quant_to_vec(q_val_y, SRC_Y);
         for(q_val_x = 0; q_val_x < Q_LEVELS; q_val_x++){
             i = encoder_x[q_val_x];
+            assert( 0 <= i );
+            assert( CODEBOOK_SIZE_X > i );
             num = q_trset[q_val_x][q_val_y];
             count[i][j] += num;
             sum[i][j] += num * val_y;
         }
     }
+
+    print_int_array_2d(stdout, (int*) count, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y );
 
 	for(k = 0; k < CODEBOOK_SIZE_X; k++){
 		for(l = 0; l < CODEBOOK_SIZE_Y; l++){
@@ -265,6 +295,8 @@ void centroid_update_y() {
 					denom += p * count[i][j];
 				}
 			}
+            assert( denom > -0.0001 );
+            assert( denom > 0 );
 			cv_y[k][l] = numer / denom;
 		}
 	}
