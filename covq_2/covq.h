@@ -63,6 +63,7 @@ extern int bin_cw_y[CODEBOOK_SIZE_Y];
 
 // Simulated Annealing (anneal.c)
 void anneal();
+double eucl_dist(int i, int j, int k, int el);
 
 // Printing and IO (io.c)
 void print_int_array(FILE *stream, int *arr, int len);

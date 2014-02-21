@@ -131,12 +131,28 @@ void csv_io_test() {
 
 }
 
+void eucl_dist_test() {
+    int i, j, k, el;
+    printf("running eucl_dist test\n");
+    for (i = 0; i < CODEBOOK_SIZE_X; i++) {
+        for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
+            for (k = 0; k < CODEBOOK_SIZE_X; k++) {
+                for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
+                    printf("eucl dist (%d, %d) <-> (%d, %d) = %f\n",
+                        i, j, k, el, eucl_dist(i,j,k,el));
+                }
+            }
+        }
+    }
+}
+
 int main( int argc, const char* argv[] ){
-    // init_binary_codewords();
-    // channel_test();
-    // print_test();
-    
-    // csv_io_test();
+    read_csv_trset(stdin);
+    init();
+    print_test();
+    eucl_dist_test();
+    quantize_test();
+    csv_io_test();
 }
 
 
