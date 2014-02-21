@@ -77,6 +77,6 @@ int quantize() {
         y_bin = vec_to_quant(trset_y[i], NULL, SRC_Y);
         q_trset[x_bin][y_bin] += 1;
     }
-
+    trset_size -= outlier_count;
     return outlier_count;
 }
