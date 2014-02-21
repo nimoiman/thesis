@@ -46,7 +46,13 @@ void init(void) {
     printf("centroid Y...\n");
     centroid_update( SRC_Y );
 
+    printf("X codevectors:\n");
+    print_double_array_2d(stdout, (double*) cv_x, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
+    printf("\nY codevectors:\n");
+    print_double_array_2d(stdout, (double*) cv_y, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
+    printf("\n");
     printf("init anneal...\n");
+
     anneal();
 }
 

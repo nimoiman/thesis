@@ -20,7 +20,15 @@ void transmission_prob(prob_ij p_ij) {
  * Return distance between codevectors (centroids) represented by the two
  * respective pairs (i, j), (k, el) */
 double eucl_dist(int i, int j, int k, int el) {
-    return POW2(cv_x[i][j] - cv_x[k][el]) + POW2(cv_y[i][j] - cv_y[k][el]);
+    double d = POW2(cv_x[i][j] - cv_x[k][el]) + POW2(cv_y[i][j] - cv_y[k][el]);
+    assert( -Q_LENGTH_X <= cv_x[i][j]);
+    assert( Q_LENGTH_X >= cv_x[i][j]);
+    assert( -Q_LENGTH_Y <= cv_y[k][el]);
+    assert( Q_LENGTH_X >= cv_y[k][el]);
+    assert( d >= 0);
+    assert( d >= 0);
+    assert( d <= 10);
+    return d;
 }
 
 void swap(int *i, int *j){
