@@ -5,7 +5,6 @@
  * Return 1 on success, 0 on EOF */
 int get_next_csv_record(FILE *stream, double record[2]) {
     char line[1024];
-    printf("getting csv record...\n");
     if (fgets(line, 1024, stream) != NULL) {
         sscanf(line, "%lf,%lf", &(record[0]), &(record[1]));
         return 1;

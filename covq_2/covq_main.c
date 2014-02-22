@@ -9,13 +9,10 @@ int main( int argc, const char* argv[] ){
     FILE * pFile;
 
     srand(0);
-    trset_size = 10000;
-    printf("reading csv...\n");
-    read_csv_trset(stdin);
-    quantize(stdin);
-    print_int(stdout, (int*) q_trset, Q_LEVELS, Q_LEVELS);
+    trset_size = 10000;    
     printf("init...\n");
-    init();
+    init(stdin);
+    print_int(stdout, (int*) q_trset, Q_LEVELS, Q_LEVELS);
     printf("running...\n");
     run();
     
