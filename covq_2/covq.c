@@ -1,37 +1,67 @@
 #include "covq.h"
 
-quant q_trset;
-int encoder_x[Q_LEVELS];
-int encoder_y[Q_LEVELS];
+quant_lvls q_trset;
+encoder encoder_x;
+encoder encoder_y;
 codevectors cv_x;
 codevectors cv_y; 
-int bin_cw_x[CODEBOOK_SIZE_X];
-int bin_cw_y[CODEBOOK_SIZE_Y];
+codewords_x bin_cw_x;
+codewords_y bin_cw_y;
 
+/* Channel transition probability
+ * Computes the channel transition probability P(k,l | i,j). That is, the
+ * probability of receiving indexes k and l from source X and Y respectively,
+ * given that index i was sent from source X and j was sent from source Y. Take
+ * note that the channels do not need to be independent.
+ * Asserts:
+ * i, j, k, and l are valid codebook indexes.
+ * return value is between 0 and 1.
+ */
 double channel_prob(int i, int j, int k, int l) {
     double p = 1;
     int n, diff;
     int i_cw, j_cw, k_cw, l_cw;
+
+    //Assert indecies in range
+    assert(IN_RANGE(i, 0, CODEBOOK_SIZE_X-1));
+    assert(IN_RANGE(j, 0, CODEBOOK_SIZE_Y-1));
+    assert(IN_RANGE(k, 0, CODEBOOK_SIZE_X-1));
+    assert(IN_RANGE(l, 0, CODEBOOK_SIZE_Y-1));
+
+    // Get binary transmission codewords for the indexes
     i_cw = bin_cw_x[i];
     j_cw = bin_cw_y[j];
     k_cw = bin_cw_x[k];
     l_cw = bin_cw_y[l];
     
+    // Compute transition probability
     diff = i_cw ^ k_cw;
     for(n = 0; n < CODEWORD_LEN_X; n++)
         p *= (diff>>n & 1) ? TRANS_PROB_X: (1-TRANS_PROB_X);
     diff = j_cw ^ l_cw;
     for(n = 0; n < CODEWORD_LEN_Y; n++)
         p *= (diff>>n & 1) ? TRANS_PROB_Y: (1-TRANS_PROB_Y);
-    assert(0 < p);
-    assert(p < 1);
+    
+    //Assert valid probability
+    assert(IN_RANGE(p, 0, 1));
+
     return p;
 }
 
+/* Finds the index i of minimum expected distortion for a given value of x.
+ * For a given x quantization level (q_lvl_x), find the index i (*index) that
+ * would result in the lowest expected distotion. The expected distortion is
+ * retured.
+ * Asserts:
+ * q_lvl_x is a valid quantization level
+*/
 double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 	double prob_j[CODEBOOK_SIZE_Y], expected_val_j[CODEBOOK_SIZE_Y];
 	double d, d_best, var_y, val_x, val_y;
 	int i, j, k, l, num, count, q_lvl_y;
+    
+
+    assert(IN_RANGE(q_lvl_x, 0, Q_LEVELS-1));
 
     count = 0;
     for(i = 0; i < CODEBOOK_SIZE_Y; i++){
@@ -97,14 +127,22 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 			*index = i;
 		}
 	}
-    printf("var_y=%lf, d_best x=%lf\n", var_y, d_best);
 	return d_best;
 }
 
+/* Finds the index i of minimum expected distortion for a given value of y.
+ * For a given y quantization level (q_lvl_y), find the index i (*index) that
+ * would result in the lowest expected distotion. The expected distortion is
+ * retured.
+ * Asserts:
+ * q_lvl_y is a valid quantization level
+*/
 double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
 	double prob_i[CODEBOOK_SIZE_Y], expected_val_i[CODEBOOK_SIZE_Y];
 	double d, d_best, var_x, val_x, val_y;
 	int i, j, k, l, num, count, q_lvl_x;
+
+    assert(IN_RANGE(q_lvl_y, 0, Q_LEVELS-1));
 
     count = 0;
     for(i = 0; i < CODEBOOK_SIZE_X; i++){
@@ -170,10 +208,12 @@ double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
 			*index = j;
 		}
 	}
-    printf("dvar_x=%lf, best y=%lf\n", var_x, d_best);
 	return d_best;
 }
 
+/* Finds the index of lowest expected distoriton for a given source and quantization level.
+ * Calls nearest_neighbour_x or nearest_neighbour_y depending on the value of src.
+ */
 double nearest_neighbour(int q_lvl, int *index, int init, int src){
     if(src == SRC_X)
         return nearest_neighbour_x(q_lvl,index,init);
@@ -181,11 +221,12 @@ double nearest_neighbour(int q_lvl, int *index, int init, int src){
         return nearest_neighbour_y(q_lvl,index,init);
 }
 
+/* Uses the nearest neighbour condition to encode each quantization level for
+ * source X and source Y. */
 double nn_update(int init){
 	double d_total, d;
 	int i, j, num;
 	
-    printf("Encoding X...\n");
 	for(i = 0; i < Q_LEVELS; i++){
 		d = nearest_neighbour(i, encoder_x + i, init, SRC_X);
 		num = 0;
@@ -194,7 +235,6 @@ double nn_update(int init){
 		d_total += num * d;
 	}
 
-    printf("Encoding Y...\n");
 	for(j = 0; j < Q_LEVELS; j++){
 		d = nearest_neighbour(j, encoder_y + j, init, SRC_Y);
 		num = 0;
@@ -206,6 +246,7 @@ double nn_update(int init){
 	return d_total / trset_size;
 }
 
+/* Updates the codevectors for the X source using the centroid condition */
 void centroid_update_x() {
 	int count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 	double sum[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
@@ -221,20 +262,14 @@ void centroid_update_x() {
 
     for(q_val_x = 0; q_val_x < Q_LEVELS; q_val_x++){
         i = encoder_x[q_val_x];
-        assert( 0 <= i );
-        assert( CODEBOOK_SIZE_X > i );
         val_x = quant_to_vec(q_val_x, SRC_X);
         for(q_val_y = 0; q_val_y < Q_LEVELS; q_val_y++){
             j = encoder_y[q_val_y];
-            assert( 0 <= j );
-            assert( CODEBOOK_SIZE_Y > j );
             num = q_trset[q_val_x][q_val_y];
             count[i][j] += num;
             sum[i][j] += num * val_x;
         }
     }
-
-    print_int_array_2d(stdout, (int*) count, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y );
 
 	for(k = 0; k < CODEBOOK_SIZE_X; k++){
 		for(l = 0; l < CODEBOOK_SIZE_Y; l++){
@@ -247,12 +282,12 @@ void centroid_update_x() {
 					denom += p * count[i][j];
 				}
 			}
-            assert( denom > 0 );
 			cv_x[k][l] = numer / denom;
 		}
 	}
 }
 
+/* Updates the codevectors for the Y source using the centroid condition */
 void centroid_update_y() {
 	int count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 	double sum[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
@@ -269,20 +304,14 @@ void centroid_update_y() {
 
     for(q_val_y = 0; q_val_y < Q_LEVELS; q_val_y++){
         j = encoder_y[q_val_y];
-        assert( 0 <= j );
-        assert( CODEBOOK_SIZE_Y > j );
         val_y = quant_to_vec(q_val_y, SRC_Y);
         for(q_val_x = 0; q_val_x < Q_LEVELS; q_val_x++){
             i = encoder_x[q_val_x];
-            assert( 0 <= i );
-            assert( CODEBOOK_SIZE_X > i );
             num = q_trset[q_val_x][q_val_y];
             count[i][j] += num;
             sum[i][j] += num * val_y;
         }
     }
-
-    print_int_array_2d(stdout, (int*) count, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y );
 
 	for(k = 0; k < CODEBOOK_SIZE_X; k++){
 		for(l = 0; l < CODEBOOK_SIZE_Y; l++){
@@ -295,8 +324,6 @@ void centroid_update_y() {
 					denom += p * count[i][j];
 				}
 			}
-            assert( denom > -0.0001 );
-            assert( denom > 0 );
 			cv_y[k][l] = numer / denom;
 		}
 	}
