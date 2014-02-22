@@ -29,6 +29,13 @@ extern "C"{
 #define Q_LENGTH_X 1
 #define Q_LENGTH_Y 1
 
+// Simulated Annealing Constants
+#define TEMP_INIT 10.0
+#define COOLING_RATE 0.8
+#define TEMP_FINAL 0.00025
+#define PHI 5 // energy drops until temperature drop
+#define PSI 200 // rejected swaps until temperature drop
+
 // Length of binary codewords (in bits), should be less than 8
 #define CODEWORD_LEN_X 3
 #define CODEWORD_LEN_Y 4
