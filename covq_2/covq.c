@@ -8,46 +8,6 @@ codevectors cv_y;
 codewords_x bin_cw_x;
 codewords_y bin_cw_y;
 
-/* Channel transition probability
- * Computes the channel transition probability P(k,l | i,j). That is, the
- * probability of receiving indexes k and l from source X and Y respectively,
- * given that index i was sent from source X and j was sent from source Y. Take
- * note that the channels do not need to be independent.
- * Asserts:
- * i, j, k, and l are valid codebook indexes.
- * return value is between 0 and 1.
- */
-double channel_prob(int i, int j, int k, int l) {
-    double p = 1;
-    int n, diff;
-    int i_cw, j_cw, k_cw, l_cw;
-
-    //Assert indecies in range
-    assert(IN_RANGE(i, 0, CODEBOOK_SIZE_X-1));
-    assert(IN_RANGE(j, 0, CODEBOOK_SIZE_Y-1));
-    assert(IN_RANGE(k, 0, CODEBOOK_SIZE_X-1));
-    assert(IN_RANGE(l, 0, CODEBOOK_SIZE_Y-1));
-
-    // Get binary transmission codewords for the indexes
-    i_cw = bin_cw_x[i];
-    j_cw = bin_cw_y[j];
-    k_cw = bin_cw_x[k];
-    l_cw = bin_cw_y[l];
-    
-    // Compute transition probability
-    diff = i_cw ^ k_cw;
-    for(n = 0; n < CODEWORD_LEN_X; n++)
-        p *= (diff>>n & 1) ? TRANS_PROB_X: (1-TRANS_PROB_X);
-    diff = j_cw ^ l_cw;
-    for(n = 0; n < CODEWORD_LEN_Y; n++)
-        p *= (diff>>n & 1) ? TRANS_PROB_Y: (1-TRANS_PROB_Y);
-    
-    //Assert valid probability
-    assert(IN_RANGE(p, 0, 1));
-
-    return p;
-}
-
 /* Finds the index i of minimum expected distortion for a given value of x.
  * For a given x quantization level (q_lvl_x), find the index i (*index) that
  * would result in the lowest expected distotion. The expected distortion is
@@ -58,8 +18,7 @@ double channel_prob(int i, int j, int k, int l) {
 double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 	double prob_j[CODEBOOK_SIZE_Y], expected_val_j[CODEBOOK_SIZE_Y];
 	double d, d_best, var_y, val_x, val_y;
-	int i, j, k, l, num, count, q_lvl_y;
-    
+	int i, j, k, l, num, count, q_lvl_y, indicator;    
 
     assert(IN_RANGE(q_lvl_x, 0, Q_LEVELS-1));
 
@@ -69,6 +28,7 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
         expected_val_j[i] = 0;
     }
 
+    var_y = 0;
     if(!init){
         for(q_lvl_y = 0; q_lvl_y < Q_LEVELS; q_lvl_y++){
             num = q_trset[q_lvl_x][q_lvl_y];
@@ -107,9 +67,9 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
         }
     }
 
+    assert(var_y >= 0); 
 	val_x = quant_to_vec(q_lvl_x, SRC_X);
-	d_best = -1;
-	*index = 0;	
+    d_best = -1;
 	for(i = 0; i < CODEBOOK_SIZE_X; i++){
 		d = var_y;
 		for(j = 0; j < CODEBOOK_SIZE_Y; j++){
@@ -125,8 +85,11 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 		if(d_best < 0 || d < d_best){
 			d_best = d;
 			*index = i;
+            indicator = 1;
 		}
 	}
+
+    assert(d_best >= 0);
 	return d_best;
 }
 
@@ -138,7 +101,7 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
  * q_lvl_y is a valid quantization level
 */
 double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
-	double prob_i[CODEBOOK_SIZE_Y], expected_val_i[CODEBOOK_SIZE_Y];
+	double prob_i[CODEBOOK_SIZE_X], expected_val_i[CODEBOOK_SIZE_X];
 	double d, d_best, var_x, val_x, val_y;
 	int i, j, k, l, num, count, q_lvl_x;
 
@@ -150,6 +113,7 @@ double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
         expected_val_i[i] = 0;
     }
 
+    var_x = 0;
     if(!init){
         for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++){
             num = q_trset[q_lvl_x][q_lvl_y];
@@ -190,7 +154,6 @@ double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
 
 	val_y = quant_to_vec(q_lvl_y, SRC_Y);
 	d_best = -1;
-	*index = 0;	
 	for(j = 0; j < CODEBOOK_SIZE_Y; j++){
 		d = var_x;
 		for(i = 0; i < CODEBOOK_SIZE_X; i++){
@@ -208,6 +171,8 @@ double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
 			*index = j;
 		}
 	}
+
+    assert(d_best >= 0);
 	return d_best;
 }
 
@@ -225,21 +190,18 @@ double nearest_neighbour(int q_lvl, int *index, int init, int src){
  * source X and source Y. */
 double nn_update(int init){
 	double d_total, d;
-	int i, j, num;
+	int q_lvl_x, q_lvl_y, num;
 	
-	for(i = 0; i < Q_LEVELS; i++){
-		d = nearest_neighbour(i, encoder_x + i, init, SRC_X);
-		num = 0;
-		for(j = 0; j < Q_LEVELS; j++)
-			num += q_trset[i][j];
-		d_total += num * d;
+	for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++){
+		nearest_neighbour(q_lvl_x, encoder_x + q_lvl_x, init, SRC_X);
 	}
 
-	for(j = 0; j < Q_LEVELS; j++){
-		d = nearest_neighbour(j, encoder_y + j, init, SRC_Y);
+    d_total = 0;
+	for(q_lvl_y = 0; q_lvl_y < Q_LEVELS; q_lvl_y++){
+		d = nearest_neighbour(q_lvl_y, encoder_y + q_lvl_y, init, SRC_Y);
 		num = 0;
-		for(i = 0; i < Q_LEVELS; i++)
-			num += q_trset[i][j];
+		for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++)
+			num += q_trset[q_lvl_x][q_lvl_y];
 		d_total += num * d;
 	}
 

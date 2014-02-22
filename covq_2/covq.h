@@ -22,17 +22,17 @@ extern "C"{
 #define SRC_Y 1
 
 // Transition Probabilities for BSC
-#define TRANS_PROB_X 0.2
-#define TRANS_PROB_Y 0.2
+#define TRANS_PROB_X 0.01
+#define TRANS_PROB_Y 0.01
 
 // Uniform Quantizer Parameters
-#define Q_LEVELS 25
-#define Q_LENGTH_X 3
-#define Q_LENGTH_Y 3
+#define Q_LEVELS 100
+#define Q_LENGTH_X 4
+#define Q_LENGTH_Y 4
 
 // Length of binary codewords (in bits), should be less than 8
 #define CODEWORD_LEN_X 3
-#define CODEWORD_LEN_Y 4
+#define CODEWORD_LEN_Y 2
 
 #define CODEBOOK_SIZE_X (1 << CODEWORD_LEN_X)
 #define CODEBOOK_SIZE_Y (1 << CODEWORD_LEN_Y)
