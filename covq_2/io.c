@@ -1,21 +1,17 @@
 #include "covq.h"
 #include <string.h>
 
-/* Read csv file into trset_x, trset_y 
- * Assumes two colums delimited by commas, each line delimited by newline
- */
-void read_csv_trset(FILE *stream) {
-    int i;
+/* Read next line of *stream into record.
+ * Return 1 on success, 0 on EOF */
+int get_next_csv_record(FILE *stream, double record[2]) {
     char line[1024];
-    // count the lines
-    trset_x = malloc(trset_size * sizeof(double));
-    trset_y = malloc(trset_size * sizeof(double));
-    
-    // read file again, line by line:
-    i = 0;
-    while (fgets(line, 1024, stream) != NULL) {
-        sscanf(line, "%lf,%lf", trset_x+i, trset_y+i);
-        i++;
+    printf("getting csv record...\n");
+    if (fgets(line, 1024, stream) != NULL) {
+        sscanf(line, "%lf,%lf", &(record[0]), &(record[1]));
+        return 1;
+    }
+    else {
+        return 0;
     }
 }
 

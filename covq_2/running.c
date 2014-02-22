@@ -1,17 +1,5 @@
 #include "covq.h"
 
-
-void init_codevectors(void){
-    int i, j;
-
-    for(i = 0; i < CODEBOOK_SIZE_X; i++){
-        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-            cv_x[i][j] = trset_x[i*CODEBOOK_SIZE_Y + j];
-            cv_y[i][j] = trset_y[i*CODEBOOK_SIZE_Y + j];
-        }
-    }
-}
-
 void init_binary_codewords(void){
     int i;
     for( i = 0; i < CODEBOOK_SIZE_X; i++)
@@ -21,15 +9,14 @@ void init_binary_codewords(void){
         bin_cw_y[i] = i;
 }
 
-void init(void) {
+void init(FILE *stream) {
     // quantize
     printf("quantizing...\n");
-    quantize();
+    printf("& init codevectors...\n");
+    quantize(stream);
 
     printf("init codewords...\n");
     init_binary_codewords();
-    printf("init codevectors...\n");
-    init_codevectors();
 
     printf("X codevectors:\n");
     print_double_array_2d(stdout, (double*) cv_x, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);

@@ -50,11 +50,15 @@ double quant_to_vec(int x, int src) {
  * note: (Vector is outlier) ~ Geometric(p, N) where p is the probability of
  * a given component being outside the quantize region
  */
-int quantize() {
-    int i, j, dim; // iteration variables
+int quantize(FILE *stream) {
+    int i, j; // iteration variables
     int x_bin, y_bin;
+    double record[2]; // buffer for new training record
     int outlier_count = 0;
-    int outlier = 0;
+    int outlier_x = 0, outlier_y = 0;
+
+    // initialize global trset_size to 0
+    trset_size = 0;
 
     // initialize quantized bin counts to 0
     for (i = 0; i < Q_LEVELS; i++) {
@@ -64,23 +68,32 @@ int quantize() {
     }
 
     // iterate through X and Y jointly
-    for (i = 0; i < trset_size; i++) {
-        outlier = 0;
-        x_bin = vec_to_quant(trset_x[i], &outlier, SRC_X);
-        if (outlier) {
+    while (get_next_csv_record(stream, record)) {
+        x_bin = vec_to_quant(record[0], &outlier_x, SRC_X);
+        y_bin = vec_to_quant(record[1], &outlier_y, SRC_Y);
+        if (outlier_x || outlier_y) {
             outlier_count++;
         }
         else {
-            y_bin = vec_to_quant(trset_y[i], &outlier, SRC_Y);
-            if (outlier) {
-                outlier_count++;
-            }
-            else {
-                q_trset[x_bin][y_bin] += 1;
+            // only count non-outliers
+            trset_size += 1;
+            q_trset[x_bin][y_bin] += 1;
+
+            // TODO: remove this, come up with better initial codevectors
+            // for now, take first CODEBOOK_SIZE_X * CODEBOOKSIZE_Y training
+            // vectors as the initial codevectors
+            if (trset_size < CODEBOOK_SIZE_X * CODEBOOK_SIZE_Y) {
+                i = trset_size % CODEBOOK_SIZE_X;
+                j = trset_size / CODEBOOK_SIZE_X;
+                cv_x[i][j] = record[0];
+                cv_y[i][j] = record[1];
             }
         }
-        
     }
-    trset_size -= outlier_count;
+    if (trset_size < CODEBOOK_SIZE_X * CODEBOOK_SIZE_Y) {
+        // we have less training vectors than codevectors
+        fprintf(stderr, "Training set supplied is smaller than codebook size\n");
+        exit(1);
+    }
     return outlier_count;
 }

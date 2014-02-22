@@ -57,7 +57,6 @@ typedef int prob_ij[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
 
 // Input Global Variables
 extern int trset_size;
-extern double *trset_x, *trset_y;
 
 // Output Global Variables
 extern quant q_trset;
@@ -76,12 +75,12 @@ void print_int_array(FILE *stream, int *arr, int len);
 void print_double_array(FILE *stream, double *arr, int len);
 void print_int_array_2d(FILE *stream, int *arr, int rows, int cols);
 void print_double_array_2d(FILE *stream, double *arr, int rows, int cols);
-void read_csv_trset(FILE *stream);
+int get_next_csv_record(FILE *stream, double record[2]);
 
 // Quantization (quantize.c)
 int vec_to_quant(double x, int *outlier, int src);
 double quant_to_vec(int x, int src);
-int quantize();
+int quantize(FILE *stream);
 
 // COVQ (covq.c)
 double channel_prob(int i, int j, int k, int l);
@@ -92,7 +91,7 @@ int bsc_2_source_covq();
 
 // Running (running.c)
 void init_binary_codewords(void);
-void init(void);
+void init(FILE *stream);
 void run(void);
 
 #ifdef __cplusplus
