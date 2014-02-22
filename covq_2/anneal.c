@@ -4,9 +4,12 @@
 void transmission_prob(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     int i, j, q_x, q_y;
 
-    for(i = 0; i < CODEBOOK_SIZE_X; i++)
-        for(j = 0; j < CODEBOOK_SIZE_Y; j++)
+    // Initialize codebook_count to 0
+    for (i = 0; i < CODEBOOK_SIZE_X; i++) {
+        for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
             codebook_count[i][j] = 0;
+        }
+    }
 
     // loop through quantization levels q_trset
     for (q_x = 0; q_x < Q_LEVELS; q_x++) {
@@ -20,22 +23,8 @@ void transmission_prob(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     }
 }
 
-/* Helper function to simulated annealing
- * Return distance between codevectors (centroids) represented by the two
- * respective pairs (i, j), (k, el) */
-double eucl_dist(int i, int j, int k, int el) {
-    double d = POW2(cv_x[i][j] - cv_x[k][el]) + POW2(cv_y[i][j] - cv_y[k][el]);
-    assert( -Q_LENGTH_X <= cv_x[i][j]);
-    assert( Q_LENGTH_X >= cv_x[i][j]);
-    assert( -Q_LENGTH_Y <= cv_y[k][el]);
-    assert( Q_LENGTH_X >= cv_y[k][el]);
-    assert( d >= 0);
-    assert( d >= 0);
-    assert( d <= 10);
-    return d;
-}
-
-void swap(int *i, int *j){
+/* Helper function to swap integers *i and *j */
+void swap(int *i, int *j) {
     int tmp;
     tmp = *i;
     *i = *j;
@@ -45,6 +34,7 @@ void swap(int *i, int *j){
 /* get energy of current binary index assignment */
 double energy(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     int i, j, k, el;
+    double eucl_dist;
     double sum = 0;
     double inner_sum;
     for (i = 0; i < CODEBOOK_SIZE_X; i++) {
@@ -52,11 +42,11 @@ double energy(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
             inner_sum = 0;
             for (k = 0; k < CODEBOOK_SIZE_X; k++) {
                 for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
-                    inner_sum += channel_prob(i, j, k, el) * eucl_dist(i, j, k, el);
+                    eucl_dist = POW2(cv_x[i][j] - cv_x[k][el]) +
+                                POW2(cv_y[i][j] - cv_y[k][el]);
+                    inner_sum += channel_prob(i, j, k, el) * eucl_dist;
                 }
             }
-            assert(1000000000000000 >= inner_sum);
-            assert(65000 >= inner_sum);
             assert(inner_sum >= 0);
             sum += inner_sum * codebook_count[i][j];
         }
@@ -79,26 +69,26 @@ int rand_lim(int limit) {
 
 void anneal() {
     double new_energy, old_energy;
-    double tmp;
-    double T = 10.0, cooling_rate = 0.8, T_final = 0.00025;
-    int phi = 5, drop_count = 0, psi = 200, fail_count = 0;
+    double T = TEMP_INIT;
+    int drop_count = 0, fail_count = 0;
     int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
     int i_1, j_1, i_2, j_2;
 
     transmission_prob(codebook_count);
     old_energy = energy(codebook_count);
-    printf("initial energy = %f\n", old_energy);
-    do {
-        // randomly choose two indices between 0 and FINAL_C_SIZE_X-1
+
+    while (T > TEMP_FINAL) {
+        // randomly choose two indices in [0, CODEBOOK_SIZE_X-1]
         i_1 = rand_lim(CODEBOOK_SIZE_X);
         i_2 = rand_lim(CODEBOOK_SIZE_X);
-        // randomly choose two indices between 0 and FINAL_C_SIZE_Y-1
+        // randomly choose two indices in [0, CODEBOOK_SIZE_Y-1]
         j_1 = rand_lim(CODEBOOK_SIZE_Y);
         j_2 = rand_lim(CODEBOOK_SIZE_Y);
 
         // swap i_1 <-> i_2 & j_1 <-> j_2 temporarily
         swap(bin_cw_x + i_1, bin_cw_x + i_2);
         swap(bin_cw_y + j_1, bin_cw_y + j_2);
+
         // find the difference in new state's energy from old energy
         new_energy = energy(codebook_count);
         
@@ -115,18 +105,16 @@ void anneal() {
         else {
             fail_count++;
             // don't keep swap i.e. swap back
-        swap(bin_cw_x + i_1, bin_cw_x + i_2);
-        swap(bin_cw_y + j_1, bin_cw_y + j_2);
+            swap(bin_cw_x + i_1, bin_cw_x + i_2);
+            swap(bin_cw_y + j_1, bin_cw_y + j_2);
         }
 
-        if (drop_count == phi || fail_count == psi) {
+        if (drop_count == PHI || fail_count == PSI) {
             // lower the temperature
-            T *= cooling_rate;
+            T *= COOLING_RATE;
             // reset counts
             drop_count = 0;
             fail_count = 0;
         }
-    } while (T > T_final);
-
-    printf("final energy = %f\n", old_energy);
+    }
 }

@@ -2,7 +2,6 @@
 #include "covq.h"
 
 int trset_size;
-double *trset_x, *trset_y;
 
 
 int main( int argc, const char* argv[] ){
@@ -12,11 +11,8 @@ int main( int argc, const char* argv[] ){
 
     srand(0);
     trset_size = 10000;
-    printf("reading csv...\n");
-    read_csv_trset(stdin);
-    quantize();
     printf("init...\n");
-    init();
+    init(stdin);
     assert_globals();
     printf("running...\n");
     run();

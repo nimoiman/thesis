@@ -30,6 +30,13 @@ extern "C"{
 #define Q_LENGTH_X 4
 #define Q_LENGTH_Y 4
 
+// Simulated Annealing Constants
+#define TEMP_INIT 10.0
+#define COOLING_RATE 0.8
+#define TEMP_FINAL 0.00025
+#define PHI 5 // energy drops until temperature drop
+#define PSI 200 // rejected swaps until temperature drop
+
 // Length of binary codewords (in bits), should be less than 8
 #define CODEWORD_LEN_X 3
 #define CODEWORD_LEN_Y 2
@@ -40,6 +47,7 @@ extern "C"{
 // Typedefs
 typedef int quant_lvls[Q_LEVELS][Q_LEVELS];
 typedef double codevectors[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
+
 typedef int encoder[Q_LEVELS];
 typedef int codewords_x[CODEBOOK_SIZE_X];
 typedef int codewords_y[CODEBOOK_SIZE_Y];
@@ -59,19 +67,18 @@ extern double *trset_x, *trset_y;
 
 // Simulated Annealing (anneal.c)
 void anneal();
-double eucl_dist(int i, int j, int k, int el);
 
 // Printing and IO (io.c)
+int get_next_csv_record(FILE *stream, double record[2]);
 void print_int(FILE *stream, int *arr, int rows, int cols);
 void print_double(FILE *stream, double *arr, int rows, int cols);
 int csvwrite_int(char *filename, int *arr, int rows, int cols);
 int csvwrite_double(char *filename, double *arr, int rows, int cols);
-void read_csv_trset(FILE *stream);
 
 // Quantization (quantize.c)
 int vec_to_quant(double x, int *outlier, int src);
 double quant_to_vec(int x, int src);
-int quantize();
+int quantize(FILE *stream);
 
 // COVQ (covq.c)
 double channel_prob(int i, int j, int k, int l);
@@ -81,8 +88,9 @@ void centroid_update(int src);
 int bsc_2_source_covq();
 
 // Running (running.c)
+void init_binary_codewords(void);
+void init(FILE *stream);
 void assert_globals(void);
-void init(void);
 void run(void);
 
 #ifdef __cplusplus
