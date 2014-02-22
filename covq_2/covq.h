@@ -26,9 +26,9 @@ extern "C"{
 #define TRANS_PROB_Y 0.2
 
 // Uniform Quantizer Parameters
-#define Q_LEVELS 10 
-#define Q_LENGTH_X 1
-#define Q_LENGTH_Y 1
+#define Q_LEVELS 25
+#define Q_LENGTH_X 3
+#define Q_LENGTH_Y 3
 
 // Length of binary codewords (in bits), should be less than 8
 #define CODEWORD_LEN_X 3
@@ -62,10 +62,10 @@ void anneal();
 double eucl_dist(int i, int j, int k, int el);
 
 // Printing and IO (io.c)
-void print_int_array(FILE *stream, int *arr, int len);
-void print_double_array(FILE *stream, double *arr, int len);
-void print_int_array_2d(FILE *stream, int *arr, int rows, int cols);
-void print_double_array_2d(FILE *stream, double *arr, int rows, int cols);
+void print_int(FILE *stream, int *arr, int rows, int cols);
+void print_double(FILE *stream, double *arr, int rows, int cols);
+int csvwrite_int(char *filename, int *arr, int rows, int cols);
+int csvwrite_double(char *filename, double *arr, int rows, int cols);
 void read_csv_trset(FILE *stream);
 
 // Quantization (quantize.c)
