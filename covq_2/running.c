@@ -1,5 +1,46 @@
 #include "covq.h"
 
+void assert_globals(){
+    int i,j,count = 0;
+    codewords_x cw_check_x;
+    codewords_y cw_check_y;
+
+    // Assert quantized training set
+    for(i = 0; i < Q_LEVELS; i++)
+        for(j = 0; j < Q_LEVELS; j++)
+            count += q_trset[i][j];
+
+    assert(count == trset_size);
+
+    // Assert encoders
+    for(i = 0; i < Q_LEVELS; i++){
+        assert(IN_RANGE(encoder_x[i], 0, CODEBOOK_SIZE_X));
+        assert(IN_RANGE(encoder_y[i], 0, CODEBOOK_SIZE_Y));
+    }
+    
+    // Assert codewords
+    for(i = 0; i < CODEBOOK_SIZE_X; i++)
+        cw_check_x[i] = 0;
+    for(i = 0; i < CODEBOOK_SIZE_X; i++)
+        cw_check_x[encoder_x[i]] = 1;
+    for(i = 0; i < CODEBOOK_SIZE_X; i++)
+        assert(cw_check_x[i] == 1);
+    
+    for(i = 0; i < CODEBOOK_SIZE_Y; i++)
+        cw_check_y[i] = 0;
+    for(i = 0; i < CODEBOOK_SIZE_Y; i++)
+        cw_check_y[encoder_y[i]] = 1;
+    for(i = 0; i < CODEBOOK_SIZE_Y; i++)
+        assert(cw_check_y[i] == 1);
+
+    // Assert codevectors
+    for(i = 0; i < CODEBOOK_SIZE_X; i++){
+        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
+            assert(IN_RANGE(cv_x[i][j], -Q_LENGTH_X/2, -Q_LENGTH_X/2));
+            assert(IN_RANGE(cv_y[i][j], -Q_LENGTH_Y/2, -Q_LENGTH_Y/2));
+        }
+    }
+}
 
 void init_codevectors(void){
     int i, j;
@@ -31,11 +72,6 @@ void init(void) {
     printf("init codevectors...\n");
     init_codevectors();
 
-    printf("X codevectors:\n");
-    print_double_array_2d(stdout, (double*) cv_x, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
-    printf("\nY codevectors:\n");
-    print_double_array_2d(stdout, (double*) cv_y, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
-    printf("\n");
     printf("init encoder...\n");
     nn_update( 1 ); // Set encoders, init flag set to 1
 
@@ -46,13 +82,7 @@ void init(void) {
     printf("centroid Y...\n");
     centroid_update( SRC_Y );
 
-    printf("X codevectors:\n");
-    print_double_array_2d(stdout, (double*) cv_x, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
-    printf("\nY codevectors:\n");
-    print_double_array_2d(stdout, (double*) cv_y, CODEBOOK_SIZE_X, CODEBOOK_SIZE_Y);
-    printf("\n");
     printf("init anneal...\n");
-
     anneal();
 }
 
@@ -64,7 +94,6 @@ void run(void){
             d = nn_update( 0 );
             centroid_update( SRC_X );
             centroid_update( SRC_Y );
-            printf("j=%d,i=%d,d=%f\n",j,i,d);
         }
         printf("annealing...\n");
         anneal();

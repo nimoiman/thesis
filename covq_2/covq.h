@@ -5,7 +5,8 @@
 extern "C"{
 #endif
 
-#define POW2(x) ((x)*(x))
+#define POW2(x) ((x)*(x))    
+#define IN_RANGE(x, low, high) ((low) <= (x) && (x) <= (high))
 
 // Includes
 #include <assert.h>
@@ -14,7 +15,7 @@ extern "C"{
 #include <math.h> /* pow, exp */
 
 // IO
-#define IO_DELIM "\t"
+#define IO_DELIM ", "
 
 // Source Indicators
 #define SRC_X 0
@@ -36,30 +37,25 @@ extern "C"{
 #define CODEBOOK_SIZE_X (1 << CODEWORD_LEN_X)
 #define CODEBOOK_SIZE_Y (1 << CODEWORD_LEN_Y)
 
-// Maximum codebook size
-#if CODEBOOK_SIZE_X > CODEBOOK_SIZE_Y 
-#define CODEBOOK_SIZE_MAX CODEBOOK_SIZE_X
-#else
-#define CODEBOOK_SIZE_MAX CODEBOOK_SIZE_Y
-#endif
-
 // Typedefs
-typedef int quant[Q_LEVELS][Q_LEVELS];
+typedef int quant_lvls[Q_LEVELS][Q_LEVELS];
 typedef double codevectors[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
-typedef int prob_ij[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
+typedef int encoder[Q_LEVELS];
+typedef int codewords_x[CODEBOOK_SIZE_X];
+typedef int codewords_y[CODEBOOK_SIZE_Y];
+
+// Output Global Variables
+extern quant_lvls q_trset;
+extern encoder encoder_x;
+extern encoder encoder_y;
+extern codevectors cv_x;
+extern codevectors cv_y; 
+extern codewords_x bin_cw_x;
+extern codewords_y bin_cw_y;
 
 // Input Global Variables
 extern int trset_size;
 extern double *trset_x, *trset_y;
-
-// Output Global Variables
-extern quant q_trset;
-extern int encoder_x[Q_LEVELS];
-extern int encoder_y[Q_LEVELS];
-extern codevectors cv_x;
-extern codevectors cv_y; 
-extern int bin_cw_x[CODEBOOK_SIZE_X];
-extern int bin_cw_y[CODEBOOK_SIZE_Y];
 
 // Simulated Annealing (anneal.c)
 void anneal();
@@ -84,7 +80,7 @@ void centroid_update(int src);
 int bsc_2_source_covq();
 
 // Running (running.c)
-void init_binary_codewords(void);
+void assert_globals(void);
 void init(void);
 void run(void);
 

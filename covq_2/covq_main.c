@@ -13,11 +13,6 @@ int main( int argc, const char* argv[] ){
     print_int_array_2d(stdout, (int*) q_trset, Q_LEVELS, Q_LEVELS);
     printf("init...\n");
     init();
-    print_int_array(stdout, bin_cw_x, CODEBOOK_SIZE_X);
-    printf("\n");
-    print_int_array(stdout, bin_cw_y, CODEBOOK_SIZE_Y);
-    printf("\n");
-    return 0;
     printf("running...\n");
     run();
     
