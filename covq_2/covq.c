@@ -10,15 +10,15 @@ codewords_y bin_cw_y;
 
 /* Finds the index i of minimum expected distortion for a given value of x.
  * For a given x quantization level (q_lvl_x), find the index i (*index) that
- * would result in the lowest expected distotion. The expected distortion is
- * retured.
+ * would result in the lowest expected distortion. The expected distortion is
+ * returned.
  * Asserts:
  * q_lvl_x is a valid quantization level
 */
 double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 	double prob_j[CODEBOOK_SIZE_Y], expected_val_j[CODEBOOK_SIZE_Y];
 	double d, d_best, var_y, val_x, val_y;
-	int i, j, k, l, num, count, q_lvl_y, indicator;    
+	int i, j, k, l, num, count, q_lvl_y;    
 
     assert(IN_RANGE(q_lvl_x, 0, Q_LEVELS-1));
 
@@ -67,7 +67,6 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
         }
     }
 
-    assert(var_y >= 0); 
 	val_x = quant_to_vec(q_lvl_x, SRC_X);
     d_best = -1;
 	for(i = 0; i < CODEBOOK_SIZE_X; i++){
@@ -85,7 +84,6 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 		if(d_best < 0 || d < d_best){
 			d_best = d;
 			*index = i;
-            indicator = 1;
 		}
 	}
 
@@ -95,8 +93,8 @@ double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
 
 /* Finds the index i of minimum expected distortion for a given value of y.
  * For a given y quantization level (q_lvl_y), find the index i (*index) that
- * would result in the lowest expected distotion. The expected distortion is
- * retured.
+ * would result in the lowest expected distortion. The expected distortion is
+ * returned.
  * Asserts:
  * q_lvl_y is a valid quantization level
 */
@@ -176,7 +174,7 @@ double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
 	return d_best;
 }
 
-/* Finds the index of lowest expected distoriton for a given source and quantization level.
+/* Finds the index of lowest expected distortion for a given source and quantization level.
  * Calls nearest_neighbour_x or nearest_neighbour_y depending on the value of src.
  */
 double nearest_neighbour(int q_lvl, int *index, int init, int src){
