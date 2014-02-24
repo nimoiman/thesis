@@ -9,8 +9,7 @@ int main( int argc, const char* argv[] ){
     FILE * pFile;
     double qlvls[Q_LEVELS];
 
-    srand(0);
-    trset_size = 10000;
+    srand(1);
     printf("init...\n");
     init(stdin);
     assert_globals();
