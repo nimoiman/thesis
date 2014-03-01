@@ -19,11 +19,11 @@ int get_next_csv_record(FILE *stream, double record[VECTOR_DIM]) {
     if (fgets(line, 1024, stream) != NULL) {
         // get first token:
         token = strtok(line, ",")
-        sscanf(line, "%lf", &(record[0]));
+        sscanf(token, "%lf", &(record[0]));
         // get next tokens up to VECTOR_DIM
         for (i = 1; i < VECTOR_DIM; i++) {
             token = strtok(NULL, ",");
-            sscanf(line, "%lf", &(record[i]));
+            sscanf(token, "%lf", &(record[i]));
         }
         return 1;
     }
