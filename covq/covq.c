@@ -23,7 +23,7 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
     total_distance = 0;
     for (i = 0; i < train->size; i++) {
         // index nearest neighbour for each training vector
-        best_distance = 100;
+        best_distance = DBL_MAX;
         for (j = 0; j < codebook->size; j++) {
             // linear search for nearest neighbour for now
             new_distance = 0;
