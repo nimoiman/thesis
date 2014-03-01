@@ -7,7 +7,7 @@ covq_DIR=covq/
 covq_2_DIR=covq_2/
 
 vq_OBJS=vq_main.o vq.o vector.o channel.o
-covq_OBJS=covq_main.o covq.o channel.o vector.o
+covq_OBJS=covq_main.o covq.o channel.o vector.o anneal.o io.o
 covq_2_OBJS=covq_main.o covq.o io.o quantize.o anneal.o running.o channel.o
 test_OBJS=test.o covq.o io.o quantize.o anneal.o running.o
 

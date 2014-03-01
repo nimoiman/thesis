@@ -41,7 +41,10 @@ void binary_symmetric_channel(char *index, double error_prob,
     }
 }
 
-double transition_probability(int i, int j, double error_prob, int length) {
-    return pow(error_prob, hamming_distance(i, j)) *
-        pow(1 - error_prob, length - hamming_distance(i, j));
+double channel_prob(int i, int j, double error_prob, int length,
+                              int *cw_map) {
+    int d = hamming_distance(cw_map[i], cw_map[j]);
+    return pow(error_prob, d) * pow(1 - error_prob, length - d);
 }
+
+int simulate();

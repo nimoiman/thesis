@@ -4,9 +4,11 @@ int main(int argc, char *argv[]) {
     int i, j;
     int tr_size, test_size;
     int nsplits = 7;
-    vectorset *train, *c;
+    vectorset *train, *test, *c;
     double *d;
     FILE *fp;
+    // Codeword map for simulated annealing
+    int *cw_map = malloc(sizeof(int) * nsplits);
 
     // Expects input of training set csv name and testing set csv name
 
@@ -39,7 +41,7 @@ int main(int argc, char *argv[]) {
     srand(1234);
 
     /* Generate codebook from training set */
-    c = bsc_covq(train, nsplits);
+    c = bsc_covq(train, cw_map, nsplits);
     destroy_vectorset(train);
 
     /* Output codebook to file */
@@ -59,7 +61,7 @@ int main(int argc, char *argv[]) {
 
     // allocate testing vector set
     if (!(test = init_vectorset(test_size))) {
-        fprintf(stderr, "Could not allocate test vector array.\n")
+        fprintf(stderr, "Could not allocate test vector array.\n");
         exit(1);
     }
 
@@ -76,7 +78,8 @@ int main(int argc, char *argv[]) {
 
 
     /* Output distortions to distortion_out.csv */
-
+    free(cw_map);
+    destroy_vectorset(test);
     destroy_vectorset(c);
     
 }

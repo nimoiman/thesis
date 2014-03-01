@@ -1,4 +1,5 @@
-#include "covq.h"
+#include "anneal.h"
+#define POW2(x) ((x)*(x))
 
 /* Helper function to swap integers *i and *j */
 void swap(int *i, int *j) {
@@ -9,24 +10,21 @@ void swap(int *i, int *j) {
 }
 
 /* get energy of current binary index assignment */
-double energy(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
+double energy(vectorset *codebook, int *count, int *cw_map, int trset_size) {
     int i, j, k, el;
     double eucl_dist;
     double sum = 0;
     double inner_sum;
-    for (i = 0; i < CODEBOOK_SIZE_X; i++) {
-        for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
-            inner_sum = 0;
-            for (k = 0; k < CODEBOOK_SIZE_X; k++) {
-                for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
-                    eucl_dist = POW2(cv_x[i][j] - cv_x[k][el]) +
-                                POW2(cv_y[i][j] - cv_y[k][el]);
-                    inner_sum += channel_prob(i, j, k, el) * eucl_dist;
-                }
-            }
-            assert(inner_sum >= 0);
-            sum += inner_sum * codebook_count[i][j];
+
+    for (i = 0; i < codebook->size; i++) {
+        inner_sum = 0;
+        for (j = 0; j < codebook->size; j++) {
+            eucl_dist = POW2(codebook->v[i] - codebook->v[j]);
+            inner_sum += channel_prob(i, j, BSC_ERROR_PROB,
+                log2(codebook->size), cw_map) * eucl_dist;
         }
+        assert(inner_sum >= 0);
+        sum += inner_sum * count[i];
     }
     return sum / trset_size;
 }
@@ -44,30 +42,24 @@ int rand_lim(int limit) {
     return retval;
 }
 
-void anneal() {
+void anneal(vectorset *codebook, int *count, int *cw_map, int trset_size) {
     double new_energy, old_energy;
     double T = TEMP_INIT;
     int drop_count = 0, fail_count = 0;
-    int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
-    int i_1, j_1, i_2, j_2;
+    int i, j;
 
-    transmission_prob(codebook_count);
-    old_energy = energy(codebook_count);
+    old_energy = energy(codebook, count, cw_map, trset_size);
 
     while (T > TEMP_FINAL) {
-        // randomly choose two indices in [0, CODEBOOK_SIZE_X-1]
-        i_1 = rand_lim(CODEBOOK_SIZE_X);
-        i_2 = rand_lim(CODEBOOK_SIZE_X);
-        // randomly choose two indices in [0, CODEBOOK_SIZE_Y-1]
-        j_1 = rand_lim(CODEBOOK_SIZE_Y);
-        j_2 = rand_lim(CODEBOOK_SIZE_Y);
+        // randomly choose two indices in [0, codebook->size-1]
+        i = rand_lim(codebook->size);
+        j = rand_lim(codebook->size);
 
-        // swap i_1 <-> i_2 & j_1 <-> j_2 temporarily
-        swap(bin_cw_x + i_1, bin_cw_x + i_2);
-        swap(bin_cw_y + j_1, bin_cw_y + j_2);
+        // swap i <-> j temporarily
+        swap(cw_map + i, cw_map + j);
 
         // find the difference in new state's energy from old energy
-        new_energy = energy(codebook_count);
+        new_energy = energy(codebook, count, cw_map, trset_size);
         
         // keep swap if energy drop
         // else keep swap with probability e^{-rise/T}
@@ -82,8 +74,7 @@ void anneal() {
         else {
             fail_count++;
             // don't keep swap i.e. swap back
-            swap(bin_cw_x + i_1, bin_cw_x + i_2);
-            swap(bin_cw_y + j_1, bin_cw_y + j_2);
+            swap(cw_map + i, cw_map + j);
         }
 
         if (drop_count == PHI || fail_count == PSI) {

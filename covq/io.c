@@ -1,5 +1,4 @@
-#include "covq.h"
-#include <string.h>
+#include "io.h"
 
 int get_num_lines(FILE *stream) {
     char line[1024];
@@ -12,17 +11,17 @@ int get_num_lines(FILE *stream) {
 
 /* Read next line of *stream into record.
  * Return 1 on success, 0 on EOF */
-int get_next_csv_record(FILE *stream, double record[VECTOR_DIM]) {
+int get_next_csv_record(FILE *stream, double *record, int vector_dim) {
     char line[1024];
     char *token;
     int i;
     if (fgets(line, 1024, stream) != NULL) {
         // get first token:
-        token = strtok(line, ",")
+        token = strtok(line, IO_DELIM);
         sscanf(token, "%lf", &(record[0]));
-        // get next tokens up to VECTOR_DIM
-        for (i = 1; i < VECTOR_DIM; i++) {
-            token = strtok(NULL, ",");
+        // get next tokens up to vector_dim
+        for (i = 1; i < vector_dim; i++) {
+            token = strtok(NULL, IO_DELIM);
             sscanf(token, "%lf", &(record[i]));
         }
         return 1;

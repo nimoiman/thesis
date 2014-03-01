@@ -1,21 +1,5 @@
 #include "covq.h"
 
-void print_int(int *array, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        fprintf(stderr, "%d, ", array[i]);
-    }
-    fprintf(stderr, "\n");
-}
-
-void print_double(double *array, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        fprintf(stderr, "%f, ", array[i]);
-    }
-    fprintf(stderr, "\n");
-}
-
 /* partition_index, count ought to be size of training set train
    
    for x in *train, ensures j := partition_index(x) minimizes:
@@ -25,7 +9,7 @@ void print_double(double *array, int size) {
    MSE(x, codebook[j]) = dist(x, codebook[j])
 */
 double nearest_neighbour(vectorset *train, vectorset *codebook,
-                         int *partition_index, int *count) {
+                         int *partition_index, int *count, int *cw_map) {
     int i, j, k;
     double new_distance, best_distance, total_distance;
     // initialize partition indices to "arbitrary" codebook vector
@@ -44,8 +28,8 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
             // linear search for nearest neighbour for now
             new_distance = 0;
             for (k = 0; k < codebook->size; k++) {
-                new_distance += transition_probability(k, j, BSC_ERROR_PROB,
-                    log2(codebook->size)) * dist(train->v[i], codebook->v[j]);
+                new_distance += channel_prob(k, j, BSC_ERROR_PROB,
+                    log2(codebook->size), cw_map) * dist(train->v[i], codebook->v[j]);
             }
             
             if (new_distance < best_distance) {
@@ -73,7 +57,7 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
    note: Pr(i received|j sent) = BSC_ERROR_PROB * hamming_distance(i, j)
  */
 void update_centroids(vectorset *train, vectorset *codebook,
-                      int *partition_index, int *count) {
+                      int *partition_index, int *count, int *cw_map) {
     int i, j, k, dim;
     double partition_euclidean_centroid[VECTOR_DIM], partition_probability;
     double numerator[VECTOR_DIM], denominator;
@@ -101,12 +85,12 @@ void update_centroids(vectorset *train, vectorset *codebook,
             partition_probability = (double) count[j] / train->size;
 
             for (dim = 0; dim < VECTOR_DIM; dim++) {
-                numerator[dim] += transition_probability(i, j, BSC_ERROR_PROB,
-                    log2(codebook->size)) * partition_euclidean_centroid[dim];
+                numerator[dim] += channel_prob(i, j, BSC_ERROR_PROB,
+                    log2(codebook->size), cw_map) * partition_euclidean_centroid[dim];
             }
 
-            denominator += transition_probability(i, j, BSC_ERROR_PROB,
-                log2(codebook->size)) * partition_probability;
+            denominator += channel_prob(i, j, BSC_ERROR_PROB,
+                log2(codebook->size), cw_map) * partition_probability;
         }
         for (dim = 0; dim < VECTOR_DIM; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
@@ -117,7 +101,7 @@ void update_centroids(vectorset *train, vectorset *codebook,
 
 
 /* note: n_splits should be less than log_2(INT_MAX)=16 */
-vectorset *bsc_covq(vectorset *train, int n_splits) {
+vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits) {
     double d_new, d_old;
     int i, j, k, *partition_index, *count;
     vectorset *codebook;
@@ -148,9 +132,10 @@ vectorset *bsc_covq(vectorset *train, int n_splits) {
         do {
             d_old = d_new;
             // satisfy nearest neighbour criterion on decoder's end
-            d_new = nearest_neighbour(train, codebook, partition_index, count);
+            d_new = nearest_neighbour(train, codebook, partition_index, count,
+                cw_map);
             // satisfy centroid criterion on encoder's end
-            update_centroids(train, codebook, partition_index, count);
+            update_centroids(train, codebook, partition_index, count, cw_map);
 
         } while (d_old > (1 + LBG_EPS) * d_new);
 

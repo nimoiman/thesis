@@ -8,14 +8,16 @@ extern "C"{
 #include <stdio.h> /* sprintf */
 #include <float.h> /* DBL_MAX */
 #include <stdlib.h> /* malloc, free, size_t */
-#include "vector.h"
-#include "channel.h"
+#include <math.h> /* log2 */
+#include "vector.h" /* dist */
+#include "channel.h" /* channel_prob */
+#include "anneal.h" /* anneal */
 
 #define LBG_EPS 0.001
 #define CODE_VECTOR_DISPLACE 0.001
 #define EMPIRICAL_GRANULARITY 100
 
-vectorset *bsc_covq(vectorset *train, int n_splits);
+vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits);
 
 #ifdef __cplusplus
 }
