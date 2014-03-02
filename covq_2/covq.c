@@ -1,12 +1,8 @@
 #include "covq.h"
-
-quant_lvls q_trset;
-encoder encoder_x;
-encoder encoder_y;
-codevectors cv_x;
-codevectors cv_y; 
-codewords_x bin_cw_x;
-codewords_y bin_cw_y;
+#define CODEBOOK_SIZE_X (1 << p->cwlen_x)
+#define CODEBOOK_SIZE_Y (1 << p->cwlen_y)
+#define CV_IDX(i,j) j * CODEBOOK_SIZE_X + i
+#define TS_IDX(i,j) j * p->qlvls * i
 
 /* Finds the index i of minimum expected distortion for a given value of x.
  * For a given x quantization level (q_lvl_x), find the index i (*index) that
@@ -15,285 +11,242 @@ codewords_y bin_cw_y;
  * Asserts:
  * q_lvl_x is a valid quantization level
 */
-double nearest_neighbour_x(int q_lvl_x, int *index, int init) {
-	double prob_j[CODEBOOK_SIZE_Y], expected_val_j[CODEBOOK_SIZE_Y];
-	double d, d_best, var_y, val_x, val_y;
-	int i, j, k, l, num, count, q_lvl_y;    
+double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, params_covq2 *p) {
+	double prob2[MAX_CODEBOOK_SIZE], expected_val2[MAX_CODEBOOK_SIZE];
+	double d, d_best, var2=0, val2, val1;
+	int i, j, k, l, num, count=0, qlvl2;
 
-    assert(IN_RANGE(q_lvl_x, 0, Q_LEVELS-1));
+    int *encoder2;
+    int codebook_size1, codebook_size2;
+    int src1, src2;
+    double *codevec1, *codevec2;
 
-    count = 0;
-    for(i = 0; i < CODEBOOK_SIZE_Y; i++){
-        prob_j[i] = 0;
-        expected_val_j[i] = 0;
+    /*
+     * Initialize source variables.
+     * '1' suffice indicates the primary source and '2' indicates the secondary
+     * source. That is, if src == SRC_X, '1' corresponds to SRC_X and '2'
+     * corresponds to SRC_Y. If src == SRC_Y, '1' corresponds to SRC_Y and '2'
+     * corresponds to SRC_X.
+     */
+    if(src == SRC_X){
+        encoder2 = c->encoder_y;
+        codebook_size1 = CODEBOOK_SIZE_X;
+        codebook_size2 = CODEBOOK_SIZE_Y;
+        src1 = SRC_X;
+        src2 = SRC_Y;
+    }
+    else{
+        encoder2 = c->encoder_x;
+        codebook_size1 = CODEBOOK_SIZE_Y;
+        codebook_size2 = CODEBOOK_SIZE_X;
+        src1 = SRC_Y;
+        src2 = SRC_X;
+
     }
 
-    var_y = 0;
+    /*
+     * Set variables to zero
+     */
+    for(i = 0; i < codebook_size2; i++){
+        prob2[i] = 0;
+        expected_val2[i] = 0;
+    }
+
+    assert(IN_RANGE(qlvl1, 0, p->qlvls-1));
+    
+    /*
+     * Compute var2, expected_val2, and prob2.
+     * var2 should be the condition variance of source 2 given the value of
+     * source 1. Expected_val2 should be the expected value of source 2
+     * conditioned on the value of source 1 and the transmitted index for
+     * source 2. Prob2 should equal the probability of transmitting an index
+     * from source 2.
+     */
     if(!init){
-        for(q_lvl_y = 0; q_lvl_y < Q_LEVELS; q_lvl_y++){
-            num = q_trset[q_lvl_x][q_lvl_y];
-            j = encoder_y[q_lvl_y]; // Encoding index
-            val_y = quant_to_vec(q_lvl_y, SRC_Y); // value
+        for(qlvl2 = 0; qlvl2 < p->qlvls; qlvl2++){
+            if(src == SRC_X)
+                num = c->qtrset[TS_IDX(qlvl1,qlvl2)];
+            else
+                num = c->qtrset[TS_IDX(qlvl2,qlvl1)];
+            j = encoder2[qlvl2]; // Encoding index
+            val2 = quant_to_vec(qlvl2, src2); // value
 
             count += num;
-            prob_j[j] += num;
-            expected_val_j[j] += num * val_y;
-            var_y += num * POW2(val_y);
+            prob2[j] += num;
+            expected_val2[j] += num * val1;
+            var2 += num * POW2(val1);
         }
         if(count == 0) return -1;
-        var_y /= count;
-        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-            if(prob_j[j] > 0)
-                expected_val_j[j] /= prob_j[j];
+        var2 /= count;
+        for(j = 0; j < codebook_size2; j++){
+            if(prob2[j] > 0)
+                expected_val2[j] /= prob2[j];
             else
-                expected_val_j[j] = 0;
-            prob_j[j] /= count;
+                expected_val2[j] = 0;
+            prob2[j] /= count;
         }
     }
     else{
-        for(q_lvl_y = 0; q_lvl_y < Q_LEVELS; q_lvl_y++){
-            num = q_trset[q_lvl_x][q_lvl_y];
-            val_y = quant_to_vec(q_lvl_y, SRC_Y); // value
+        for(qlvl2 = 0; qlvl2 < p->qlvls; qlvl2++){
+            if(src == SRC_X)
+                num = c->qtrset[TS_IDX(qlvl1,qlvl2)];
+            else
+                num = c->qtrset[TS_IDX(qlvl2,qlvl1)];
+            val1 = quant_to_vec(qlvl2, SRC_Y); // value
 
             count += num;
-            expected_val_j[0] += num * val_y;
-            var_y += num * POW2(val_y);
+            expected_val2[0] += num * val1;
+            var2 += num * POW2(val1);
         }
         if(count == 0) return -1;
-        var_y /= count;
-        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-            expected_val_j[j] = expected_val_j[0] / count;
-            prob_j[j] = ((double) 1) / CODEBOOK_SIZE_Y;
+        var2 /= count;
+        for(j = 0; j < codebook_size2; j++){
+            expected_val2[j] = expected_val2[0] / count;
+            prob2[j] = ((double) 1) / codebook_size2;
         }
     }
 
-	val_x = quant_to_vec(q_lvl_x, SRC_X);
+    /*
+     * Find the best transmition index for qlvl1.
+     * Loop through all transmission indexes (i) to find the one which
+     * minimizes expected distortion at the receiver. The expected distortion
+     * is computed for each transmission index and the best one is stored in
+     * d_best. The best index is sent to *idx. We use the equation illustrated
+     * in the paper to compute the distortion.
+     */
+	val1 = quant_to_vec(qlvl1, src);
     d_best = -1;
-	for(i = 0; i < CODEBOOK_SIZE_X; i++){
-		d = var_y;
-		for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-			for(k = 0; k < CODEBOOK_SIZE_X; k++){
-				for(l = 0; l < CODEBOOK_SIZE_Y; l++){
-                    d += (POW2(val_x - cv_x[k][l])
-                            -2 * cv_y[k][l] * expected_val_j[j]
-                            + POW2(cv_y[k][l]))
-                        *prob_j[j] * channel_prob(i,j,k,l);
+	for(i = 0; i < codebook_size1; i++){
+		d = var2;
+		for(j = 0; j < codebook_size2; j++){
+			for(k = 0; k < codebook_size1; k++){
+				for(l = 0; l < codebook_size2; l++){
+                    if(src == SRC_X)
+                        d += (POW2(val1 - codevec1[CV_IDX(k,l)])
+                                -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
+                                + POW2(codevec2[CV_IDX(k,l)]))
+                            *prob2[j] * channel_prob(i,j,k,l);
+                    else
+                        d += (POW2(val1 - codevec1[CV_IDX(k,l)])
+                                -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
+                                + POW2(codevec2[CV_IDX(k,l)]))
+                            *prob2[j] * channel_prob(i,j,k,l);
                 }
             }
         }
 		if(d_best < 0 || d < d_best){
 			d_best = d;
-			*index = i;
+			*idx = i;
 		}
 	}
 
     assert(d_best >= 0);
 	return d_best;
-}
-
-/* Finds the index i of minimum expected distortion for a given value of y.
- * For a given y quantization level (q_lvl_y), find the index i (*index) that
- * would result in the lowest expected distortion. The expected distortion is
- * returned.
- * Asserts:
- * q_lvl_y is a valid quantization level
-*/
-double nearest_neighbour_y(int q_lvl_y, int *index, int init) {
-	double prob_i[CODEBOOK_SIZE_X], expected_val_i[CODEBOOK_SIZE_X];
-	double d, d_best, var_x, val_x, val_y;
-	int i, j, k, l, num, count, q_lvl_x;
-
-    assert(IN_RANGE(q_lvl_y, 0, Q_LEVELS-1));
-
-    count = 0;
-    for(i = 0; i < CODEBOOK_SIZE_X; i++){
-        prob_i[i] = 0;
-        expected_val_i[i] = 0;
-    }
-
-    var_x = 0;
-    if(!init){
-        for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++){
-            num = q_trset[q_lvl_x][q_lvl_y];
-            i = encoder_x[q_lvl_x]; // Encoding index
-            val_x = quant_to_vec(q_lvl_x, SRC_X); // value
-
-            count += num;
-            prob_i[i] += num;
-            expected_val_i[i] += num * val_x;
-            var_x += num * POW2(val_x);
-        }
-        if(count == 0) return -1;
-        var_x /= count;
-        for(i = 0; i < CODEBOOK_SIZE_X; i++){
-            if(prob_i[i] > 0)
-                expected_val_i[i] /= prob_i[i];
-            else
-                expected_val_i[i] = 0;
-            prob_i[i] /= count;
-        }
-    }
-    else{
-        for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++){
-            num = q_trset[q_lvl_x][q_lvl_y];
-            val_x = quant_to_vec(q_lvl_x, SRC_X); // value
-
-            count += num;
-            expected_val_i[0] += num * val_x;
-            var_x += num * POW2(val_x);
-        }
-        if(count == 0) return -1;
-        var_x /= count;
-        for(i = 0; i < CODEBOOK_SIZE_X; i++){
-            expected_val_i[i] = expected_val_i[0] / count;
-            prob_i[i] = ((double) 1) / CODEBOOK_SIZE_X;
-        }
-    }
-
-	val_y = quant_to_vec(q_lvl_y, SRC_Y);
-	d_best = -1;
-	for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-		d = var_x;
-		for(i = 0; i < CODEBOOK_SIZE_X; i++){
-			for(k = 0; k < CODEBOOK_SIZE_X; k++){
-				for(l = 0; l < CODEBOOK_SIZE_Y; l++){
-                    d += (POW2(val_y - cv_y[k][l])
-                            -2 * cv_x[k][l] * expected_val_i[i]
-                            + POW2(cv_x[k][l]))
-                        *prob_i[i] * channel_prob(i,j,k,l);
-                }
-            }
-        }
-		if(d_best < 0 || d < d_best){
-			d_best = d;
-			*index = j;
-		}
-	}
-
-    assert(d_best >= 0);
-	return d_best;
-}
-
-/* Finds the index of lowest expected distortion for a given source and quantization level.
- * Calls nearest_neighbour_x or nearest_neighbour_y depending on the value of src.
- */
-double nearest_neighbour(int q_lvl, int *index, int init, int src){
-    if(src == SRC_X)
-        return nearest_neighbour_x(q_lvl,index,init);
-    else
-        return nearest_neighbour_y(q_lvl,index,init);
 }
 
 /* Uses the nearest neighbour condition to encode each quantization level for
  * source X and source Y. */
-double nn_update(int init){
+double nn_update(int init, covq2 *c, params_covq2 *p){
 	double d_total, d;
-	int q_lvl_x, q_lvl_y, num;
+	int qlvl_x, qlvl_y, num;
 	
-	for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++){
-		nearest_neighbour(q_lvl_x, encoder_x + q_lvl_x, init, SRC_X);
+	for(qlvl_x = 0; qlvl_x < p->qlvls; qlvl_x++){
+		nearest_neighbour(qlvl_x, c->encoder_x + qlvl_x, init, SRC_X, c, p);
 	}
 
     d_total = 0;
-	for(q_lvl_y = 0; q_lvl_y < Q_LEVELS; q_lvl_y++){
-		d = nearest_neighbour(q_lvl_y, encoder_y + q_lvl_y, init, SRC_Y);
+	for(qlvl_y = 0; qlvl_y < p->qlvls; qlvl_y++){
+		d = nearest_neighbour(qlvl_y, c->encoder_y + qlvl_y, init, SRC_Y, c, p);
 		num = 0;
-		for(q_lvl_x = 0; q_lvl_x < Q_LEVELS; q_lvl_x++)
-			num += q_trset[q_lvl_x][q_lvl_y];
+		for(qlvl_x = 0; qlvl_x < p->qlvls; qlvl_x++)
+			num += c->qtrset[TS_IDX(qlvl_x,qlvl_y)];
 		d_total += num * d;
 	}
 
-	return d_total / trset_size;
+	return d_total / p->trset_size;
 }
 
 /* Updates the codevectors for the X source using the centroid condition */
-void centroid_update_x() {
-	int count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
-	double sum[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
-	int num, i, j, k, l, q_val_x, q_val_y;
-	double val_x, p, numer, denom;
+void centroid_update(int src, covq2 *c, params_covq2 *p) {
+	int count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
+	double sum[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
+	int num, i, j, k, l, qval1, qval2;
+	double val1, prob, numer, denom;
 
-    for(i = 0; i < CODEBOOK_SIZE_X; i++){
-        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
+    int *encoder1, *encoder2;
+    int codebook_size1, codebook_size2;
+    double *codevec1;
+
+    /*
+     * Set parameters based on src value
+     */
+    if(src == SRC_X){
+        encoder1 = c->encoder_x;
+        encoder2 = c->encoder_y;
+        codebook_size1 = CODEBOOK_SIZE_X;
+        codebook_size2 = CODEBOOK_SIZE_Y;
+        codevec1 = c->codevec_x;
+    }
+    else{
+        encoder1 = c->encoder_y;
+        encoder2 = c->encoder_x;
+        codebook_size1 = CODEBOOK_SIZE_Y;
+        codebook_size2 = CODEBOOK_SIZE_X;
+        codevec1 = c->codevec_y;
+    }
+    
+
+    /*
+     * Set count and sum to zero. We don't have to iterate across
+     * MAX_CODEBOOK_SIZE since we don't use the whole array.
+     */
+    for(i = 0; i < codebook_size1; i++){
+        for(j = 0; j < codebook_size2; j++){
             count[i][j] = 0;
             sum[i][j] = 0;
         }
     }
 
-    for(q_val_x = 0; q_val_x < Q_LEVELS; q_val_x++){
-        i = encoder_x[q_val_x];
-        val_x = quant_to_vec(q_val_x, SRC_X);
-        for(q_val_y = 0; q_val_y < Q_LEVELS; q_val_y++){
-            j = encoder_y[q_val_y];
-            num = q_trset[q_val_x][q_val_y];
+    /*
+     * Compute count and sum. Count[i][j] should equal the total count of all
+     * the training set pairs that map onto transmission indexes i and j.
+     * Sum[i][j] should equal the total sum of all the training set pairs hat
+     * map onto transmission indexes i and j.
+     */
+    for(qval1 = 0; qval1 < p->qlvls; qval1++){
+        i = encoder1[qval1];
+        val1 = quant_to_vec(qval1, src);
+        for(qval2 = 0; qval2 < p->qlvls; qval2++){
+            j = encoder2[qval2];
+            if(src == SRC_X)
+                num = c->qtrset[TS_IDX(qval1,qval2)];
+            else
+                num = c->qtrset[TS_IDX(qval2,qval1)];
             count[i][j] += num;
-            sum[i][j] += num * val_x;
+            sum[i][j] += num * val1;
         }
     }
 
-	for(k = 0; k < CODEBOOK_SIZE_X; k++){
-		for(l = 0; l < CODEBOOK_SIZE_Y; l++){
+    /*
+     * Compute new centroid by placing them at the expected values of the
+     * source conditioned on the received indexes k, l.
+     */
+	for(k = 0; k < codebook_size1; k++){
+		for(l = 0; l < codebook_size2; l++){
 			numer = 0;
 			denom = 0;
-			for(i = 0; i < CODEBOOK_SIZE_X; i++){
-				for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-                    p = channel_prob(i,j,k,l);
-					numer += p * sum[i][j];
-					denom += p * count[i][j];
+			for(i = 0; i < codebook_size1; i++){
+				for(j = 0; j < codebook_size2; j++){
+                    if(src == SRC_X)
+                        prob = channel_prob(i,j,k,l);
+                    else
+                        prob = channel_prob(j,i,l,k);
+					numer += prob * sum[i][j];
+					denom += prob * count[i][j];
 				}
 			}
-			cv_x[k][l] = numer / denom;
+			codevec1[CV_IDX(k,l)] = numer / denom;
 		}
 	}
-}
-
-/* Updates the codevectors for the Y source using the centroid condition */
-void centroid_update_y() {
-	int count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
-	double sum[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
-	int num, i, j, k, l, q_val_x, q_val_y;
-	double val_y, p, numer, denom;
-
-
-    for(i = 0; i < CODEBOOK_SIZE_X; i++){
-        for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-            count[i][j] = 0;
-            sum[i][j] = 0;
-        }
-    }
-
-    for(q_val_y = 0; q_val_y < Q_LEVELS; q_val_y++){
-        j = encoder_y[q_val_y];
-        val_y = quant_to_vec(q_val_y, SRC_Y);
-        for(q_val_x = 0; q_val_x < Q_LEVELS; q_val_x++){
-            i = encoder_x[q_val_x];
-            num = q_trset[q_val_x][q_val_y];
-            count[i][j] += num;
-            sum[i][j] += num * val_y;
-        }
-    }
-
-	for(k = 0; k < CODEBOOK_SIZE_X; k++){
-		for(l = 0; l < CODEBOOK_SIZE_Y; l++){
-			numer = 0;
-			denom = 0;
-			for(i = 0; i < CODEBOOK_SIZE_X; i++){
-				for(j = 0; j < CODEBOOK_SIZE_Y; j++){
-                    p = channel_prob(i,j,k,l);
-					numer += p * sum[i][j];
-					denom += p * count[i][j];
-				}
-			}
-			cv_y[k][l] = numer / denom;
-		}
-	}
-}
-
-/* Updates the centroids for a given source by applying the centroid condition. */
-void centroid_update(int src) {
-    if(src == SRC_X)
-        centroid_update_x();
-    else
-        centroid_update_y();
 }
 

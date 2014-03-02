@@ -14,21 +14,9 @@ extern "C"{
 #include <stdlib.h> /* malloc, free, size_t */
 #include <math.h> /* pow, exp */
 
-// IO
-#define IO_DELIM ", "
-
 // Source Indicators
 #define SRC_X 0
 #define SRC_Y 1
-
-// Transition Probabilities for BSC
-#define TRANS_PROB_X 0.01
-#define TRANS_PROB_Y 0.01
-
-// Uniform Quantizer Parameters
-#define Q_LEVELS 100
-#define Q_LENGTH_X 4
-#define Q_LENGTH_Y 4
 
 // Simulated Annealing Constants
 #define TEMP_INIT 10.0
@@ -37,43 +25,57 @@ extern "C"{
 #define PHI 5 // energy drops until temperature drop
 #define PSI 200 // rejected swaps until temperature drop
 
-// Length of binary codewords (in bits), should be less than 8
-#define CODEWORD_LEN_X 3
-#define CODEWORD_LEN_Y 2
+// Codeword length should not exceed this value
+#define MAX_CODEWORD_LEN 8
+#define MAX_CODEBOOK_SIZE (1 << MAX_CODEWORD_LEN)
 
-#define CODEBOOK_SIZE_X (1 << CODEWORD_LEN_X)
-#define CODEBOOK_SIZE_Y (1 << CODEWORD_LEN_Y)
+typedef struct{
 
-// Typedefs
-typedef int quant_lvls[Q_LEVELS][Q_LEVELS];
-typedef double codevectors[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y];
+    /*
+     * Uniform Quantizer Parameters
+     * The number of uniform quantization levels is determined by qlvls. The
+     * length of the entire quantization interval is given by qlen_x for the
+     * x-source and qlen_y for the y-source. The width of each individual
+     * quantization interval is therefore qlen_x/qlvls for the x-source and
+     * qlen_y/qlvls for the y-source.
+     *
+     */
+    unsigned int qlvls;
+    double qlen_x, qlen_y;
 
-typedef int encoder[Q_LEVELS];
-typedef int codewords_x[CODEBOOK_SIZE_X];
-typedef int codewords_y[CODEBOOK_SIZE_Y];
 
-// Output Global Variables
-extern quant_lvls q_trset;
-extern encoder encoder_x;
-extern encoder encoder_y;
-extern codevectors cv_x;
-extern codevectors cv_y; 
-extern codewords_x bin_cw_x;
-extern codewords_y bin_cw_y;
+    /*
+     * Encoder Parameters
+     * 
+     */
+    unsigned char cwlen_x, cwlen_y;
 
-// Input Global Variables
-extern int trset_size;
-extern double *trset_x, *trset_y;
+    /*
+     * Training Set
+     *
+     */
+    double *trset_x;
+    double *trset_y;
+    unsigned int trset_size;
+
+
+    /*
+     * Channel Transition Probability Function
+     *
+     */
+    double (*transition_prob)(int i, int j, int k, int l);
+} params_covq2;
+
+typedef struct{
+
+    int *qtrset;
+    int *encoder_x, *encoder_y;
+    double *codevec_x, *codevec_y;
+    int *cwmap_x, *cwmap_y;
+} covq2;
 
 // Simulated Annealing (anneal.c)
 void anneal();
-
-// Printing and IO (io.c)
-int get_next_csv_record(FILE *stream, double record[2]);
-void print_int(FILE *stream, int *arr, int rows, int cols);
-void print_double(FILE *stream, double *arr, int rows, int cols);
-int csvwrite_int(char *filename, int *arr, int rows, int cols);
-int csvwrite_double(char *filename, double *arr, int rows, int cols);
 
 // Quantization (quantize.c)
 int vec_to_quant(double x, int *outlier, int src);
@@ -81,10 +83,10 @@ double quant_to_vec(int x, int src);
 int quantize(FILE *stream);
 
 // COVQ (covq.c)
+double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, params_covq2 *p);
+void centroid_update(int src, covq2 *c, params_covq2 *p);
 double channel_prob(int i, int j, int k, int l);
-double nearest_neighbour(int q_lvl, int *index, int src, int init);
 double nn_update();
-void centroid_update(int src);
 int bsc_2_source_covq();
 
 // Running (running.c)

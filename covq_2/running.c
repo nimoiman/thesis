@@ -70,7 +70,7 @@ void run(void){
     int i, j;
     double d;
     for( j = 0; j < 1; j++ ){
-        for( i = 0; i < 5000; i++ ){
+        for( i = 0; i < 50; i++ ){
             centroid_update( SRC_X );
             d = nn_update( 0 );
             centroid_update( SRC_Y );
