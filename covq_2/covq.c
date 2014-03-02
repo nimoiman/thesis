@@ -1,8 +1,4 @@
 #include "covq.h"
-#define CODEBOOK_SIZE_X (1 << p->cwlen_x)
-#define CODEBOOK_SIZE_Y (1 << p->cwlen_y)
-#define CV_IDX(i,j) j * CODEBOOK_SIZE_X + i
-#define TS_IDX(i,j) j * p->qlvls * i
 
 /* Finds the index i of minimum expected distortion for a given value of x.
  * For a given x quantization level (q_lvl_x), find the index i (*index) that
@@ -69,7 +65,7 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
             else
                 num = c->qtrset[TS_IDX(qlvl2,qlvl1)];
             j = encoder2[qlvl2]; // Encoding index
-            val2 = quant_to_vec(qlvl2, src2); // value
+            val2 = quant_to_vec(qlvl2, src2, p); // value
 
             count += num;
             prob2[j] += num;
@@ -92,7 +88,7 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
                 num = c->qtrset[TS_IDX(qlvl1,qlvl2)];
             else
                 num = c->qtrset[TS_IDX(qlvl2,qlvl1)];
-            val1 = quant_to_vec(qlvl2, SRC_Y); // value
+            val1 = quant_to_vec(qlvl2, SRC_Y, p); // value
 
             count += num;
             expected_val2[0] += num * val1;
@@ -114,7 +110,7 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
      * d_best. The best index is sent to *idx. We use the equation illustrated
      * in the paper to compute the distortion.
      */
-	val1 = quant_to_vec(qlvl1, src);
+	val1 = quant_to_vec(qlvl1, src, p);
     d_best = -1;
 	for(i = 0; i < codebook_size1; i++){
 		d = var2;
@@ -125,12 +121,12 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
                         d += (POW2(val1 - codevec1[CV_IDX(k,l)])
                                 -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
                                 + POW2(codevec2[CV_IDX(k,l)]))
-                            *prob2[j] * channel_prob(i,j,k,l);
+                            *prob2[j] * p->transition_prob(i,j,k,l);
                     else
                         d += (POW2(val1 - codevec1[CV_IDX(k,l)])
                                 -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
                                 + POW2(codevec2[CV_IDX(k,l)]))
-                            *prob2[j] * channel_prob(i,j,k,l);
+                            *prob2[j] * p->transition_prob(i,j,k,l);
                 }
             }
         }
@@ -215,7 +211,7 @@ void centroid_update(int src, covq2 *c, params_covq2 *p) {
      */
     for(qval1 = 0; qval1 < p->qlvls; qval1++){
         i = encoder1[qval1];
-        val1 = quant_to_vec(qval1, src);
+        val1 = quant_to_vec(qval1, src, p);
         for(qval2 = 0; qval2 < p->qlvls; qval2++){
             j = encoder2[qval2];
             if(src == SRC_X)
@@ -238,9 +234,9 @@ void centroid_update(int src, covq2 *c, params_covq2 *p) {
 			for(i = 0; i < codebook_size1; i++){
 				for(j = 0; j < codebook_size2; j++){
                     if(src == SRC_X)
-                        prob = channel_prob(i,j,k,l);
+                        prob = p->transition_prob(i,j,k,l);
                     else
-                        prob = channel_prob(j,i,l,k);
+                        prob = p->transition_prob(j,i,l,k);
 					numer += prob * sum[i][j];
 					denom += prob * count[i][j];
 				}

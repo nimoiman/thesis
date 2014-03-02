@@ -1,5 +1,12 @@
 #include "covq.h"
 
+// Simulated Annealing Constants
+#define TEMP_INIT 10.0
+#define COOLING_RATE 0.8
+#define TEMP_FINAL 0.00025
+#define PHI 5 // energy drops until temperature drop
+#define PSI 200 // rejected swaps until temperature drop
+
 /* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
 void transmission_prob(int codebook_count[CODEBOOK_SIZE_X][CODEBOOK_SIZE_Y]) {
     int i, j, q_x, q_y;

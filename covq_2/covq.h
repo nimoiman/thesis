@@ -8,6 +8,11 @@ extern "C"{
 #define POW2(x) ((x)*(x))    
 #define IN_RANGE(x, low, high) ((low) <= (x) && (x) <= (high))
 
+#define CODEBOOK_SIZE_X (1 << p->cwlen_x)
+#define CODEBOOK_SIZE_Y (1 << p->cwlen_y)
+#define CV_IDX(i,j) (j * CODEBOOK_SIZE_X + i)
+#define TS_IDX(i,j) (j * p->qlvls * i)
+
 // Includes
 #include <assert.h>
 #include <stdio.h> /* sprintf */
@@ -18,15 +23,8 @@ extern "C"{
 #define SRC_X 0
 #define SRC_Y 1
 
-// Simulated Annealing Constants
-#define TEMP_INIT 10.0
-#define COOLING_RATE 0.8
-#define TEMP_FINAL 0.00025
-#define PHI 5 // energy drops until temperature drop
-#define PSI 200 // rejected swaps until temperature drop
-
 // Codeword length should not exceed this value
-#define MAX_CODEWORD_LEN 8
+#define MAX_CODEWORD_LEN 4
 #define MAX_CODEBOOK_SIZE (1 << MAX_CODEWORD_LEN)
 
 typedef struct{
@@ -77,23 +75,28 @@ typedef struct{
 // Simulated Annealing (anneal.c)
 void anneal();
 
-// Quantization (quantize.c)
-int vec_to_quant(double x, int *outlier, int src);
-double quant_to_vec(int x, int src);
-int quantize(FILE *stream);
+/*
+ * util.c
+ *
+ */
+int vec_to_quant(double x, int *outlier, int src, params_covq2 *p);
+double quant_to_vec(int qlvl, int src, params_covq2 *p);
+int quantize(double *trset_x, double *trset_y, int *qtrset, covq2 *c, params_covq2 *p);
+int init_covq2_struct(covq2 *c, params_covq2 *p);
+void destroy_covq2_struct(covq2 *c);
+void print_double(FILE *stream, double *arr, int rows, int cols);
+int fprintf_int(char *filename, int *arr, int rows, int cols);
+int fprintf_double(char *filename, double *arr, int rows, int cols);
+void assert_globals(covq2 *c, params_covq2 *p);
 
 // COVQ (covq.c)
 double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, params_covq2 *p);
 void centroid_update(int src, covq2 *c, params_covq2 *p);
-double channel_prob(int i, int j, int k, int l);
-double nn_update();
-int bsc_2_source_covq();
+double nn_update(int init, covq2 *c, params_covq2 *p;
+void centroid_update(int src, covq2 *c, params_covq2 *p);
 
 // Running (running.c)
-void init_binary_codewords(void);
-void init(FILE *stream);
-void assert_globals(void);
-void run(void);
+void run(covq2 *c, params_covq2 *p);
 
 #ifdef __cplusplus
 }
