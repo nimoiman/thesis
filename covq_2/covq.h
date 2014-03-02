@@ -41,7 +41,6 @@ typedef struct{
     unsigned int qlvls;
     double qlen_x, qlen_y;
 
-
     /*
      * Encoder Parameters
      * 
@@ -55,7 +54,6 @@ typedef struct{
     double *trset_x;
     double *trset_y;
     unsigned int trset_size;
-
 
     /*
      * Channel Transition Probability Function
@@ -72,6 +70,12 @@ typedef struct{
     int *cwmap_x, *cwmap_y;
 } covq2;
 
+typedef struct{
+    double *simset_x;
+    double *simset_y;
+    int simset_size;
+    void (*channel_sim)(int i, int j, int *k, int *l);
+} sim_covq2;
 // Simulated Annealing (anneal.c)
 void anneal();
 
@@ -81,22 +85,18 @@ void anneal();
  */
 int vec_to_quant(double x, int *outlier, int src, params_covq2 *p);
 double quant_to_vec(int qlvl, int src, params_covq2 *p);
-int quantize(double *trset_x, double *trset_y, int *qtrset, covq2 *c, params_covq2 *p);
-int init_covq2_struct(covq2 *c, params_covq2 *p);
 void destroy_covq2_struct(covq2 *c);
 void print_double(FILE *stream, double *arr, int rows, int cols);
 int fprintf_int(char *filename, int *arr, int rows, int cols);
 int fprintf_double(char *filename, double *arr, int rows, int cols);
 void assert_globals(covq2 *c, params_covq2 *p);
+int run(covq2 *c, params_covq2 *p);
 
 // COVQ (covq.c)
+double nn_update(int init, covq2 *c, params_covq2 *p);
 double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, params_covq2 *p);
 void centroid_update(int src, covq2 *c, params_covq2 *p);
-double nn_update(int init, covq2 *c, params_covq2 *p;
-void centroid_update(int src, covq2 *c, params_covq2 *p);
 
-// Running (running.c)
-void run(covq2 *c, params_covq2 *p);
 
 #ifdef __cplusplus
 }
