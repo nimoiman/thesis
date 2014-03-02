@@ -5,11 +5,12 @@
    for x in *train, ensures j := partition_index(x) minimizes:
    sum_k(Pr(k received|j sent) * MSE(x, codebook[j]))
 
-   note: Pr(k received|j sent) = BSC_ERROR_PROB * hamming_distance(k, j),
+   note: Pr(k received|j sent) = error_prob * hamming_distance(k, j),
    MSE(x, codebook[j]) = dist(x, codebook[j])
 */
 double nearest_neighbour(vectorset *train, vectorset *codebook,
-                         int *partition_index, int *count, int *cw_map) {
+                         int *partition_index, int *count, int *cw_map,
+                         double error_prob) {
     int i, j, k;
     double new_distance, best_distance, total_distance;
     // initialize partition indices to "arbitrary" codebook vector
@@ -28,8 +29,9 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
             // linear search for nearest neighbour for now
             new_distance = 0;
             for (k = 0; k < codebook->size; k++) {
-                new_distance += channel_prob(k, j, BSC_ERROR_PROB,
-                    log2(codebook->size), cw_map) * dist(train->v[i], codebook->v[j]);
+                new_distance += channel_prob(k, j, error_prob,
+                    log2(codebook->size), cw_map) * dist(train->v[i],
+                    codebook->v[j], train->dim);
             }
             
             if (new_distance < best_distance) {
@@ -54,54 +56,67 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
    codebook->v[i] = sum_j(Pr(i received|j sent) * partition_euclidean_centroid)
                     / sum_j(Pr(i received|j sent) * partition_probability)
    
-   note: Pr(i received|j sent) = BSC_ERROR_PROB * hamming_distance(i, j)
+   note: Pr(i received|j sent) = error_prob * hamming_distance(i, j)
  */
 void update_centroids(vectorset *train, vectorset *codebook,
-                      int *partition_index, int *count, int *cw_map) {
+                      int *partition_index, int *count, int *cw_map,
+                      double error_prob) {
     int i, j, k, dim;
-    double partition_euclidean_centroid[VECTOR_DIM], partition_probability;
-    double numerator[VECTOR_DIM], denominator;
+    double *partition_euclidean_centroid, partition_probability;
+    double *numerator, denominator;
+
+    // allocate numerator, partition_euclidean_centroid
+    numerator = calloc(train->dim, sizeof(double));
+    partition_euclidean_centroid = calloc(train->dim, sizeof(double));
 
     for (i = 0; i < codebook->size; i++) {
-        for (dim = 0; dim < VECTOR_DIM; dim++) {
-            numerator[dim] = 0;
+        // zero numerator
+        for (j = 0; j < train->dim; j++) {
+            numerator[j] = 0;
         }
         denominator = 0;
         for (j = 0; j < codebook->size; j++) {
-            for (dim = 0; dim < VECTOR_DIM; dim++) {
+            for (dim = 0; dim < codebook->dim; dim++) {
                 partition_euclidean_centroid[dim] = 0;
             }
             for (k = 0; k < train->size; k++) {
                 if (partition_index[k] == j) {
-                    for (dim = 0; dim < VECTOR_DIM; dim++) {
+                    for (dim = 0; dim < codebook->dim; dim++) {
                         partition_euclidean_centroid[dim] += train->v[k][dim];
                     }
                 }
             }
-            for (dim = 0; dim < VECTOR_DIM; dim++) {
+            for (dim = 0; dim < train->dim; dim++) {
                 partition_euclidean_centroid[dim] /= train->size;
             }
 
-            partition_probability = (double) count[j] / train->size;
+            partition_probability = ((double) count[j]) / train->size;
+            assert(partition_probability >= 0);
+            assert(partition_probability <= 1);
 
-            for (dim = 0; dim < VECTOR_DIM; dim++) {
-                numerator[dim] += channel_prob(i, j, BSC_ERROR_PROB,
+            for (dim = 0; dim < train->dim; dim++) {
+                numerator[dim] += channel_prob(i, j, error_prob,
                     log2(codebook->size), cw_map) * partition_euclidean_centroid[dim];
             }
 
-            denominator += channel_prob(i, j, BSC_ERROR_PROB,
+            denominator += channel_prob(i, j, error_prob,
                 log2(codebook->size), cw_map) * partition_probability;
         }
-        for (dim = 0; dim < VECTOR_DIM; dim++) {
+
+        assert(denominator > 0);
+        for (dim = 0; dim < codebook->dim; dim++) {
             codebook->v[i][dim] = numerator[dim] / denominator;
         }
     }
+    free(numerator);
+    free(partition_euclidean_centroid);
 }
 
 
 
 /* note: n_splits should be less than log_2(INT_MAX)=16 */
-vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits) {
+vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits,
+                    double error_prob) {
     double d_new, d_old;
     int i, j, k, *partition_index, *count;
     vectorset *codebook;
@@ -113,7 +128,7 @@ vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits) {
         free(partition_index);
         return NULL;
     }
-    else if (!(codebook = init_vectorset(1 << n_splits))) {
+    else if (!(codebook = init_vectorset(1 << n_splits, train->dim))) {
         free(partition_index);
         free(count);
         return NULL;
@@ -121,39 +136,41 @@ vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits) {
 
     /* Initialize codebook as single zero vector */
     codebook->size = 1;
-    for (i = 0; i < VECTOR_DIM; i++) {
+    for (i = 0; i < codebook->dim; i++) {
         codebook->v[0][i] = 0;
     }
 
-    d_new = DBL_MAX; // iteration minimizes d_new
-
     // iterate through n_splits
-    for (i = 0; i < n_splits; i++) {
+    for (i = 0; i <= n_splits; i++) {
+        d_new = DBL_MAX; // iteration minimizes d_new
         do {
             d_old = d_new;
             // satisfy nearest neighbour criterion on decoder's end
             d_new = nearest_neighbour(train, codebook, partition_index, count,
-                cw_map);
+                cw_map, error_prob);
             // satisfy centroid criterion on encoder's end
-            update_centroids(train, codebook, partition_index, count, cw_map);
+            update_centroids(train, codebook, partition_index, count, cw_map,
+                error_prob);
 
         } while (d_old > (1 + LBG_EPS) * d_new);
 
-        /* Split each codevector, add splitted vector to codebook */
-
-        for (j = 0; j < codebook->size; j++) {
-            // iterate through vector components
-            for (k = 0; k < VECTOR_DIM; k++) {
-                // note that, since codebook->size is a power of 2,
-                // and codebook->size > j,
-                // hamming_distance(j, j + codebook) == 1 (i.e. minimal)
-                codebook->v[j + codebook->size][k] = codebook->v[j][k]
-                    + CODE_VECTOR_DISPLACE;
+        if (i < n_splits) {
+            /* Split each codevector, add splitted vector to codebook */
+            for (j = 0; j < codebook->size; j++) {
+                // iterate through vector components
+                for (k = 0; k < codebook->dim; k++) {
+                    // note that, since codebook->size is a power of 2,
+                    // and codebook->size > j,
+                    // hamming_distance(j, j + codebook) == 1 (i.e. minimal)
+                    codebook->v[j + codebook->size][k] = codebook->v[j][k]
+                        + CODE_VECTOR_DISPLACE;
+                }
             }
+            // set codebook size
+            codebook->size = 1 << (i+1); // 2^(i+1)
         }
-        // set codebook size
-        codebook->size = 1 << (i+1); // 2^(i+1)
     }
+    printf("theoretical distortion = %f\n", d_new);
     free(partition_index);
     free(count);
     return codebook;

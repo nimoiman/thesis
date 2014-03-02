@@ -10,7 +10,8 @@ void swap(int *i, int *j) {
 }
 
 /* get energy of current binary index assignment */
-double energy(vectorset *codebook, int *count, int *cw_map, int trset_size) {
+double energy(vectorset *codebook, int *count, int *cw_map, int trset_size,
+              double error_prob) {
     int i, j, k, el;
     double eucl_dist;
     double sum = 0;
@@ -20,7 +21,7 @@ double energy(vectorset *codebook, int *count, int *cw_map, int trset_size) {
         inner_sum = 0;
         for (j = 0; j < codebook->size; j++) {
             eucl_dist = POW2(codebook->v[i] - codebook->v[j]);
-            inner_sum += channel_prob(i, j, BSC_ERROR_PROB,
+            inner_sum += channel_prob(i, j, error_prob,
                 log2(codebook->size), cw_map) * eucl_dist;
         }
         assert(inner_sum >= 0);
@@ -42,13 +43,14 @@ int rand_lim(int limit) {
     return retval;
 }
 
-void anneal(vectorset *codebook, int *count, int *cw_map, int trset_size) {
+void anneal(vectorset *codebook, int *count, int *cw_map, int trset_size,
+            double error_prob) {
     double new_energy, old_energy;
     double T = TEMP_INIT;
     int drop_count = 0, fail_count = 0;
     int i, j;
 
-    old_energy = energy(codebook, count, cw_map, trset_size);
+    old_energy = energy(codebook, count, cw_map, trset_size, error_prob);
 
     while (T > TEMP_FINAL) {
         // randomly choose two indices in [0, codebook->size-1]
@@ -59,7 +61,7 @@ void anneal(vectorset *codebook, int *count, int *cw_map, int trset_size) {
         swap(cw_map + i, cw_map + j);
 
         // find the difference in new state's energy from old energy
-        new_energy = energy(codebook, count, cw_map, trset_size);
+        new_energy = energy(codebook, count, cw_map, trset_size, error_prob);
         
         // keep swap if energy drop
         // else keep swap with probability e^{-rise/T}

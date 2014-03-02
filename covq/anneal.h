@@ -16,6 +16,9 @@ extern "C" {
 #include "vector.h" /* vectorset */
 #include "channel.h" /* BSC_ERROR_PROB */
 
+void anneal(vectorset *codebook, int *count, int *cw_map, int trset_size,
+            double error_prob);
+
 #ifdef __cplusplus
 }
 #endif

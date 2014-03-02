@@ -31,47 +31,34 @@ int get_next_csv_record(FILE *stream, double *record, int vector_dim) {
     }
 }
 
-void print_int(FILE *stream, int *arr, int rows, int cols){
+void print_vector(FILE *stream, double *v, int dim) {
+    int i;
+    for (i = 0; i < dim; i++) {
+        fprintf(stream, "%f%s", v[i], (i < dim - 1) ? IO_DELIM : "\n");
+    }
+}
+
+// Prints a vectorset to file stream
+// One vector per row, delimited by IO_DELIM
+void print_vectorset(FILE *stream, vectorset *vset) {
     int i, j;
-    for(i = 0; i < rows; i++){
-        for(j = 0; j < cols - 1; j++)
-            fprintf(stream, "%d%s", arr[cols*i + j], IO_DELIM);
-        fprintf(stream, "%d\n", arr[cols*i + j]);
+    for (i = 0; i < vset->size; i++) {
+        print_vector(stream, vset->v[i], vset->dim);
     }
 }
 
-void print_double(FILE *stream, double *arr, int rows, int cols){
+void print_int(FILE *stream, int *arr, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        fprintf(stream, "%d%s", arr[i], (i < size-1) ? IO_DELIM : "\n");
+    }
+}
+
+void print_2d_int(FILE *stream, int **arr, int rows, int cols) {
     int i, j;
-    for(i = 0; i < rows; i++){
-        for(j = 0; j < cols - 1; j++)
-            fprintf(stream, "%f%s", arr[cols*i + j], IO_DELIM);
-        fprintf(stream, "%f\n", arr[cols*i + j]);
-    }
-}
-
-int csvwrite_int(char *filename, int *arr, int rows, int cols){
-    FILE *pFile = fopen(filename, "w");
-
-    if( pFile != NULL ){
-        print_int(pFile, arr, rows, cols);
-        fclose(pFile);
-        return 1;
-    }else{
-        fprintf(stderr, "ERROR: Could not open %s\n", filename);
-        return 0;
-    }
-}
-
-
-int csvwrite_double(char *filename, double *arr, int rows, int cols){
-    FILE *pFile = fopen(filename, "w");
-
-    if( pFile != NULL ){
-        print_double(pFile, arr, rows, cols);
-        fclose(pFile);
-        return 1;
-    }else{
-        fprintf(stderr, "ERROR: Could not open %s\n", filename);
-        return 0;
+    for (i = 0; i < rows; i++) {
+        for (j = 0; j < cols; j++) {
+            fprintf(stream, "%d%s", arr[i][j], (j < cols-1) ? IO_DELIM: "\n");
+        }
     }
 }

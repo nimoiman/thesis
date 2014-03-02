@@ -1,19 +1,26 @@
 #include "covq.h"
 
 int main(int argc, char *argv[]) {
-    int i, j;
+    int i;
     int tr_size, test_size;
-    int nsplits = 7;
+    int vector_dim = 2;
+    int nsplits = 5;
+    double error_prob = 0;
     vectorset *train, *test, *c;
-    double *d;
+    double distortion;
     FILE *fp;
     // Codeword map for simulated annealing
-    int *cw_map = malloc(sizeof(int) * nsplits);
+    int *cw_map = malloc(sizeof(int) * (1 << nsplits));
+
+    // initialize cw_map to the identity mapping
+    for (i = 0; i < (1 << nsplits); i++) {
+        cw_map[i] = i;
+    }
 
     // Expects input of training set csv name and testing set csv name
 
-    if(argc != 5) {
-        fprintf(stderr, "Usage: covq tr_set.csv test_set.csv codebook_out.csv distortion_out.csv\n");
+    if (argc != 4) {
+        fprintf(stderr, "Usage: covq tr_set.csv test_set.csv codebook_out.csv\n");
         exit(1);
     }
 
@@ -23,36 +30,31 @@ int main(int argc, char *argv[]) {
     tr_size = get_num_lines(fp);
 
     // allocate training vector set
-    if (!(train = init_vectorset(tr_size))) {
+    if (!(train = init_vectorset(tr_size, vector_dim))) {
         fprintf(stderr, "Could not allocate training vector array.\n");
         exit(1);
     }
+    printf("Allocated train\n");
 
     rewind(fp);
     // read in training set
-    for (i = 0; i < tr_size; i++) {
-        for (j = 0; j < VECTOR_DIM; j++) {
-            get_next_csv_record(fp, train->v[i]);
-        }
+    for (i = 0; i < train->size; i++) {
+        get_next_csv_record(fp, train->v[i], train->dim);
     }
     fclose(fp);
+    printf("Initialized train\n");
 
     /* Reset random seed */
     srand(1234);
 
     /* Generate codebook from training set */
-    c = bsc_covq(train, cw_map, nsplits);
+    c = bsc_covq(train, cw_map, nsplits, error_prob);
     destroy_vectorset(train);
 
-    /* Output codebook to file */
-    fp = fopen(argv[2], "w");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open codebook file %s\n", argv[2]);
-        exit(1);
-    }
+    /* Write codebook to file */
+    fp = fopen(argv[3], "w");
     print_vectorset(fp, c);
     fclose(fp);
-
 
     /* Open test_set.csv for reading */
     fp = fopen(argv[2], "r");
@@ -60,24 +62,22 @@ int main(int argc, char *argv[]) {
     test_size = get_num_lines(fp);
 
     // allocate testing vector set
-    if (!(test = init_vectorset(test_size))) {
+    if (!(test = init_vectorset(test_size, vector_dim))) {
         fprintf(stderr, "Could not allocate test vector array.\n");
         exit(1);
     }
 
     rewind(fp);
     /* Read in test data */
-    for (i = 0; i < test_size; i++) {
-        for (j = 0; j < VECTOR_DIM; j++) {
-            get_next_csv_record(fp, test->v[i]);
-        }
+    for (i = 0; i < test->size; i++) {
+        get_next_csv_record(fp, test->v[i], test->dim);
     }
     fclose(fp);
 
     /* Run on test data */
+    distortion = run_test(c, cw_map, test, error_prob);
+    printf("test distortion = %f\n", distortion);
 
-
-    /* Output distortions to distortion_out.csv */
     free(cw_map);
     destroy_vectorset(test);
     destroy_vectorset(c);

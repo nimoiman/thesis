@@ -15,9 +15,9 @@ extern "C"{
 
 #define LBG_EPS 0.001
 #define CODE_VECTOR_DISPLACE 0.001
-#define EMPIRICAL_GRANULARITY 100
 
-vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits);
+vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits,
+                    double error_prob);
 
 #ifdef __cplusplus
 }

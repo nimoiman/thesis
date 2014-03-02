@@ -9,14 +9,13 @@ extern "C"{
 #include <stdlib.h> /* rand, srand, RAND_MAX */
 #include <time.h> /* time (for rand seed) */
 #include <stdio.h>
-#include "vector.h" /* vectorset */
+#include <float.h> /* DBL_MAX */
+#include <assert.h> /* assert */
+#include "vector.h" /* vectorset, dist */
 
-#define BSC_ERROR_PROB 0.1
-
-double drand();
-double box_muller(double mean, double var);
-void gaussian_channel(double *vector, int dim, double mean, double var);
 double channel_prob(int i, int j, double error_prob, int length, int *cw_map);
+double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
+                double error_prob);
 
 #ifdef __cplusplus
 }
