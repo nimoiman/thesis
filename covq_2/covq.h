@@ -26,7 +26,7 @@ extern "C"{
 // Codeword length should not exceed this value
 #define MAX_CODEWORD_LEN 4
 #define MAX_CODEBOOK_SIZE (1 << MAX_CODEWORD_LEN)
-
+#define TRSET_SIZE_MAX 10000
 typedef struct{
 
     /*
@@ -90,7 +90,7 @@ void print_double(FILE *stream, double *arr, int rows, int cols);
 int fprintf_int(char *filename, int *arr, int rows, int cols);
 int fprintf_double(char *filename, double *arr, int rows, int cols);
 void assert_globals(covq2 *c, params_covq2 *p);
-int run(covq2 *c, params_covq2 *p);
+int run(covq2 *c, double *d, params_covq2 *p);
 
 // COVQ (covq.c)
 double nn_update(int init, covq2 *c, params_covq2 *p);

@@ -13,6 +13,10 @@ int main( int argc, const char* argv[] ){
     params_covq2 p;
     covq2 *c;
     int trset_size = 0;
+    double *trset_x, *trset_y;
+    char line[LINE_LEN];
+    int param_count;
+    double distortion;
 
     /*
      * Set COVQ 2 Parameters
@@ -31,7 +35,23 @@ int main( int argc, const char* argv[] ){
         fprintf(stderr, "Could not open training set file.\n");
         return 0;
     }
-    while((line = 
+    trset_x = (double*) malloc(TRSET_SIZE_MAX * sizeof(double));
+    trset_y = (double*) malloc(TRSET_SIZE_MAX * sizeof(double));
+    if(!trset_x){
+        fprintf(stderr, "Could not allocate memory for training set.\n");
+        free(trset_x);
+        free(trset_y);
+        return 0;
+    }
+    while(fgets(line, LINE_LEN, pFile) != NULL){
+        param_count = sscanf(line, "%lf,%lf", trset_x + trset_size, trset_y + trset_size);
+        if( param_count != 2 ){
+            fprintf(stderr, "Invalid training set format.\n");
+            free(trset_x);
+            free(trset_y);
+            return 0;
+        }
+    }
 
     /*
      * Set seed and run.
@@ -39,8 +59,10 @@ int main( int argc, const char* argv[] ){
      * encoder mapping in c.
      */
     srand(1);
-    if( run( c, &p ) == 0 )
+    if( run( c, &distortion, &p ) == 0 )
         // Stop if it didn't work
+        free(trset_x);
+        free(trset_y);
         return 0;
     // Make sure everything is in order
     assert_globals(c, &p);
@@ -61,6 +83,9 @@ int main( int argc, const char* argv[] ){
         qlvls[i] = quant_to_vec(i, SRC_Y, &p);
     fprintf_double("qlvls_y.csv", qlvls, 1, p.qlvls);
 
+    destroy_covq2_struct(c);
+    free(trset_x);
+    free(trset_y);
     return 1;
 }
 
