@@ -14,7 +14,7 @@ extern "C"{
 #include "anneal.h" /* anneal */
 
 #define LBG_EPS 0.001
-#define CODE_VECTOR_DISPLACE 0.001
+#define CODE_VECTOR_DISPLACE 0.01
 
 vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits,
                     double error_prob);

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I. -g -O2
+CFLAGS=-I. -g -O2 -Wall -Wextra -Wpedantic -std=gnu99
 LDFLAGS=-lm
 
 vq_DIR=vq/

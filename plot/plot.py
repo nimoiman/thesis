@@ -20,6 +20,13 @@ def plot_codevectors_vs_training_data(training_set_filename, codevector_filename
 
     plt.show()
     
+@command
+def scatter_2d(*args):
+    for filename in args:
+        fp = open(filename, 'r')
+        data = [[float(n) for n in l.split(',')] for l in fp.readlines()]
+        plt.scatter([t[0] for t in data], [t[1] for t in data])
+    plt.show()
 
 if __name__ == '__main__':
     parse_args()
