@@ -33,10 +33,10 @@ double energy(int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE],
                     inner_sum += p->transition_prob(i, j, k, el, p, c) * eucl_dist;
                 }
             }
-            assert(inner_sum >= 0);
             sum += inner_sum * codebook_count[i][j];
         }
     }
+    // assert( sum >= 0 );
     return sum / p->trset_size;
 }
 

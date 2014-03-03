@@ -51,7 +51,7 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
         expected_val2[i] = 0;
     }
 
-    assert(IN_RANGE(qlvl1, 0, p->qlvls-1));
+    // assert(IN_RANGE(qlvl1, 0, p->qlvls-1));
     
     /*
      * Compute var2, expected_val2, and prob2.
@@ -132,7 +132,6 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
                                 -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
                                 + POW2(codevec2[CV_IDX(k,l)]))
                             *prob2[j] * p->transition_prob(i,j,k,l,p,c);
-                    assert(d >= 0);
                 }
             }
         }
@@ -142,6 +141,7 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
 		}
 	}
 
+    // assert(d >= -0.5);
 	return d_best;
 }
 

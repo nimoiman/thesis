@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include "covq.h"
+
 #define QLVLS 25
 #define LINE_LEN 100
-
 
 #define TRSET_FILE "training_set.csv"
 #define ENCODER_X_FILE "encoder_x.csv"
 #define ENCODER_Y_FILE "encoder_y.csv"
 #define CODEVEC_X_FILE "x_ij.csv"
 #define CODEVEC_Y_FILE "y_ij.csv"
+
+#define EPS_INIT 0.02
+#define EPS_FINAL 0.5
+#define EPS_INC 0.005
+#define SEPS_INIT 1
+#define SEPS_INC 0.1
 
 double trans_prob_x = 0.01;
 double trans_prob_y = 0.01;
@@ -53,6 +59,22 @@ double channel_prob(int i, int j, int k, int l, params_covq2 *p, covq2 *c){
     return prob;
 }
 
+double eps_sweep(double eps0, double eps1, double eps_inc, params_covq2 *p, covq2 *c){
+    double eps;
+    double distortion;
+
+    for(eps = eps0; eps > eps1; eps -= eps_inc){
+        trans_prob_x = eps;
+        trans_prob_y = eps;
+        run(&distortion, c, p);
+    }
+    trans_prob_x = eps1;
+    trans_prob_y = eps1;
+    run(&distortion, c, p);
+
+    return distortion;
+}
+
 int main( int argc, const char* argv[] ){
     int i,j;
     FILE * pFile;
@@ -62,8 +84,7 @@ int main( int argc, const char* argv[] ){
     char line[LINE_LEN];
     int param_count;
     double distortion;
-    double tprob;
-    int tsize;
+    double eps;
 
     /*
      * Set COVQ 2 Parameters
@@ -103,14 +124,12 @@ int main( int argc, const char* argv[] ){
         p.trset_size++;
     }
 
-    tsize = p.trset_size;
     srand(1);
-    for( tprob = 0.001; tprob < 0.5; tprob += 0.001 ){
-        trans_prob_x = tprob;
-        trans_prob_y = tprob;
-
-        run( &c, &distortion, &p );
-        printf("%lf, %lf\n", tprob, distortion);
+    for( eps = EPS_INIT; eps < EPS_FINAL; eps += EPS_INC ){
+        init_covq2_struct( &c, &p );
+        distortion = eps_sweep(SEPS_INIT, eps, SEPS_INC, &p, &c);
+        destroy_covq2_struct( &c );
+        printf("%lf, %lf\n", eps, distortion);
     }
 
     /*
@@ -119,7 +138,7 @@ int main( int argc, const char* argv[] ){
      * encoder mapping in c.
      */
     srand(1);
-    if( run( &c, &distortion, &p ) == 0 )
+    if( run(&distortion,  &c, &p ) == 0 )
         // Stop if it didn't work
         free(p.trset_x);
         free(p.trset_y);
