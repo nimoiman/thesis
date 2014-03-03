@@ -11,7 +11,7 @@ extern "C"{
 #define CODEBOOK_SIZE_X (1 << p->cwlen_x)
 #define CODEBOOK_SIZE_Y (1 << p->cwlen_y)
 #define CV_IDX(i,j) (j * CODEBOOK_SIZE_X + i)
-#define TS_IDX(i,j) (j * p->qlvls * i)
+#define TS_IDX(i,j) (j * p->qlvls + i)
 
 // Includes
 #include <assert.h>
@@ -26,8 +26,17 @@ extern "C"{
 // Codeword length should not exceed this value
 #define MAX_CODEWORD_LEN 4
 #define MAX_CODEBOOK_SIZE (1 << MAX_CODEWORD_LEN)
-#define TRSET_SIZE_MAX 10000
+#define TRSET_SIZE_MAX 20000
 typedef struct{
+
+    int qtrset_size;
+    int *qtrset;
+    int *encoder_x, *encoder_y;
+    double *codevec_x, *codevec_y;
+    int *cwmap_x, *cwmap_y;
+} covq2;
+
+typedef struct params{
 
     /*
      * Uniform Quantizer Parameters
@@ -59,16 +68,8 @@ typedef struct{
      * Channel Transition Probability Function
      *
      */
-    double (*transition_prob)(int i, int j, int k, int l);
+    double (*transition_prob)(int i, int j, int k, int l, struct params *p, covq2 *c);
 } params_covq2;
-
-typedef struct{
-
-    int *qtrset;
-    int *encoder_x, *encoder_y;
-    double *codevec_x, *codevec_y;
-    int *cwmap_x, *cwmap_y;
-} covq2;
 
 typedef struct{
     double *simset_x;

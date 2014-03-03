@@ -7,8 +7,6 @@
 #define PHI 5 // energy drops until temperature drop
 #define PSI 200 // rejected swaps until temperature drop
 
-/* Calculate the (unnormalized) probabilities of transmitting the pairs (i,j) */
-
 /* Helper function to swap integers *i and *j */
 void swap(int *i, int *j) {
     int tmp;
@@ -32,7 +30,7 @@ double energy(int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE],
                 for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
                     eucl_dist = POW2(c->codevec_x[CV_IDX(i,j)] - c->codevec_x[CV_IDX(k,el)]) +
                                 POW2(c->codevec_y[CV_IDX(i,j)] - c->codevec_y[CV_IDX(k, el)]);
-                    inner_sum += p->transition_prob(i, j, k, el) * eucl_dist;
+                    inner_sum += p->transition_prob(i, j, k, el, p, c) * eucl_dist;
                 }
             }
             assert(inner_sum >= 0);

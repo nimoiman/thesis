@@ -28,6 +28,8 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
         encoder2 = c->encoder_y;
         codebook_size1 = CODEBOOK_SIZE_X;
         codebook_size2 = CODEBOOK_SIZE_Y;
+        codevec1 = c->codevec_x;
+        codevec2 = c->codevec_y;
         src1 = SRC_X;
         src2 = SRC_Y;
     }
@@ -35,9 +37,10 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
         encoder2 = c->encoder_x;
         codebook_size1 = CODEBOOK_SIZE_Y;
         codebook_size2 = CODEBOOK_SIZE_X;
+        codevec1 = c->codevec_y;
+        codevec2 = c->codevec_x;
         src1 = SRC_Y;
         src2 = SRC_X;
-
     }
 
     /*
@@ -88,13 +91,15 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
                 num = c->qtrset[TS_IDX(qlvl1,qlvl2)];
             else
                 num = c->qtrset[TS_IDX(qlvl2,qlvl1)];
-            val1 = quant_to_vec(qlvl2, SRC_Y, p); // value
+            val1 = quant_to_vec(qlvl2, src2, p); // value
 
             count += num;
             expected_val2[0] += num * val1;
             var2 += num * POW2(val1);
         }
-        if(count == 0) return -1;
+        if(count == 0){
+            return -1;    
+        }
         var2 /= count;
         for(j = 0; j < codebook_size2; j++){
             expected_val2[j] = expected_val2[0] / count;
@@ -121,12 +126,13 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
                         d += (POW2(val1 - codevec1[CV_IDX(k,l)])
                                 -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
                                 + POW2(codevec2[CV_IDX(k,l)]))
-                            *prob2[j] * p->transition_prob(i,j,k,l);
+                            *prob2[j] * p->transition_prob(i,j,k,l,p,c);
                     else
                         d += (POW2(val1 - codevec1[CV_IDX(k,l)])
                                 -2 * codevec2[CV_IDX(k,l)] * expected_val2[j]
                                 + POW2(codevec2[CV_IDX(k,l)]))
-                            *prob2[j] * p->transition_prob(i,j,k,l);
+                            *prob2[j] * p->transition_prob(i,j,k,l,p,c);
+                    assert(d >= 0);
                 }
             }
         }
@@ -136,7 +142,6 @@ double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, param
 		}
 	}
 
-    assert(d_best >= 0);
 	return d_best;
 }
 
@@ -234,9 +239,9 @@ void centroid_update(int src, covq2 *c, params_covq2 *p) {
 			for(i = 0; i < codebook_size1; i++){
 				for(j = 0; j < codebook_size2; j++){
                     if(src == SRC_X)
-                        prob = p->transition_prob(i,j,k,l);
+                        prob = p->transition_prob(i,j,k,l,p,c);
                     else
-                        prob = p->transition_prob(j,i,l,k);
+                        prob = p->transition_prob(j,i,l,k,p,c);
 					numer += prob * sum[i][j];
 					denom += prob * count[i][j];
 				}
