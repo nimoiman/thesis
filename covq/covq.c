@@ -142,7 +142,14 @@ vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits,
 
     // iterate through n_splits
     for (i = 0; i <= n_splits; i++) {
-        d_new = DBL_MAX; // iteration minimizes d_new
+        d_new = nearest_neighbour(train, codebook, partition_index, count,
+                cw_map, error_prob);
+        // Ensure centroid condition met for annealing
+        update_centroids(train, codebook, partition_index, count, cw_map,
+                error_prob);
+        // Perform simulated annealing
+        anneal(codebook, count, cw_map, train->size, error_prob);
+
         do {
             d_old = d_new;
             // satisfy nearest neighbour criterion on decoder's end

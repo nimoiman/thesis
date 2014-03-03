@@ -5,7 +5,7 @@ int main(int argc, char *argv[]) {
     int tr_size, test_size;
     int vector_dim = 2;
     int nsplits = 5;
-    double error_prob = 0;
+    double error_prob = 0.001;
     vectorset *train, *test, *c;
     double distortion;
     FILE *fp;
@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Could not allocate training vector array.\n");
         exit(1);
     }
-    printf("Allocated train\n");
 
     rewind(fp);
     // read in training set
@@ -42,7 +41,6 @@ int main(int argc, char *argv[]) {
         get_next_csv_record(fp, train->v[i], train->dim);
     }
     fclose(fp);
-    printf("Initialized train\n");
 
     /* Reset random seed */
     srand(1234);
