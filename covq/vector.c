@@ -53,13 +53,7 @@ double dist(double *x, double *y, int dim){
 }
 
 int hamming_distance(int v_1, int v_2) {
-    int i, count;
-    count = 0;
-    for (i = 0; i < sizeof(int)*8; i++) {
-        // count the different bits
-        count += ((v_1 & (1 << i)) ^ (v_2 & (1 << i))) >> i; // 1 or 0
-    }
-    return count;
+    return __builtin_popcount(v_1 ^ v_2);
 }
 
 int vector_equals(double *v_1, double *v_2, int dim) {

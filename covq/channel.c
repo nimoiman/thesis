@@ -57,11 +57,15 @@ double channel_prob(int i, int j, double error_prob, int length,
 
 /* Nearest Neighbour encode vector, return channel index */
 int test_encode(double *vector, vectorset *codebook, int *cw_map) {
-    int i, channel_index = -1;
+    int i, j, channel_index = -1;
     double d = DBL_MAX;
     double d_new;
     for (i = 0; i < codebook->size; i++) {
-        d_new = dist(vector, codebook->v[i], codebook->dim);
+        d_new = 0;
+        for (j = 0; j < codebook->size; j++) {
+            d_new += channel_prob(j, i, error_prob, log2(codebook->size),
+                cw_map) * dist(vector, codebook->v[j], codebook->dim);
+        }
         if (d_new < d) {
             d = d_new;
             channel_index = cw_map[i];

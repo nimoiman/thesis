@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-I. -g -O2
 LDFLAGS=-lm
 
 vq_DIR=vq/
