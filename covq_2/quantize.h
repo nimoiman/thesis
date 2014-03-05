@@ -10,11 +10,10 @@ extern "C"{
 
 typedef struct{
 
-    int levels;
-    int num;
+    int nbins;
+    int npoints;
     double min;
     double max;
-    double len;
     int *bins;
 
 }uniform_quantizer;
