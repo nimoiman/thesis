@@ -10,11 +10,11 @@
 #define CODEVEC_X_FILE "x_ij.csv"
 #define CODEVEC_Y_FILE "y_ij.csv"
 
-#define EPS_INIT 0.02
-#define EPS_FINAL 0.5
-#define EPS_INC 0.005
-#define SEPS_INIT 1
-#define SEPS_INC 0.1
+#define EPS_INIT 0.001
+#define EPS_FINAL 0.2
+#define EPS_INC 0.001
+#define SEPS_INIT 0.35
+#define SEPS_INC 0.025
 
 double trans_prob_x = 0.01;
 double trans_prob_y = 0.01;
@@ -132,40 +132,6 @@ int main( int argc, const char* argv[] ){
         printf("%lf, %lf\n", eps, distortion);
     }
 
-    /*
-     * Set seed and run.
-     * We provide the covq 2 parameters and run will return the codevectors and
-     * encoder mapping in c.
-     */
-    srand(1);
-    if( run(&distortion,  &c, &p ) == 0 )
-        // Stop if it didn't work
-        free(p.trset_x);
-        free(p.trset_y);
-        return 0;
-    // Make sure everything is in order
-    assert_globals(&c, &p);
-
-    /*
-     * Print results to files
-     */
-    printf("Printing results to file...\n");
-    fprintf_double("x_ij.csv", (double*) c.codevec_x, 1<<p.cwlen_x, 1<<p.cwlen_x);
-    fprintf_double("y_ij.csv", (double*) c.codevec_y, 1<<p.cwlen_x, 1<<p.cwlen_x);
-    fprintf_int("x_encoder.csv", c.encoder_x, 1, p.qlvls);
-    fprintf_int("y_encoder.csv", c.encoder_y, 1, p.qlvls);
-
-    for(i = 0; i < p.qlvls; i++)
-        qlvls[i] = quant_to_vec(i, SRC_X, &p);
-    fprintf_double("qlvls_x.csv", qlvls, 1, p.qlvls);
-
-    for(i = 0; i < p.qlvls; i++)
-        qlvls[i] = quant_to_vec(i, SRC_Y, &p);
-    fprintf_double("qlvls_y.csv", qlvls, 1, p.qlvls);
-
-    destroy_covq2_struct(&c);
-    free(p.trset_x);
-    free(p.trset_y);
     return 1;
 }
 

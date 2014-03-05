@@ -82,7 +82,6 @@ void anneal();
 
 /*
  * util.c
- *
  */
 int vec_to_quant(double x, int *outlier, int src, params_covq2 *p);
 double quant_to_vec(int qlvl, int src, params_covq2 *p);

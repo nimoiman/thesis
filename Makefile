@@ -10,6 +10,7 @@ vq_OBJS=vq_main.o vq.o vector.o channel.o
 covq_OBJS=covq_main.o covq.o channel.o vector.o
 covq_2_OBJS=covq_main.o covq.o anneal.o util.o
 test_OBJS=test.o covq.o io.o quantize.o anneal.o running.o
+covq2_test_OBJS=quantize_test.o quantize.o
 
 all: vq covq covq_2
 
@@ -21,6 +22,9 @@ vq: $(addprefix $(vq_DIR),$(vq_OBJS))
 
 covq: $(addprefix $(covq_DIR),$(covq_OBJS))
 	$(CC) -o $(addprefix $(covq_DIR),$@) $^ $(LDFLAGS) $(CFLAGS)
+
+covq2_test: $(addprefix $(covq_2_DIR),$(covq2_test_OBJS))
+	$(CC) -o $(addprefix $(covq_2_DIR),$@) $^ $(LDFLAGS) $(CFLAGS)
 
 covq_2: $(addprefix $(covq_2_DIR),$(covq_2_OBJS))
 	$(CC) -o $(addprefix $(covq_2_DIR),$@) $^ $(LDFLAGS) $(CFLAGS)
@@ -35,6 +39,7 @@ clean:
 	   $(addprefix $(covq_DIR),$(covq_OBJS)) \
 	   $(addprefix $(covq_DIR),covq) \
 	   $(addprefix $(covq_2_DIR),$(covq_2_OBJS)) \
+	   $(addprefix $(covq_2_DIR),$(covq2_test_OBJS)) \
 	   $(addprefix $(covq_2_DIR),covq_2) \
 	   $(addprefix $(covq_2_DIR),$(test_OBJS)) \
 	   $(addprefix $(covq_2_DIR),test)
