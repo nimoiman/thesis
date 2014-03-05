@@ -56,7 +56,8 @@ double channel_prob(int i, int j, double error_prob, int length,
 }
 
 /* Nearest Neighbour encode vector, return channel index */
-int test_encode(double *vector, vectorset *codebook, int *cw_map) {
+int test_encode(double *vector, vectorset *codebook, int *cw_map,
+                double error_prob) {
     int i, j, channel_index = -1;
     double d = DBL_MAX;
     double d_new;
@@ -91,14 +92,17 @@ int test_decode(int received_index, vectorset *codebook, int *cw_map) {
 
 double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
                 double error_prob) {
-    int i, channel_index;
+    FILE *fp;
+    int i, k, channel_index;
     double distortion = 0;
     int error_count = 0;
     int reconstruction_index = 0;
+    vectorset *test_out = init_vectorset(test_set->size, test_set->dim);
 
     for (i = 0; i < test_set->size; i++) {
         // encode source index to nearest neighbour
-        channel_index = test_encode(test_set->v[i], codebook, cw_map);
+        channel_index = test_encode(test_set->v[i], codebook, cw_map,
+            error_prob);
 
         // pass channel_index through BSC
         binary_symmetric_channel(&channel_index, error_prob,
@@ -106,6 +110,10 @@ double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
 
         // decode received index to codevector
         reconstruction_index = test_decode(channel_index, codebook, cw_map);
+
+        for (k = 0; k < test_set->dim; k++) {
+            test_out->v[i][k] = codebook->v[reconstruction_index][k];
+        }
 
         if (channel_index != cw_map[reconstruction_index]) {
             error_count++;
@@ -118,5 +126,12 @@ double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
 
     // printf("error_count = %d\n", error_count);
     distortion /= test_set->size;
+
+    /* Write to a file */
+    fp = fopen("test_out.csv", "w");
+    print_vectorset(fp, test_out);
+    fclose(fp);
+
+    free(test_out);
     return distortion;
 }
