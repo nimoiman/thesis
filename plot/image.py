@@ -37,8 +37,6 @@ def ster2csv(filename_1, filename_2, out_filename):
     for i in range(0, dim_x, 8):
         for j in range(0, dim_y, 8):
             # 8x8 pixel block is in range [-128, 127]
-            # code.interact(local=locals())
-            # im_1.crop((i, j, i+8, j+8))
             dct_out[0][i*dim_x + 8*j: i*dim_x + 8*j + 64] = \
                 dct(np.array(im_1.crop((i, j, i+8, j+8))).astype(np.float64) -
                     128, norm='ortho').flatten()
@@ -74,11 +72,8 @@ def csv2ster(csv_filename, out_filename_1, out_filename_2, dim_x, dim_y):
                     line = f.readline().split(',')
                     block_1[int(i/8)][i % 8] = float(line[0])
                     block_2[int(i/8)][i % 8] = float(line[1])
-                assert((idct(block_1, norm='ortho') + 128).max() < 256)
-                assert((idct(block_2, norm='ortho') + 128).max() < 256)
-                im_1[k:k+8, j:j+8] = (idct(block_1, norm='ortho') + 128).astype(np.uint8)
-                im_2[k:k+8, j:j+8] = (idct(block_2, norm='ortho') + 128).astype(np.uint8)
-        # convert to unsigned
+                im_1[k:k+8, j:j+8] = (idct(block_1, norm='ortho') + 128.5).astype(np.uint8)
+                im_2[k:k+8, j:j+8] = (idct(block_2, norm='ortho') + 128.5).astype(np.uint8)
         im_1 = Image.fromarray(im_1)
         im_1.save(out_filename_1)
         im_2 = Image.fromarray(im_2)
