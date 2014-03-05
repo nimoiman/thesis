@@ -8,24 +8,32 @@ extern "C"{
 #include <stdlib.h>
 #include <stdio.h>
 
+/* Includes for testing */
+#include <assert.h>
+#include <math.h>
+
 typedef struct{
 
-    int nbins;
+    int nbins_x, nbins_y;
+    double min_x, min_y;
+    double max_x, max_y;
     int npoints;
-    double min;
-    double max;
-    int *bins;
+    int *quant;
 
 }uniform_quantizer;
 
 
-int val_to_quant(double val, uniform_quantizer *q);
-double quant_to_val(int qval, uniform_quantizer *q);
+int quantizer_init(uniform_quantizer *q, int nbins_x, int nbins_y,
+        double min_x, double max_x, double min_y, double max_y);
+void quantizer_destroy(uniform_quantizer *q);
 
-int init_quantizer(uniform_quantizer *q, int levels, double min, double max);
-void destroy_quantizer(uniform_quantizer *q);
+int quantizer_bin(double val_x, double val_y, uniform_quantizer *q);
+int quantizer_get_count(double val_x, double val_y, uniform_quantizer *q);
 
-int bin_val(double val, uniform_quantizer *q);
+int quantizer_sum_marg(double val, uniform_quantizer *q);
+int quantizer_count_marg(double val, uniform_quantizer *q);
+
+void quantizer_test();
 
 #ifdef __cplusplus
 }
