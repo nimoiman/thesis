@@ -36,13 +36,13 @@ def ster2csv(filename_1, filename_2, out_filename):
 
     for i in range(0, dim_x, 8):
         for j in range(0, dim_y, 8):
-            # 8x8 pixel block is in range [-128, 127]
+            # 8x8 pixel block is in range [-127.5, 127.5]
             dct_out[0][i*dim_x + 8*j: i*dim_x + 8*j + 64] = \
                 dct(np.array(im_1.crop((i, j, i+8, j+8))).astype(np.float64) -
-                    128, norm='ortho').flatten()
+                    127.5, norm='ortho').flatten()
             dct_out[1][i*dim_x + 8*j: i*dim_x + 8*j + 64] = \
                 dct(np.array(im_2.crop((i, j, i+8, j+8))).astype(np.float64) -
-                    128, norm='ortho').flatten()
+                    127.5, norm='ortho').flatten()
 
     # write to file
     with open(out_filename, 'w') as f:
