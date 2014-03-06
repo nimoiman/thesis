@@ -41,7 +41,7 @@ void print_vector(FILE *stream, double *v, int dim) {
 // Prints a vectorset to file stream
 // One vector per row, delimited by IO_DELIM
 void print_vectorset(FILE *stream, vectorset *vset) {
-    int i, j;
+    uint i;
     for (i = 0; i < vset->size; i++) {
         print_vector(stream, vset->v[i], vset->dim);
     }

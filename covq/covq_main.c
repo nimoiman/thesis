@@ -1,19 +1,19 @@
 #include "covq.h"
 
 int main(int argc, char *argv[]) {
-    int i;
-    int tr_size, test_size;
-    int vector_dim = 2;
-    int nsplits = 4;
+    size_t i, j;
+    size_t tr_size, test_size;
+    uint vector_dim = 2;
+    uint nsplits = 4;
     double error_prob = 0.001;
     vectorset *train, *test, *c;
     double distortion;
     FILE *fp;
     // Codeword map for simulated annealing
-    int *cw_map = malloc(sizeof(int) * (1 << nsplits));
+    uint *cw_map = malloc(sizeof(int) * (1 << nsplits));
 
     // initialize cw_map to the identity mapping
-    for (i = 0; i < (1 << nsplits); i++) {
+    for (i = 0; i < (uint) (1 << nsplits); i++) {
         cw_map[i] = i;
     }
 
@@ -34,11 +34,15 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Could not allocate training vector array.\n");
         exit(1);
     }
+    printf("allocated train\n");
+    printf("ready to receive %zu*%u doubles\n", train->size, train->dim);
 
     rewind(fp);
     // read in training set
     for (i = 0; i < train->size; i++) {
-        get_next_csv_record(fp, train->v[i], train->dim);
+        for (j = 0; j < train->dim/2; j++) {
+            get_next_csv_record(fp, (train->v[i])+2*j, 2);
+        }
     }
     fclose(fp);
 
@@ -59,20 +63,24 @@ int main(int argc, char *argv[]) {
 
     test_size = get_num_lines(fp);
 
-    // allocate testing vector set
     if (!(test = init_vectorset(test_size, vector_dim))) {
-        fprintf(stderr, "Could not allocate test vector array.\n");
+        fprintf(stderr, "Could not allocate testing vector array.\n");
         exit(1);
     }
+    printf("allocated test\n");
+    printf("ready to receive %zu*%u doubles\n", test->size, test->dim);
 
     rewind(fp);
-    /* Read in test data */
+    // read in testing set
     for (i = 0; i < test->size; i++) {
-        get_next_csv_record(fp, test->v[i], test->dim);
+        for (j = 0; j < test->dim/2; j++) {
+            get_next_csv_record(fp, (test->v[i])+2*j, 2);
+        }
     }
     fclose(fp);
 
     /* Run on test data */
+    printf("about to run on test data\n");
     distortion = run_test(c, cw_map, test, error_prob);
     printf("test distortion = %f\n", distortion);
 

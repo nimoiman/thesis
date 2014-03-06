@@ -2,17 +2,17 @@
 #define POW2(x) ((x)*(x))
 
 /* Helper function to swap integers *i and *j */
-void swap(int *i, int *j) {
-    int tmp;
+void swap(uint *i, uint *j) {
+    uint tmp;
     tmp = *i;
     *i = *j;
     *j = tmp;
 }
 
 /* get energy of current binary index assignment */
-double energy(vectorset *codebook, int *count, int *cw_map, int trset_size,
-              double error_prob) {
-    int i, j, k, el;
+double energy(vectorset *codebook, size_t *count, uint *cw_map,
+              size_t trset_size, double error_prob) {
+    uint i, j;
     double eucl_dist;
     double sum = 0;
     double inner_sum;
@@ -32,9 +32,9 @@ double energy(vectorset *codebook, int *count, int *cw_map, int trset_size,
 
 /* return a random number between 0 and limit-1 inclusive.
  */
-int rand_lim(int limit) {
-    int divisor = RAND_MAX/(limit);
-    int retval;
+uint rand_lim(uint limit) {
+    uint divisor = RAND_MAX/(limit);
+    uint retval;
 
     do { 
         retval = rand() / divisor;
@@ -43,12 +43,12 @@ int rand_lim(int limit) {
     return retval;
 }
 
-void anneal(vectorset *codebook, int *count, int *cw_map, int trset_size,
+void anneal(vectorset *codebook, size_t *count, uint *cw_map, size_t trset_size,
             double error_prob) {
     double new_energy, old_energy;
     double T = TEMP_INIT;
-    int drop_count = 0, fail_count = 0;
-    int i, j;
+    uint drop_count = 0, fail_count = 0;
+    uint i, j;
 
     old_energy = energy(codebook, count, cw_map, trset_size, error_prob);
 

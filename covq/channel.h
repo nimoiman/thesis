@@ -12,9 +12,10 @@ extern "C"{
 #include <float.h> /* DBL_MAX */
 #include <assert.h> /* assert */
 #include "vector.h" /* vectorset, dist */
+#include "io.h" /* print_vectorset */
 
-double channel_prob(int i, int j, double error_prob, int length, int *cw_map);
-double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
+double channel_prob(uint i, uint j, double error_prob, uint length, uint *cw_map);
+double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
                 double error_prob);
 
 #ifdef __cplusplus

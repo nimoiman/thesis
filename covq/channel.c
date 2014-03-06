@@ -14,8 +14,8 @@ double box_muller(double mean, double var) {
     return sqrt(var)*(sqrt(-2*log(r_1))*cos(2*M_PI*r_2)) + mean;
 }
 
-void gaussian_channel(double *vector, int dim, double mean, double var) {
-    int i;
+void gaussian_channel(double *vector, uint dim, double mean, double var) {
+    uint i;
     for (i = 0; i < dim; i++) {
         vector[i] += box_muller(mean, var);
     }
@@ -26,9 +26,9 @@ int bernoulli(double p) {
     return (rand() < p * RAND_MAX) ? 1 : 0;
 }
 
-void binary_symmetric_channel(int *index, double error_prob,
-                              int fixed_length) {
-    int i;
+void binary_symmetric_channel(uint *index, double error_prob,
+                              uint fixed_length) {
+    uint i;
     char *ch_index = (char*) index; // go through byte at a time
     for (i = 0; i < fixed_length; i++) {
         if (bernoulli(error_prob)) {
@@ -42,23 +42,55 @@ void binary_symmetric_channel(int *index, double error_prob,
     }
 }
 
+double _channel_prob(uint i, uint j, uint length, double error_prob) {
+    // static const int n_buckets = 8;
+    static struct {
+        uint i;
+        uint j;
+        uint length;
+        double error_prob;
+        double result;
+    } cache[8];
+    static uint last_read_k = 0;
+    static uint last_written_k = 0;
+    uint k = last_read_k;
+    /* look in cache for result */
+    do {
+        if (cache[k].i == i && cache[k].j == j && cache[k].length == length &&
+            cache[k].error_prob == error_prob) {
+            return cache[k].result;
+        }
+        k = (k + 1) % 8;
+    } while (k != last_read_k);
+    last_read_k = last_written_k = (last_written_k + 1) % 8;
+    cache[last_written_k].i = i;
+    cache[last_written_k].j = j;
+    cache[last_written_k].length = length;
+    cache[last_written_k].error_prob = error_prob;
+    uint d = hamming_distance(i, j);
+    cache[last_written_k].result = pow(error_prob, d) * pow(1-error_prob,
+        length - d);
+
+    return cache[last_written_k].result;
+}
+
 /* Return probability of channel index cw_map[i] transitioning to cw_map[j] 
  * over BSC with epsilon = error_prob
  */
-double channel_prob(int i, int j, double error_prob, int length,
-                              int *cw_map) {
-    int d = hamming_distance(cw_map[i], cw_map[j]);
-    double prob = pow(error_prob, d) * pow(1 - error_prob, length - d);
+double channel_prob(uint i, uint j, double error_prob, uint length,
+                    uint *cw_map) {
+    
+    return _channel_prob(cw_map[i], cw_map[j], length, error_prob);
+    // double prob = pow(error_prob, d) * pow(1 - error_prob, length - d);
 
-    assert(d >= 0);
-    assert(prob >= 0);
-    return prob;
+    // assert(prob >= 0);
+    // return prob;
 }
 
 /* Nearest Neighbour encode vector, return channel index */
-int test_encode(double *vector, vectorset *codebook, int *cw_map,
+uint test_encode(double *vector, vectorset *codebook, uint *cw_map,
                 double error_prob) {
-    int i, j, channel_index = -1;
+    uint i, j, channel_index = 0;
     double d = DBL_MAX;
     double d_new;
     for (i = 0; i < codebook->size; i++) {
@@ -72,14 +104,13 @@ int test_encode(double *vector, vectorset *codebook, int *cw_map,
             channel_index = cw_map[i];
         }
     }
-    assert(channel_index >= 0);
     assert(channel_index < codebook->size);
     return channel_index;
 }
 
 /* Decode to the vector indexed by cw_map[received_index] */
-int test_decode(int received_index, vectorset *codebook, int *cw_map) {
-    int i;
+uint test_decode(uint received_index, vectorset *codebook, uint *cw_map) {
+    uint i;
     // find this channel index in cw_map, to find source index...
     for (i = 0; i < codebook->size; i++) {
         if (cw_map[i] == received_index) {
@@ -90,10 +121,11 @@ int test_decode(int received_index, vectorset *codebook, int *cw_map) {
     return i;
 }
 
-double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
+double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
                 double error_prob) {
     FILE *fp;
-    int i, k, channel_index;
+    size_t i, k;
+    uint channel_index;
     double distortion = 0;
     int error_count = 0;
     int reconstruction_index = 0;
@@ -125,10 +157,15 @@ double run_test(vectorset *codebook, int *cw_map, vectorset *test_set,
     }
 
     // printf("error_count = %d\n", error_count);
-    distortion /= test_set->size;
+    distortion /= (test_set->size * test_set->dim);
 
     /* Write to a file */
     fp = fopen("test_out.csv", "w");
+    // for (i = 0; i < test_out->size; i++) {
+    //     for (j = 0; j < test_out->dim/2; j++) {
+    //         print_vector(fp, test_out->v[i]+2*j, 2);
+    //     }
+    // }
     print_vectorset(fp, test_out);
     fclose(fp);
 

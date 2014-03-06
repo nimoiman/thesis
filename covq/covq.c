@@ -9,9 +9,9 @@
    MSE(x, codebook[j]) = dist(x, codebook[j])
 */
 double nearest_neighbour(vectorset *train, vectorset *codebook,
-                         int *partition_index, int *count, int *cw_map,
+                         uint *partition_index, size_t *count, uint *cw_map,
                          double error_prob) {
-    int i, j, k;
+    size_t i, j, k;
     double new_distance, best_distance, total_distance;
     // initialize partition indices to "arbitrary" codebook vector
     for (i = 0; i < train->size; i++) {
@@ -44,7 +44,7 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
 
         total_distance += best_distance;
     }
-    return total_distance / train->size;
+    return total_distance / (train->size * train->dim);
 }
 
 
@@ -59,9 +59,10 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
    note: Pr(i received|j sent) = error_prob * hamming_distance(i, j)
  */
 void update_centroids(vectorset *train, vectorset *codebook,
-                      int *partition_index, int *count, int *cw_map,
+                      uint *partition_index, size_t *count, uint *cw_map,
                       double error_prob) {
-    int i, j, k, dim;
+    size_t i, j, k;
+    uint dim;
     double *partition_euclidean_centroid, partition_probability;
     double *numerator, denominator;
 
@@ -71,8 +72,8 @@ void update_centroids(vectorset *train, vectorset *codebook,
 
     for (i = 0; i < codebook->size; i++) {
         // zero numerator
-        for (j = 0; j < train->dim; j++) {
-            numerator[j] = 0;
+        for (dim = 0; dim < train->dim; dim++) {
+            numerator[dim] = 0;
         }
         denominator = 0;
         for (j = 0; j < codebook->size; j++) {
@@ -115,16 +116,17 @@ void update_centroids(vectorset *train, vectorset *codebook,
 
 
 /* note: n_splits should be less than log_2(INT_MAX)=16 */
-vectorset *bsc_covq(vectorset *train, int *cw_map, int n_splits,
+vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
                     double error_prob) {
-    double d_new, d_old;
-    int i, j, k, *partition_index, *count;
+    double d_new = 0, d_old = 0;
+    uint i, j, k, *partition_index;
+    size_t *count;
     vectorset *codebook;
 
-    if (!(partition_index = malloc(sizeof(int) * train->size))) {
+    if (!(partition_index = malloc(sizeof(uint) * train->size))) {
         return NULL;
     }
-    else if (!(count = malloc(sizeof(int) * (1 << n_splits)))) {
+    else if (!(count = malloc(sizeof(size_t) * (1 << n_splits)))) {
         free(partition_index);
         return NULL;
     }
