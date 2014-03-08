@@ -53,6 +53,7 @@ def ster2csv(filename_1, filename_2, out_filename, block_size=8):
                  str(matrix_dcts[1].flatten()[i]) + '\n')
          for i in range(matrix_dcts[0].size)]
 
+
 @command
 def csv2ster(csv_filename, out_filename_1, out_filename_2, dim_x, dim_y,
              block_size=8):
@@ -106,18 +107,18 @@ def csv2ster(csv_filename, out_filename_1, out_filename_2, dim_x, dim_y,
                 idct(ster_images[1][i:i+block_size, j:j+block_size],
                      norm='ortho')
 
-    # Add 127.5, convert to ints
-    ster_images = [(a + 127.5).astype(int) for a in ster_images]
-
     # Ensure no overflow errors
-    assert(ster_images[0].min() >= 0)
-    assert(ster_images[1].min() >= 0)
-    assert(ster_images[0].max() <= 255)
-    assert(ster_images[1].max() <= 255)
+    assert(int(ster_images[0].min() + 127.5) >= 0)
+    assert(int(ster_images[1].min() + 127.5) >= 0)
+    assert(int(ster_images[0].max() + 127.5) <= 255)
+    assert(int(ster_images[1].max() + 127.5) <= 255)
+
+    # Add 127.5, convert to ints
+    ster_images = [(a + 127.5).astype(np.uint8) for a in ster_images]
 
     # convert to uint8 & save (as png)
-    Image.fromarray(ster_images[0].astype(np.uint8)).save(out_filename_1)
-    Image.fromarray(ster_images[1].astype(np.uint8)).save(out_filename_2)
+    Image.fromarray(ster_images[0]).save(out_filename_1)
+    Image.fromarray(ster_images[1]).save(out_filename_2)
 
 
 
