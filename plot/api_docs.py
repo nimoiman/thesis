@@ -50,11 +50,16 @@ def parse_args():
         cmd, args = 'help', []
 
     # do it!
-    output = funcs[cmd](*args)
+    try:
+        output = funcs[cmd](*args)
+        # (and print the output)
+        if output:
+            print(output)
+    except TypeError as e:
+        help()
+        print(e)
+        raise SystemExit(1)
 
-    # (and print the output)
-    if output:
-        print(output)
 
 def _signature(name, func):
     """Return string repr of function signature"""
@@ -101,5 +106,3 @@ def help():
             print('    ? {}\n'.format(_format_doc(func.__doc__.strip())))
         else:
             print('  * {}\n'.format(_signature(name, func)))
-
-    raise SystemExit(1)
