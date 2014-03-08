@@ -16,7 +16,7 @@ extern "C"{
 
 double channel_prob(uint i, uint j, double error_prob, uint length, uint *cw_map);
 double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
-                double error_prob);
+                char *test_out_csv, double error_prob);
 
 #ifdef __cplusplus
 }

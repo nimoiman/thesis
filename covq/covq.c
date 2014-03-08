@@ -30,7 +30,7 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
             new_distance = 0;
             for (k = 0; k < codebook->size; k++) {
                 new_distance += channel_prob(k, j, error_prob,
-                    log2(codebook->size), cw_map) * dist(train->v[i],
+                    (uint) log2(codebook->size), cw_map) * dist(train->v[i],
                     codebook->v[j], train->dim);
             }
             
@@ -95,13 +95,14 @@ void update_centroids(vectorset *train, vectorset *codebook,
             assert(partition_probability >= 0);
             assert(partition_probability <= 1);
 
+            double p_ij = channel_prob(i, j, error_prob, (uint) log2(codebook->size),
+                cw_map);
+
             for (dim = 0; dim < train->dim; dim++) {
-                numerator[dim] += channel_prob(i, j, error_prob,
-                    log2(codebook->size), cw_map) * partition_euclidean_centroid[dim];
+                numerator[dim] += p_ij * partition_euclidean_centroid[dim];
             }
 
-            denominator += channel_prob(i, j, error_prob,
-                log2(codebook->size), cw_map) * partition_probability;
+            denominator += p_ij * partition_probability;
         }
 
         assert(denominator > 0);

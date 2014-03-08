@@ -1,8 +1,27 @@
 #include "io.h"
 
-int get_num_lines(FILE *stream) {
+/* Read top line of stream, find how many tokens */
+uint get_num_cols(FILE *stream) {
     char line[1024];
-    int i = 0;
+    char *token;
+    uint i = 0;
+    if (fgets(line, 1024, stream) != NULL) {
+        i += 1;
+        token = strtok(line, IO_DELIM);
+        while ((token = strtok(NULL, IO_DELIM)) != NULL) {
+            i += 1;
+        }
+        return i;
+    }
+    else {
+        return 0;
+    }
+}
+
+size_t get_num_lines(FILE *stream) {
+    char line[1024];
+    size_t i = 0;
+
     while(fgets(line, 1024, stream) != NULL) {
         i++;
     }
@@ -11,18 +30,56 @@ int get_num_lines(FILE *stream) {
 
 /* Read next line of *stream into record.
  * Return 1 on success, 0 on EOF */
-int get_next_csv_record(FILE *stream, double *record, int vector_dim) {
+int get_next_csv_record(FILE *stream, double *record, uint vector_dim) {
     char line[1024];
     char *token;
-    int i;
+    uint i;
     if (fgets(line, 1024, stream) != NULL) {
         // get first token:
         token = strtok(line, IO_DELIM);
+        if (token == NULL) {
+            fprintf(stderr, "I/O error in reading csv\n");
+            exit(1);
+        }
         sscanf(token, "%lf", &(record[0]));
         // get next tokens up to vector_dim
         for (i = 1; i < vector_dim; i++) {
             token = strtok(NULL, IO_DELIM);
+            if (token == NULL) {
+                fprintf(stderr, "I/O error in reading csv\n");
+                exit(1);
+            }
             sscanf(token, "%lf", &(record[i]));
+        }
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+/* Read next line of *stream into cw_map.
+ * Return 1 on success, 0 on EOF */
+int read_cw_map_csv(FILE *stream, uint *cw_map, uint num_cw) {
+    char line[1024];
+    char *token;
+    uint i;
+    if (fgets(line, 1024, stream) != NULL) {
+        // get first token:
+        token = strtok(line, IO_DELIM);
+        if (token == NULL) {
+            fprintf(stderr, "I/O error in reading cw_map\n");
+            exit(1);
+        }
+        sscanf(token, "%u", &(cw_map[0]));
+        // get next tokens up to num_cw
+        for (i = 1; i < num_cw; i++) {
+            token = strtok(NULL, IO_DELIM);
+            if (token == NULL) {
+                fprintf(stderr, "I/O error in reading cw_map\n");
+                exit(1);
+            }
+            sscanf(token, "%u", &(cw_map[i]));
         }
         return 1;
     }

@@ -42,32 +42,32 @@ void binary_symmetric_channel(uint *index, double error_prob,
     }
 }
 
-double _channel_prob(uint i, uint j, uint length, double error_prob) {
+double _channel_prob(uint d, uint length, double error_prob) {
     // static const int n_buckets = 8;
+    /* Caching assumes error_prob never changes */
     static struct {
-        uint i;
-        uint j;
+        uint d;
         uint length;
-        double error_prob;
         double result;
     } cache[8];
+    /* Stupidly special case */
+    if (length == 0) {
+        return 1;
+    }
+
     static uint last_read_k = 0;
     static uint last_written_k = 0;
     uint k = last_read_k;
     /* look in cache for result */
     do {
-        if (cache[k].i == i && cache[k].j == j && cache[k].length == length &&
-            cache[k].error_prob == error_prob) {
+        if (cache[k].d == d && cache[k].length == length) {
             return cache[k].result;
         }
         k = (k + 1) % 8;
     } while (k != last_read_k);
     last_read_k = last_written_k = (last_written_k + 1) % 8;
-    cache[last_written_k].i = i;
-    cache[last_written_k].j = j;
+    cache[last_written_k].d = d;
     cache[last_written_k].length = length;
-    cache[last_written_k].error_prob = error_prob;
-    uint d = hamming_distance(i, j);
     cache[last_written_k].result = pow(error_prob, d) * pow(1-error_prob,
         length - d);
 
@@ -79,23 +79,19 @@ double _channel_prob(uint i, uint j, uint length, double error_prob) {
  */
 double channel_prob(uint i, uint j, double error_prob, uint length,
                     uint *cw_map) {
-    
-    return _channel_prob(cw_map[i], cw_map[j], length, error_prob);
-    // double prob = pow(error_prob, d) * pow(1 - error_prob, length - d);
-
-    // assert(prob >= 0);
-    // return prob;
+    // printf("prob(%u|%u)=%f\n", cw_map[i], cw_map[j], _channel_prob(cw_map[i], cw_map[j], length, error_prob));
+    uint d = hamming_distance(cw_map[i], cw_map[j]);
+    return _channel_prob(d, length, error_prob);
 }
 
 /* Nearest Neighbour encode vector, return channel index */
 uint test_encode(double *vector, vectorset *codebook, uint *cw_map,
                 double error_prob) {
-    uint i, j, channel_index = 0;
+    uint channel_index = 0;
     double d = DBL_MAX;
-    double d_new;
-    for (i = 0; i < codebook->size; i++) {
-        d_new = 0;
-        for (j = 0; j < codebook->size; j++) {
+    for (uint i = 0; i < codebook->size; i++) {
+        double d_new = 0;
+        for (uint j = 0; j < codebook->size; j++) {
             d_new += channel_prob(j, i, error_prob, log2(codebook->size),
                 cw_map) * dist(vector, codebook->v[j], codebook->dim);
         }
@@ -122,7 +118,7 @@ uint test_decode(uint received_index, vectorset *codebook, uint *cw_map) {
 }
 
 double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
-                double error_prob) {
+                char *test_out_csv, double error_prob) {
     FILE *fp;
     size_t i, k;
     uint channel_index;
@@ -155,17 +151,14 @@ double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
         distortion += dist(test_set->v[i], codebook->v[reconstruction_index],
             test_set->dim);
     }
+    printf("Finished running test set\n");
 
     // printf("error_count = %d\n", error_count);
     distortion /= (test_set->size * test_set->dim);
 
-    /* Write to a file */
-    fp = fopen("test_out.csv", "w");
-    // for (i = 0; i < test_out->size; i++) {
-    //     for (j = 0; j < test_out->dim/2; j++) {
-    //         print_vector(fp, test_out->v[i]+2*j, 2);
-    //     }
-    // }
+    /* Write to output file */
+    printf("Writing test channel output data to %s\n", test_out_csv);
+    fp = fopen(test_out_csv, "w");
     print_vectorset(fp, test_out);
     fclose(fp);
 
