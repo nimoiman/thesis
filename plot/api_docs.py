@@ -56,7 +56,7 @@ def parse_args():
         if output:
             print(output)
     except TypeError as e:
-        help()
+        help(cmd)
         print(e)
         raise SystemExit(1)
 
@@ -89,8 +89,21 @@ def _format_doc(doc):
     return '\n'.join(doc_lines)
 
 @command
-def help():
+def help(f_name=None):
     """Get usage information about this script"""
+    if f_name is not None:
+        # Find f_name in available commands
+        try:
+            func = command.__defaults__[0][f_name]
+            print('Usage: {} {} [params]'.format(sys.argv[0], f_name))
+            if func.__doc__:
+                print('  * {}'.format(_signature(f_name, func)))
+                print('    ? {}\n'.format(_format_doc(func.__doc__.strip())))
+            else:
+                print('  * {}\n'.format(_signature(f_name, func)))
+            return
+        except KeyError:
+            print("Unknown command {}".format(f_name))
     print('Usage: {} [command]'.format(sys.argv[0]))
 
     # print module help here
