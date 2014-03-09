@@ -57,8 +57,7 @@ def parse_args():
             print(output)
     except TypeError as e:
         help(cmd)
-        print(e)
-        raise SystemExit(1)
+        raise e
 
 
 def _signature(name, func):
