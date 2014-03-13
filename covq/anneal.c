@@ -88,3 +88,38 @@ void anneal(vectorset *codebook, size_t *count, uint *cw_map, size_t trset_size,
         }
     }
 }
+
+int test_anneal(vectorset *codebook, size_t *count, uint *cw_map,
+            size_t trset_size, double error_prob) {
+    /* Test that resulting index map is a permutation */
+    uint *orig_map = malloc(sizeof(uint) * codebook->size);
+    for (size_t i = 0; i < codebook->size; i++) {
+        orig_map[i] = cw_map[i];
+    }
+    anneal(codebook, count, cw_map, trset_size, error_prob);
+    for (size_t i = 0; i < codebook->size; i++) {
+        for (size_t j = 0; j < codebook->size; j++) {
+            if (cw_map[i] == orig_map[j]) {
+                break;
+            }
+            else if (j == codebook->size - 1) {
+                fprintf(stderr, "%u not in new map\n", cw_map[i]);
+                fprintf(stderr, "original cw_map not a permutation of new cw_map\n");
+                fprintf(stderr, "orig: ");
+                for (size_t k = 0; k < codebook->size; k++) {
+                    fprintf(stderr, "%u%s", orig_map[k], (k < codebook->size-1)
+                        ? IO_DELIM: "\n");
+                }
+                fprintf(stderr, "new: ");
+                for (size_t k = 0; k < codebook->size; k++) {
+                    fprintf(stderr, "%u%s", cw_map[k], (k < codebook->size-1)
+                        ? IO_DELIM: "\n");
+                }
+                free(orig_map);
+                assert(0);
+            }
+        }
+    }
+    free(orig_map);
+    return 1;
+}
