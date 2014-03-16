@@ -16,11 +16,9 @@ extern "C"{
 #include "io.h" /* get_num_lines, print_vector, print_vectorset,
                  * get_next_csv_record */
 
-#define LBG_EPS 0.01
-#define CODE_VECTOR_DISPLACE 0.01
-
 vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
-                    double error_prob);
+                    double error_prob, double lbg_eps,
+                    double code_vector_displace);
 
 #ifdef __cplusplus
 }

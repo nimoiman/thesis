@@ -5,6 +5,8 @@ void print_usage(FILE *fp) {
     fprintf(fp, "\nOptions:\n");
     fprintf(fp, "  --train train.csv codebook_out.csv cw_map_out.csv\n");
     fprintf(fp, "  --test test_in.csv codebook_in.csv cw_map.csv test_out.csv\n");
+    fprintf(fp, "  -e, --lbg-eps NUM [default=0.01]\n");
+    fprintf(fp, "  -c, --cv-disp NUM [default=0.01]\n");
     fprintf(fp, "  -d, --dim NUM [default=2]\n");
     fprintf(fp, "  -n, --nsplits NUM [default=4]\n");
     fprintf(fp, "  -p, --bep NUM [default=0.001]\n");
@@ -17,6 +19,8 @@ struct cmdline {
     char *train_csv;
     char *codebook_out;
     char *cw_map_out;
+    double lbg_eps;
+    double codevector_displace;
 
     int test;
     char *test_in_csv;
@@ -38,6 +42,8 @@ void init_cmdline(struct cmdline *opts) {
     opts->nsplits = 4;
     opts->bep = 0.001;
     opts->seed = 1234;
+    opts->lbg_eps = 0.01;
+    opts->codevector_displace = 0.01;
 }
 
 struct cmdline parse_args(int argc, char *argv[]) {
@@ -98,7 +104,7 @@ struct cmdline parse_args(int argc, char *argv[]) {
                 opts.dim = atoi(argv[i]);
             }
             else {
-                fprintf(stderr, "No dim provided.\n");
+                fprintf(stderr, "No dim provided with option %s.\n", argv[i]);
                 print_usage(stderr);
                 exit(1);
             }
@@ -109,7 +115,7 @@ struct cmdline parse_args(int argc, char *argv[]) {
                 opts.nsplits = atoi(argv[i]);
             }
             else {
-                fprintf(stderr, "No dim provided.\n");
+                fprintf(stderr, "No nsplits provided with option %s.\n", argv[i]);
                 print_usage(stderr);
                 exit(1);
             }
@@ -120,7 +126,7 @@ struct cmdline parse_args(int argc, char *argv[]) {
                 opts.bep = atof(argv[i]);
             }
             else {
-                fprintf(stderr, "No BEP provided.\n");
+                fprintf(stderr, "No BEP provided with option %s.\n", argv[i]);
                 print_usage(stderr);
                 exit(1);
             }
@@ -131,7 +137,29 @@ struct cmdline parse_args(int argc, char *argv[]) {
                 opts.seed = atoi(argv[i]);
             }
             else {
-                fprintf(stderr, "No random seed provided.\n");
+                fprintf(stderr, "No random seed provided with option %s.\n", argv[i]);
+                print_usage(stderr);
+                exit(1);
+            }
+        }
+        else if (!strcmp(argv[i], "-e") || !strcmp(argv[i], "--lbg-eps")) {
+            if (i + 1 < argc) {
+                i += 1;
+                opts.lbg_eps = atoi(argv[i]);
+            }
+            else {
+                fprintf(stderr, "No lbg eps provided with option %s.\n", argv[i]);
+                print_usage(stderr);
+                exit(1);
+            }
+        }
+        else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--cv-disp")) {
+            if (i + 1 < argc) {
+                i += 1;
+                opts.codevector_displace = atoi(argv[i]);
+            }
+            else {
+                fprintf(stderr, "No codevector displacement provided with option %s.\n", argv[i]);
                 print_usage(stderr);
                 exit(1);
             }
@@ -181,7 +209,8 @@ int main(int argc, char *argv[]) {
         fclose(fp);
 
         /* Generate codebook from training set */
-        vectorset *codebook = bsc_covq(train, cw_map, opts.nsplits, opts.bep);
+        vectorset *codebook = bsc_covq(train, cw_map, opts.nsplits, opts.bep,
+            opts.lbg_eps, opts.codevector_displace);
         destroy_vectorset(train);
 
         /* Write codebook to file */

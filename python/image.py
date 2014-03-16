@@ -284,6 +284,7 @@ def bit_distortion(var_block, bit_alloc):
 
 def bit_allocate(csv_filename_1, csv_filename_2, rate, dim_x, dim_y,
                  block_size=8):
+    """Return bit_alloc matrix along with variance matrix"""
     import numpy as np
     lines_1 = 0
     lines_2 = 0
@@ -329,7 +330,7 @@ def bit_allocate(csv_filename_1, csv_filename_2, rate, dim_x, dim_y,
                 bit_alloc[i, j] -= 1
         bit_alloc[best_step] += 1
         print(bit_alloc)
-    return bit_alloc
+    return (bit_alloc, var_block)
 
 
 def csv_quant(csv_filename, out_filename, dim_x, dim_y):

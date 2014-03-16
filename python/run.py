@@ -5,10 +5,12 @@ from image import ster2csv, csv_zip, csv2ster, csv_unzip, csv_read, \
     bit_allocate, iter_array
 bep = 0.001
 dim = 1
-rate = 4
+rate = 2
 seed = 1234
 block_size = 8
 train_dir = "training"
+# lbg_eps = variance / lbg_granularity
+lbg_granularity = 10
 # for eps in range(0, 0.2, 0.001):
 #     subprocess.call(["./covq/covq", "--test train.csv", "--bep" + str(eps)])
 
@@ -21,15 +23,19 @@ left = csv_read("l.csv", dim_x, dim_y)
 right = csv_read("r.csv", dim_x, dim_y)
 
 # Find optimal bit allocation
-# bit_alloc = bit_allocate("l.csv", "r.csv", rate, dim_x, dim_y, block_size=8)
-bit_alloc = np.array([[11, 8, 7, 6, 5, 4, 3, 3],
-                      [8, 7, 6, 5, 4, 3, 3, 3],
-                      [8, 6, 5, 4, 4, 3, 3, 2],
-                      [7, 5, 5, 4, 3, 3, 3, 2],
-                      [6, 5, 4, 4, 3, 3, 2, 2],
-                      [6, 4, 4, 3, 3, 3, 2, 2],
-                      [5, 4, 3, 3, 3, 2, 2, 2],
-                      [5, 4, 3, 3, 2, 2, 2, 2]], dtype=int)
+bit_alloc, var_block = bit_allocate("l.csv", "r.csv", rate, dim_x, dim_y, block_size=8)
+# bit_alloc = np.array([[11, 8, 7, 6, 5, 4, 3, 3],
+#                       [8, 7, 6, 5, 4, 3, 3, 3],
+#                       [8, 6, 5, 4, 4, 3, 3, 2],
+#                       [7, 5, 5, 4, 3, 3, 3, 2],
+#                       [6, 5, 4, 4, 3, 3, 2, 2],
+#                       [6, 4, 4, 3, 3, 3, 2, 2],
+#                       [5, 4, 3, 3, 3, 2, 2, 2],
+#                       [5, 4, 3, 3, 2, 2, 2, 2]], dtype=int)
+print("DCT Coefficient Variance Matrix:")
+print(var_block)
+print("DCT Coefficient Bit Allocation Matrix:")
+print(bit_alloc)
 
 
 # mkdir for training sets
@@ -68,7 +74,8 @@ for i in range(block_size):
                                              "cwmap_l.csv"),
                                "--bep", str(bep), "--dim", str(dim),
                                "--nsplits", str(bit_alloc[i,j]),
-                               "--seed", str(seed)])
+                               "--seed", str(seed), "--lbg-eps",
+                               str(var_block[i,j]/lbg_granularity)])
         subprocess.check_call(["time", "../covq/covq", "--train", "_tmp_r.csv",
                                os.path.join(train_dir, str(i)+str(j),
                                              "cb_r.csv"),
@@ -76,7 +83,8 @@ for i in range(block_size):
                                              "cwmap_r.csv"),
                                "--bep", str(bep), "--dim", str(dim),
                                "--nsplits", str(bit_alloc[i,j]),
-                               "--seed", str(seed)])
+                               "--seed", str(seed), "--lbg-eps",
+                               str(var_block[i,j]/lbg_granularity)])
 
         # Zip the two csvs
         csv_zip("_tmp_l.csv", "_tmp_r.csv", "_tmp_both.csv")
@@ -89,7 +97,8 @@ for i in range(block_size):
                                              "cwmap_both.csv"),
                                "--bep", str(bep), "--dim", str(2*dim),
                                "--nsplits", str(bit_alloc[i,j]*2),
-                               "--seed", str(seed)])
+                               "--seed", str(seed), "--lbg-eps",
+                               str(var_block[i,j]/lbg_granularity)])
 
         # TODO: Here, train on 2-source covq
 

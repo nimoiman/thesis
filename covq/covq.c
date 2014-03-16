@@ -118,7 +118,8 @@ void update_centroids(vectorset *train, vectorset *codebook,
 
 /* note: n_splits should be less than log_2(INT_MAX)=16 */
 vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
-                    double error_prob) {
+                    double error_prob, double lbg_eps,
+                    double code_vector_displace) {
     double d_new = 0, d_old = 0;
     uint i, j, k, *partition_index;
     size_t *count;
@@ -162,7 +163,7 @@ vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
             update_centroids(train, codebook, partition_index, count, cw_map,
                 error_prob);
 
-        } while (d_old > (1 + LBG_EPS) * d_new);
+        } while (d_old > (1 + lbg_eps) * d_new);
 
         if (i < n_splits) {
             /* Split each codevector, add splitted vector to codebook */
@@ -173,12 +174,13 @@ vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
                     // and codebook->size > j,
                     // hamming_distance(j, j + codebook) == 1 (i.e. minimal)
                     codebook->v[j + codebook->size][k] = codebook->v[j][k]
-                        + CODE_VECTOR_DISPLACE;
+                        + code_vector_displace;
                 }
             }
             // set codebook size
             codebook->size = 1 << (i+1); // 2^(i+1)
         }
+        printf("split number %d\n", i);
     }
     printf("theoretical distortion = %f\n", d_new);
     free(partition_index);
