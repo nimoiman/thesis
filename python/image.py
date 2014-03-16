@@ -296,7 +296,7 @@ def bit_distortion(var_block, bit_alloc):
 
 def bit_allocate(csv_filename_1, csv_filename_2, rate, dims,
                  block_size=8):
-    """Return bit_alloc matrix along with variance matrix"""
+    """Return bit_alloc matrices along with variance matrix"""
     import numpy as np
     lines_1 = 0
     lines_2 = 0
@@ -322,28 +322,28 @@ def bit_allocate(csv_filename_1, csv_filename_2, rate, dims,
                                 block_order=False, block_size=block_size))
     for dim in dims:
 
-        var_block_1 = _var_block(ster_images[0], block_size)
-        var_block_2 = _var_block(ster_images[1], block_size)
+        var_blocks = [_var_block(ster_images[0], block_size),
+                      _var_block(ster_images[1], block_size)]
 
-        var_block = (var_block_1 + var_block_2) / 2
-        bit_alloc = np.zeros((block_size, block_size), dtype=int)
+        bit_allocs = [np.zeros((block_size, block_size), dtype=int),
+                      np.zeros((block_size, block_size), dtype=int)]
 
-        print(var_block)
-        for bit in range(rate * block_size * block_size):
-            best_dist = np.inf
-            best_step = None
-            for i in range(block_size):
-                for j in range(block_size):
-                    bit_alloc[i, j] += 1
-                    new_dist = bit_distortion(var_block, bit_alloc)
-                    if new_dist < best_dist:
-                        # print("new_dist={} < {}=old_dist".format(new_dist,best_dist))
-                        best_step = (i, j)
-                        best_dist = new_dist
-                    bit_alloc[i, j] -= 1
-            bit_alloc[best_step] += 1
-            print(bit_alloc)
-    return (bit_alloc, var_block)
+        for idx, var_block in enumerate(var_blocks):
+            for bit in range(rate * block_size * block_size):
+                best_dist = np.inf
+                best_step = None
+                for i in range(block_size):
+                    for j in range(block_size):
+                        bit_allocs[idx][i, j] += 1
+                        new_dist = bit_distortion(var_block, bit_allocs[idx])
+                        if new_dist < best_dist:
+                            # print("new_dist={} < {}=old_dist".format(new_dist,best_dist))
+                            best_step = (i, j)
+                            best_dist = new_dist
+                        bit_allocs[idx][i, j] -= 1
+                bit_allocs[idx][best_step] += 1
+                print(bit_allocs[idx])
+    return (bit_allocs, var_blocks)
 
 
 def csv_quant(csv_filename, out_filename, dim_x, dim_y):
@@ -560,7 +560,6 @@ def csv2ster(csv_filename_1, csv_filename_2, out_filenames_1, out_filenames_2,
         out_im = [(a + 128).astype(np.uint8) for a in out_im]
 
         # convert to uint8 & save (as png)
-        print("out_filenames_1: {}".format(out_filenames_1))
         Image.fromarray(out_im[0]).save(out_filenames_1[idx])
         Image.fromarray(out_im[1]).save(out_filenames_2[idx])
 

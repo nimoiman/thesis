@@ -151,13 +151,13 @@ double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
         distortion += dist(test_set->v[i], codebook->v[reconstruction_index],
             test_set->dim);
     }
-    printf("Finished running test set\n");
+    fprintf(stderr, "Finished running test set\n");
 
     // printf("error_count = %d\n", error_count);
     distortion /= (test_set->size * test_set->dim);
 
     /* Write to output file */
-    printf("Writing test channel output data to %s\n", test_out_csv);
+    fprintf(stderr, "Writing test channel output data to %s\n", test_out_csv);
     fp = fopen(test_out_csv, "w");
     print_vectorset(fp, test_out);
     fclose(fp);

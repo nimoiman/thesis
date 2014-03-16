@@ -198,8 +198,8 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Could not allocate training vector array.\n");
             exit(1);
         }
-        printf("allocated train\n");
-        printf("ready to receive %zu*%u doubles\n", train->size, train->dim);
+        fprintf(stderr, "allocated train\n");
+        fprintf(stderr, "ready to receive %zu*%u doubles\n", train->size, train->dim);
 
         rewind(fp);
         // read in training set
@@ -231,20 +231,20 @@ int main(int argc, char *argv[]) {
         /* Check dimensions of (first lines of) input files */
         FILE *fp = fopen(opts.codebook_in, "r");
         uint cbook_dim = get_num_cols(fp);
-        printf("cbook_dim=%u\n", cbook_dim);
+        fprintf(stderr, "cbook_dim=%u\n", cbook_dim);
         rewind(fp);
         size_t cbook_size = get_num_lines(fp);
-        printf("cbook_size=%zu\n", cbook_size);
+        fprintf(stderr, "cbook_size=%zu\n", cbook_size);
         fclose(fp);
 
         fp = fopen(opts.cw_map_in, "r");
         uint cw_map_dim = get_num_cols(fp);
-        printf("cw_map_dim=%u\n", cw_map_dim);
+        fprintf(stderr, "cw_map_dim=%u\n", cw_map_dim);
         fclose(fp);
 
         fp = fopen(opts.test_in_csv, "r");
         uint test_set_dim = get_num_cols(fp);
-        printf("test_set_dim=%u\n", test_set_dim);
+        fprintf(stderr, "test_set_dim=%u\n", test_set_dim);
         fclose(fp);
 
         if (!(cbook_dim == test_set_dim && cw_map_dim == (uint) cbook_size)) {
@@ -254,14 +254,14 @@ int main(int argc, char *argv[]) {
 
         uint *cw_map = malloc(sizeof(int) * cw_map_dim);
         /* Read in cw_map from file */
-        printf("Reading cw_map: %s\n", opts.cw_map_in);
+        fprintf(stderr, "Reading cw_map: %s\n", opts.cw_map_in);
         fp = fopen(opts.cw_map_in, "r");
         read_cw_map_csv(fp, cw_map, cw_map_dim);
-        printf("just read cw_map\n");
+        fprintf(stderr, "just read cw_map\n");
         fclose(fp);
 
         /* Read in testing set from file */
-        printf("Reading test_in_csv: %s\n", opts.test_in_csv);
+        fprintf(stderr, "Reading test_in_csv: %s\n", opts.test_in_csv);
         fp = fopen(opts.test_in_csv, "r");
         size_t test_size = get_num_lines(fp);
 
@@ -270,8 +270,8 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Could not allocate testing vector array.\n");
             exit(1);
         }
-        printf("Allocated test set\n");
-        printf("Ready to receive %zu*%u doubles\n", test->size, test->dim);
+        fprintf(stderr, "Allocated test set\n");
+        fprintf(stderr, "Ready to receive %zu*%u doubles\n", test->size, test->dim);
         rewind(fp);
         for (size_t i = 0; i < test->size; i++) {
             get_next_csv_record(fp, test->v[i], test->dim);
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
         fclose(fp);
 
         /* Read in codebook from file */
-        printf("Reading codebook: %s\n", opts.codebook_in);
+        fprintf(stderr, "Reading codebook: %s\n", opts.codebook_in);
         vectorset *codebook;
         if (!(codebook = init_vectorset(cbook_size, cbook_dim))) {
             fprintf(stderr, "Could not allocate codebook vector array.\n");
@@ -293,10 +293,11 @@ int main(int argc, char *argv[]) {
         fclose(fp);
 
         /* Run on test data and write received output to file */
-        printf("Running test data, writing into %s\n", opts.test_out_csv);
+        fprintf(stderr, "Running test data, writing into %s\n", opts.test_out_csv);
         double distortion = run_test(codebook, cw_map, test, opts.test_out_csv,
             opts.bep);
-        printf("Test distortion = %f\n", distortion);
+        fprintf(stderr, "Test distortion = %f\n", distortion);
+        printf("%f", distortion);
 
         free(cw_map);
         destroy_vectorset(test);
