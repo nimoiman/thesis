@@ -5,10 +5,11 @@ from image import ster2csv, csv_zip, csv2ster, csv_unzip, csv_read, \
     bit_allocate, iter_array
 bep = 0.001
 dim = 1
-rate = 2
+rate = 1
 seed = 1234
 block_size = 8
 train_dir = "training"
+test_dir = "training"
 # lbg_eps = variance / lbg_granularity
 lbg_granularity = 10
 # for eps in range(0, 0.2, 0.001):
@@ -69,66 +70,140 @@ for i in range(block_size):
         # Train independent covq on each csv
         subprocess.check_call(["time", "../covq/covq", "--train", "_tmp_l.csv",
                                os.path.join(train_dir, str(i)+str(j),
-                                             "cb_l.csv"),
+                                            "cb_l.csv"),
                                os.path.join(train_dir, str(i)+str(j),
-                                             "cwmap_l.csv"),
+                                            "cwmap_l.csv"),
                                "--bep", str(bep), "--dim", str(dim),
                                "--nsplits", str(bit_alloc[i,j]),
                                "--seed", str(seed), "--lbg-eps",
                                str(var_block[i,j]/lbg_granularity)])
         subprocess.check_call(["time", "../covq/covq", "--train", "_tmp_r.csv",
                                os.path.join(train_dir, str(i)+str(j),
-                                             "cb_r.csv"),
+                                            "cb_r.csv"),
                                os.path.join(train_dir, str(i)+str(j),
-                                             "cwmap_r.csv"),
+                                            "cwmap_r.csv"),
                                "--bep", str(bep), "--dim", str(dim),
                                "--nsplits", str(bit_alloc[i,j]),
                                "--seed", str(seed), "--lbg-eps",
                                str(var_block[i,j]/lbg_granularity)])
 
         # Zip the two csvs
-        csv_zip("_tmp_l.csv", "_tmp_r.csv", "_tmp_both.csv")
+        # csv_zip("_tmp_l.csv", "_tmp_r.csv", "_tmp_both.csv")
 
         # Train on vector covq
-        subprocess.check_call(["time", "../covq/covq", "--train", "_tmp_both.csv",
-                               os.path.join(train_dir, str(i)+str(j),
-                                             "cb_both.csv"),
-                               os.path.join(train_dir, str(i)+str(j),
-                                             "cwmap_both.csv"),
-                               "--bep", str(bep), "--dim", str(2*dim),
-                               "--nsplits", str(bit_alloc[i,j]*2),
-                               "--seed", str(seed), "--lbg-eps",
-                               str(var_block[i,j]/lbg_granularity)])
+        # subprocess.check_call(["time", "../covq/covq", "--train", "_tmp_both.csv",
+        #                        os.path.join(train_dir, str(i)+str(j),
+        #                                      "cb_both.csv"),
+        #                        os.path.join(train_dir, str(i)+str(j),
+        #                                      "cwmap_both.csv"),
+        #                        "--bep", str(bep), "--dim", str(2*dim),
+        #                        "--nsplits", str(bit_alloc[i,j]*2),
+        #                        "--seed", str(seed), "--lbg-eps",
+        #                        str(var_block[i,j]/lbg_granularity)])
 
         # TODO: Here, train on 2-source covq
 
 # Cleanup tmp files
-[os.remove(p) for p in ("_tmp_l.csv", "_tmp_r.csv", "_tmp_both.csv")]
+[os.remove(p) for p in ("_tmp_l.csv", "_tmp_r.csv")] #, "_tmp_both.csv")]
 
-# # Test on same data sets, output test data
-# # independent covq
-# subprocess.check_call(["../covq/covq", "--test l.csv", "cb_l.csv",
-#                        "cwmap_l.csv", "t_out_l.csv", "--bep", str(bep),
-#                        "--dim", str(dim), "--seed", str(seed)], shell=True)
-# subprocess.check_call(["../covq/covq", "--test", "r.csv", "cb_r.csv",
-#                        "cwmap_r.csv t_out_r.csv", "--bep", str(bep),
-#                        "--dim", str(dim), "--seed", str(seed)], shell=True)
+# mkdir for training sets
+if not os.path.isdir(test_dir):
+    os.mkdir(test_dir)
 
-# # Test on vector covq
-# subprocess.check_call(["../covq/covq", "--test", "both.csv", "cb_both.csv",
-#                        "cwmap_both.csv", "t_out_both.csv", "--bep", str(bep),
-#                        "--dim", str(dim), "--seed", str(seed)], shell=True)
+for i in range(block_size):
+    for j in range(block_size):
 
-# # TODO: Here, test on 2-source covq
+        if not os.path.isdir(os.path.join(test_dir, str(i)+str(j))):
+            os.mkdir(os.path.join(test_dir, str(i)+str(j)))
 
-# # Unzip vector covq results
-# csv_unzip("t_out_both.csv", "t_out_both_l.csv", "t_out_both_r.csv")
+        # Write DCT coefficients i,j to csv files for training
+        n = 0
+        with open("_tmp_l.csv", 'w') as f:
+            for block in iter_array(left, (block_size, block_size)):
+                f.write(str(block[i, j]) + "\n")
+                n += 1
+        with open("_tmp_r.csv", 'w') as f:
+            for block in iter_array(right, (block_size, block_size)):
+                f.write(str(block[i, j]) + "\n")
 
-# # TODO: Here, unzip 2-source covq results
+        print("testing on DCT coefficient ({},{})".format(i, j))
+        print("with {} bits per sample".format(bit_alloc[i,j]))
 
-# # Convert csvs to pngs
+        # Test on same data sets, output test data
+        # independent covq
+        subprocess.check_call(["time", "../covq/covq", "--test", "_tmp_l.csv",
+                               os.path.join(test_dir, str(i)+str(j),
+                                            "cb_l.csv"),
+                               os.path.join(test_dir, str(i)+str(j),
+                                            "cwmap_l.csv"),
+                               os.path.join(test_dir, str(i)+str(j),
+                                            "t_out_l.csv"),
+                               "--bep", str(bep), "--dim", str(dim), "--seed",
+                               str(seed)])
+        subprocess.check_call(["time", "../covq/covq", "--test", "_tmp_r.csv",
+                               os.path.join(test_dir, str(i)+str(j),
+                                            "cb_r.csv"),
+                               os.path.join(test_dir, str(i)+str(j),
+                                            "cwmap_r.csv"),
+                               os.path.join(test_dir, str(i)+str(j),
+                                            "t_out_r.csv"),
+                               "--bep", str(bep), "--dim", str(dim), "--seed",
+                               str(seed)])
 
-# csv2ster("t_out_l.csv", "t_out_r.csv", "ind_l.png", "ind_r.png", dim_x, dim_y)
+        # Test on vector covq
+        # subprocess.check_call(["../covq/covq", "--test", "both.csv", "cb_both.csv",
+        #                        "cwmap_both.csv", "t_out_both.csv", "--bep", str(bep),
+        #                        "--dim", str(dim), "--seed", str(seed)], shell=True)
+
+        # TODO: Here, test on 2-source covq
+
+        # Unzip vector covq results
+        # csv_unzip("t_out_both.csv", "t_out_both_l.csv", "t_out_both_r.csv")
+
+        # TODO: Here, unzip 2-source covq results
+
+# Join the separate files into single column csv per image
+
+left_dct = []
+right_dct = []
+for i in range(block_size):
+    left_dct.append([])
+    for j in range(block_size):
+        left_dct[i].append([])
+        with open(os.path.join(test_dir, str(i)+str(j), "t_out_l.csv")) as f:
+            for n_x in range(int(dim_x / block_size)):
+                left_dct[i][j].append([])
+                for n_y in range(int(dim_y / block_size)):
+                    left_dct[i][j][n_x].append(float(f.readline()))
+
+for i in range(block_size):
+    right_dct.append([])
+    for j in range(block_size):
+        right_dct[i].append([])
+        with open(os.path.join(test_dir, str(i)+str(j), "t_out_r.csv")) as f:
+            for n_x in range(int(dim_x / block_size)):
+                right_dct[i][j].append([])
+                for n_y in range(int(dim_y / block_size)):
+                    right_dct[i][j][n_x].append(float(f.readline()))
+
+left_im = []
+right_im = []
+
+for n_x in range(int(dim_x / block_size)):
+    for i in range(block_size):
+        for n_y in range(int(dim_y / block_size)):
+            for j in range(block_size):
+                left_im.append(left_dct[i][j][n_x][n_y])
+                right_im.append(right_dct[i][j][n_x][n_y])
+
+with open("t_out_r.csv", "w") as f:
+    f.writelines([str(n) + "\n" for n in right_im])
+with open("t_out_l.csv", "w") as f:
+    f.writelines([str(n) + "\n" for n in left_im])
+
+# Convert csvs to pngs
+
+csv2ster("t_out_l.csv", "t_out_r.csv", "ind_l.png", "ind_r.png", dim_x, dim_y)
 # csv2ster("t_out_both_l.csv", "t_out_both_r.csv", "vec_l.png", "vec_r.png", dim_x, dim_y)
 
 # TODO: Here, convert 2-source covq results to png
