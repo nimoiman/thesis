@@ -12,14 +12,16 @@ def _2d_idct(a):
     from scipy.fftpack import idct
     return idct(idct(a.transpose(), norm='ortho').transpose(), norm='ortho')
 
+def lala(arg_1, arg_2, append=False):
+    print(append)
 
-def csv_read(filename, dim_x, dim_y, block_order=False, block_size=None):
+def csv_read(filename, dims, block_order=False, block_size=None):
     """Read a single column newline-separated file of floats, return
     an numpy array of dim_x by dim_y
     .. note::
         The single column newline-separated file is the standard that
-        we use because we wrote C code that likes it that way. Ideally,
-        the input/output format would be a .raw file"""
+        we use because we wrote C code that likes it that way.
+    """
     # Check that num lines == dim_x * dim_y
     # Find how many lines in csv_filename
     import numpy as np
@@ -27,36 +29,38 @@ def csv_read(filename, dim_x, dim_y, block_order=False, block_size=None):
     for line in open(filename, 'r'):
         lines += 1
 
-    if lines != dim_x * dim_y:
+    print("dims={}".format(dims))
+    if lines != sum([dim[0] * dim[1] for dim in dims]):
         print("The provided dimensions do not match the number of lines " +
               "in the input file")
         raise SystemExit(1)
 
-    
-
-    if block_order:
-        arr = np.empty((dim_x, dim_y), dtype=float)
-        if block_size is None:
-            raise TypeError("No block size provided with option " +
-                            "block_order=True")
+    arrs = []
+    for dim in dims:
+        if block_order:
+            arr = np.empty(dim, dtype=float)
+            if block_size is None:
+                raise TypeError("No block size provided with option " +
+                                "block_order=True")
+            else:
+                block_size = int(block_size)
+                block_shape = (block_size, block_size)
+            # Read as block by block serial data
+            with open(filename, 'r') as f:
+                for block in iter_array(arr, block_shape):
+                    for i in range(block_size):
+                        for j in range(block_size):
+                            arr[i,j] = float(f.readline())
         else:
-            block_size = int(block_size)
-            block_shape = (block_size, block_size)
-        # Read as block by block serial data
-        with open(filename, 'r') as f:
-            for block in iter_array(arr, block_shape):
-                for i in range(block_size):
-                    for j in range(block_size):
-                        arr[i,j] = float(f.readline())
-    else:
-        arr = np.empty(dim_x * dim_y, dtype=float)
-        with open(filename, 'r') as f:
-            for i in range(dim_x * dim_y):
-                arr[i] = float(f.readline())
+            arr = np.empty(dim[0] * dim[1], dtype=float)
+            with open(filename, 'r') as f:
+                for i in range(dim[0] * dim[1]):
+                    arr[i] = float(f.readline())
 
-        arr = arr.reshape((dim_x, dim_y))
+            arr = arr.reshape((dim[0], dim[1]))
+            arrs.append(arr)
 
-    return arr
+    return arrs
 
 
 def iter_array(arr, vec_shape=(8,1)):
@@ -163,7 +167,8 @@ def serialize(*filenames):
     for (in_file, out_file) in zip(*[iter(filenames)] * 2):
         csv_set_dim(in_file, out_file, 1)
 
-
+def lala(arg_1, arg_2, append=False, lo=False):
+    print(append)
 
 @command
 def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
@@ -181,6 +186,7 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
     """
     from PIL import Image
     import numpy as np
+    print("append={}".format(append))
 
     ster_images = [Image.open(filename_1), Image.open(filename_2)]
 
@@ -213,6 +219,8 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
         mode = 'a'
     else:
         mode = 'w'
+    print("mode={}".format(mode))
+    print("ster_images[0].flatten().shape={}".format(ster_images[0].flatten().shape))
     with open(out_filename_1, mode) as f:
         if block_order:
             for block in iter_array(ster_images[0], (block_size, block_size)):
@@ -233,26 +241,30 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
             for n in ster_images[1].flatten():
                 f.write(str(n) + '\n')
 
+
+    print("dim=({},{})".format(dim_x, dim_y))
     return (dim_x, dim_y)
 
 
-def _bit_allocate(im, block_size):
+def _var_block(imgs, block_size):
     """Use greedy steepest descent algorithm to find optimum bit
-    allocation for DCT coefficients in ``im``
+    allocation for DCT coefficients in ``imgs``
     """
     import numpy as np
     mean_block = np.zeros((block_size, block_size), dtype=float)
     var_block = np.zeros((block_size, block_size), dtype=float)
     n = 0
-    for block in iter_array(im, (block_size, block_size)):
-        mean_block += block
-        n += 1
+    for im in imgs:
+        for block in iter_array(im, (block_size, block_size)):
+            mean_block += block
+            n += 1
 
     mean_block = np.divide(mean_block, n)
     mean_sq_block = np.multiply(mean_block, mean_block)
 
-    for block in iter_array(im, (block_size, block_size)):
-        var_block += np.multiply(block, block) - mean_sq_block
+    for im in imgs:
+        for block in iter_array(im, (block_size, block_size)):
+            var_block += np.multiply(block, block) - mean_sq_block
 
     var_block = np.divide(var_block, n)
 
@@ -282,7 +294,7 @@ def bit_distortion(var_block, bit_alloc):
                 sum_ += dist_rate_laplace(var_block[i, j], bit_alloc[i, j])
     return sum_ / (var_block.shape[0] * var_block.shape[1])
 
-def bit_allocate(csv_filename_1, csv_filename_2, rate, dim_x, dim_y,
+def bit_allocate(csv_filename_1, csv_filename_2, rate, dims,
                  block_size=8):
     """Return bit_alloc matrix along with variance matrix"""
     import numpy as np
@@ -300,36 +312,37 @@ def bit_allocate(csv_filename_1, csv_filename_2, rate, dim_x, dim_y,
               "the csv file.")
         raise SystemExit(1)
 
-    ster_images = [np.empty((dim_x, dim_y), dtype=float),
-                   np.empty((dim_x, dim_y), dtype=float)]
+    
+    ster_images = []
 
     # Read in image data from csv
-    ster_images[0] = csv_read(csv_filename_1, dim_x, dim_y,
-                              block_order=False, block_size=block_size)
-    ster_images[1] = csv_read(csv_filename_2, dim_x, dim_y,
-                              block_order=False, block_size=block_size)
+    ster_images.append(csv_read(csv_filename_1, dims,
+                                block_order=False, block_size=block_size))
+    ster_images.append(csv_read(csv_filename_2, dims,
+                                block_order=False, block_size=block_size))
+    for dim in dims:
 
-    var_block_1 = _bit_allocate(ster_images[0], block_size)
-    var_block_2 = _bit_allocate(ster_images[1], block_size)
+        var_block_1 = _var_block(ster_images[0], block_size)
+        var_block_2 = _var_block(ster_images[1], block_size)
 
-    var_block = (var_block_1 + var_block_2) / 2
-    bit_alloc = np.zeros((block_size, block_size), dtype=int)
+        var_block = (var_block_1 + var_block_2) / 2
+        bit_alloc = np.zeros((block_size, block_size), dtype=int)
 
-    print(var_block)
-    for bit in range(rate * block_size * block_size):
-        best_dist = np.inf
-        best_step = None
-        for i in range(block_size):
-            for j in range(block_size):
-                bit_alloc[i, j] += 1
-                new_dist = bit_distortion(var_block, bit_alloc)
-                if new_dist < best_dist:
-                    # print("new_dist={} < {}=old_dist".format(new_dist,best_dist))
-                    best_step = (i, j)
-                    best_dist = new_dist
-                bit_alloc[i, j] -= 1
-        bit_alloc[best_step] += 1
-        print(bit_alloc)
+        print(var_block)
+        for bit in range(rate * block_size * block_size):
+            best_dist = np.inf
+            best_step = None
+            for i in range(block_size):
+                for j in range(block_size):
+                    bit_alloc[i, j] += 1
+                    new_dist = bit_distortion(var_block, bit_alloc)
+                    if new_dist < best_dist:
+                        # print("new_dist={} < {}=old_dist".format(new_dist,best_dist))
+                        best_step = (i, j)
+                        best_dist = new_dist
+                    bit_alloc[i, j] -= 1
+            bit_alloc[best_step] += 1
+            print(bit_alloc)
     return (bit_alloc, var_block)
 
 
@@ -362,11 +375,11 @@ def csv_quant(csv_filename, out_filename, dim_x, dim_y):
     if lines != dim_x * dim_y:
         print("The provided dimensions do not match the number of lines " +
               "in the input file")
-        exit(1)
+        raise SystemExit(1)
     elif dim_x % block_size != 0 or dim_y % block_size != 0:
         print("The provided dimensions must be multiples of block " +
               "size {}".format(block_size))
-        exit(1)
+        raise SystemExit(1)
 
     # Allocate array for serial input
     ster_images = [np.empty(dim_x * dim_y, dtype=float),
@@ -440,11 +453,11 @@ def csv_unquant(csv_filename, out_filename, dim_x, dim_y, block_size=8):
     if lines != dim_x * dim_y:
         print("The provided dimensions do not match the number of lines " +
               "in the input file")
-        exit(1)
+        raise SystemExit(1)
     elif dim_x % block_size != 0 or dim_y % block_size != 0:
         print("The provided dimensions must be multiples of block " +
               "size {}".format(block_size))
-        exit(1)
+        raise SystemExit(1)
 
     # Allocate array for serial input
     ster_images = [np.empty(dim_x * dim_y, dtype=float),
@@ -478,9 +491,8 @@ def csv_unquant(csv_filename, out_filename, dim_x, dim_y, block_size=8):
          for i in range(ster_images[0].size)]
 
 
-@command
-def csv2ster(csv_filename_1, csv_filename_2, out_filename_1, out_filename_2,
-             dim_x, dim_y, block_order=False, block_size='8'):
+def csv2ster(csv_filename_1, csv_filename_2, out_filenames_1, out_filenames_2,
+             dims, block_order=False, block_size='8'):
     """Extract DCT coefficiencts from 2-column csv_filename, perform 
     inverse DCT on block_size x block_size blocks and output to two
     .png's"""
@@ -503,54 +515,54 @@ def csv2ster(csv_filename_1, csv_filename_2, out_filename_1, out_filename_2,
               "lines.")
         raise SystemExit(1)
 
-    dim_x = int(dim_x)
-    dim_y = int(dim_y)
+    print("dims={}".format(dims))
 
-    if lines_1 != dim_x * dim_y:
+    if lines_1 != sum([dim[0] * dim[1] for dim in dims]):
         print("The provided dimensions do not match the number of lines " +
               "in the input files")
         raise SystemExit(1)
-    elif dim_x % block_size != 0 or dim_y % block_size != 0:
-        print("The provided dimensions must be multiples of block " +
-              "size {}".format(block_size))
-        raise SystemExit(1)
+    else:
+        for dim in dims:
+            if dim[0] % block_size != 0 or dim[1] % block_size != 0:
+                print("The provided dimensions must be multiples of block " +
+                      "size {}".format(block_size))
+                raise SystemExit(1)
 
-    ster_images = [np.empty((dim_x, dim_y), dtype=float),
-                   np.empty((dim_x, dim_y), dtype=float)]
+    ster_images = [None, None]
+    ster_images[0] = csv_read(csv_filename_1, dims, block_order, block_size)
+    ster_images[1] = csv_read(csv_filename_2, dims, block_order, block_size)
+    ster_images = zip(ster_images[0], ster_images[1])
 
-    # Read in image data from csv
-    ster_images[0] = csv_read(csv_filename_1, dim_x, dim_y, block_order,
-                               block_size)
-    ster_images[1] = csv_read(csv_filename_2, dim_x, dim_y, block_order,
-                               block_size)
+    for idx, dim in enumerate(dims):
+        # Perform inverse DCT on blocks
+        for img_pair in ster_images:
+            for img in img_pair:
+                for block in iter_array(img, (block_size, block_size)):
+                    block_dct = _2d_idct(block)
+                    for i in range(block_size):
+                        for j in range(block_size):
+                            block[i,j] = block_dct[i,j]
 
-    # Perform inverse DCT on blocks
-    for img in ster_images:
-        for block in iter_array(img, (block_size, block_size)):
-            block_dct = _2d_idct(block)
-            for i in range(block_size):
-                for j in range(block_size):
-                    block[i,j] = block_dct[i,j]
+            # Convert to rounded signed integers
+            out_im = [np.around(im).astype(int) for im in img_pair]
 
-    # Convert to rounded signed integers
-    ster_images = [np.around(im).astype(int) for im in ster_images]
-
-    # Ensure no overflow errors
-    for im in ster_images:
-        for i in range(dim_x):
-            for j in range(dim_y):
-                if int(im[i,j]) < -128:
-                    im[i,j] = -128
-                elif int(im[i,j]) > 127:
-                    im[i,j] = 127
+        # Ensure no overflow errors
+        for im in out_im:
+            for i in range(dim[0]):
+                for j in range(dim[1]):
+                    if int(im[i,j]) < -128:
+                        im[i,j] = -128
+                    elif int(im[i,j]) > 127:
+                        im[i,j] = 127
 
 
-    # Add 128, convert to 8bit ints
-    ster_images = [(a + 128).astype(np.uint8) for a in ster_images]
+        # Add 128, convert to 8bit ints
+        out_im = [(a + 128).astype(np.uint8) for a in out_im]
 
-    # convert to uint8 & save (as png)
-    Image.fromarray(ster_images[0]).save(out_filename_1)
-    Image.fromarray(ster_images[1]).save(out_filename_2)
+        # convert to uint8 & save (as png)
+        print("out_filenames_1: {}".format(out_filenames_1))
+        Image.fromarray(out_im[0]).save(out_filenames_1[idx])
+        Image.fromarray(out_im[1]).save(out_filenames_2[idx])
 
 
 if __name__ == '__main__':
