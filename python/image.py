@@ -13,7 +13,7 @@ def _2d_idct(a):
     return idct(idct(a.transpose(), norm='ortho').transpose(), norm='ortho')
 
 
-def _csv_read(filename, dim_x, dim_y, block_order=False, block_size=None):
+def csv_read(filename, dim_x, dim_y, block_order=False, block_size=None):
     """Read a single column newline-separated file of floats, return
     an numpy array of dim_x by dim_y
     .. note::
@@ -44,7 +44,7 @@ def _csv_read(filename, dim_x, dim_y, block_order=False, block_size=None):
             block_shape = (block_size, block_size)
         # Read as block by block serial data
         with open(filename, 'r') as f:
-            for block in _iter_array(arr, block_shape):
+            for block in iter_array(arr, block_shape):
                 for i in range(block_size):
                     for j in range(block_size):
                         arr[i,j] = float(f.readline())
@@ -59,7 +59,7 @@ def _csv_read(filename, dim_x, dim_y, block_order=False, block_size=None):
     return arr
 
 
-def _iter_array(arr, vec_shape=(8,1)):
+def iter_array(arr, vec_shape=(8,1)):
     """Iterate through numpy array arr in left-to-right, then
     top-to-bottom order, outputting windowed views of arr of shape
     vec_shape
@@ -167,7 +167,7 @@ def serialize(*filenames):
 
 @command
 def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
-             block_order=False, block_size=8):
+             append=False, block_order=False, block_size=8):
     """Extract pixel data from stereo grayscale images filename_1,
     filename_2, perform normalized DCT-II on block_size x block_size
     blocks and output to 2 csv files of DCT coefficients
@@ -201,7 +201,7 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
 
     # Take DCT block by block
     for img in ster_images:
-        for block in _iter_array(img, (block_size, block_size)):
+        for block in iter_array(img, (block_size, block_size)):
             block_dct = _2d_dct(block)
             for i in range(block_size):
                 for j in range(block_size):
@@ -209,9 +209,13 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
 
     # Serialize the two matrices in a left-to-right, top-to-bottom fashion
     # & write to files
-    with open(out_filename_1, 'w') as f:
+    if append:
+        mode = 'a'
+    else:
+        mode = 'w'
+    with open(out_filename_1, mode) as f:
         if block_order:
-            for block in _iter_array(ster_images[0], (block_size, block_size)):
+            for block in iter_array(ster_images[0], (block_size, block_size)):
                 for i in range(block_size):
                     for j in range(block_size):
                         f.write(str(block[i,j]) + '\n')
@@ -219,9 +223,9 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
             for n in ster_images[0].flatten():
                 f.write(str(n) + '\n')
 
-    with open(out_filename_2, 'w') as f:
+    with open(out_filename_2, mode) as f:
         if block_order:
-            for block in _iter_array(ster_images[1], (block_size, block_size)):
+            for block in iter_array(ster_images[1], (block_size, block_size)):
                 for i in range(block_size):
                     for j in range(block_size):
                         f.write(str(block[i,j]) + '\n')
@@ -230,6 +234,102 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
                 f.write(str(n) + '\n')
 
     return (dim_x, dim_y)
+
+
+def _bit_allocate(im, block_size):
+    """Use greedy steepest descent algorithm to find optimum bit
+    allocation for DCT coefficients in ``im``
+    """
+    import numpy as np
+    mean_block = np.zeros((block_size, block_size), dtype=float)
+    var_block = np.zeros((block_size, block_size), dtype=float)
+    n = 0
+    for block in iter_array(im, (block_size, block_size)):
+        mean_block += block
+        n += 1
+
+    mean_block = np.divide(mean_block, n)
+    mean_sq_block = np.multiply(mean_block, mean_block)
+
+    for block in iter_array(im, (block_size, block_size)):
+        var_block += np.multiply(block, block) - mean_sq_block
+
+    var_block = np.divide(var_block, n)
+
+    return var_block
+
+def dist_rate_gauss(var, n_bits):
+    return var / (2**(2*n_bits))
+
+def dist_rate_laplace(var, n_bits):
+    """Assume quantization to within 3 std deviations"""
+    from numpy import tanh, exp
+    from math import sqrt
+    lambda_ = sqrt(2/var)
+    delta = (3 * sqrt(var)) / (2**n_bits)
+    return (2/lambda_**2) - (delta/lambda_) * \
+        (1 + (1/tanh((lambda_*delta)/2)))*exp((-lambda_*delta)/2)
+
+
+def bit_distortion(var_block, bit_alloc):
+    sum_ = 0
+    
+    for i in range(var_block.shape[0]):
+        for j in range(var_block.shape[1]):
+            if i == 0 and j == 0:
+                sum_ += dist_rate_gauss(var_block[0, 0], bit_alloc[0, 0])
+            else:
+                sum_ += dist_rate_laplace(var_block[i, j], bit_alloc[i, j])
+    return sum_ / (var_block.shape[0] * var_block.shape[1])
+
+def bit_allocate(csv_filename_1, csv_filename_2, rate, dim_x, dim_y,
+                 block_size=8):
+    import numpy as np
+    lines_1 = 0
+    lines_2 = 0
+    for line in open(csv_filename_1):
+        lines_1 += 1
+    for line in open(csv_filename_2):
+        lines_2 += 1
+    if lines_1 != lines_2:
+        print("size of input csvs don't match")
+        raise SystemExit(1)
+    if lines_1 % (block_size * block_size) != 0:
+        print("block_size does not divide the number of lines in " +
+              "the csv file.")
+        raise SystemExit(1)
+
+    ster_images = [np.empty((dim_x, dim_y), dtype=float),
+                   np.empty((dim_x, dim_y), dtype=float)]
+
+    # Read in image data from csv
+    ster_images[0] = csv_read(csv_filename_1, dim_x, dim_y,
+                              block_order=False, block_size=block_size)
+    ster_images[1] = csv_read(csv_filename_2, dim_x, dim_y,
+                              block_order=False, block_size=block_size)
+
+    var_block_1 = _bit_allocate(ster_images[0], block_size)
+    var_block_2 = _bit_allocate(ster_images[1], block_size)
+
+    var_block = (var_block_1 + var_block_2) / 2
+    bit_alloc = np.zeros((block_size, block_size), dtype=int)
+
+    print(var_block)
+    for bit in range(rate * block_size * block_size):
+        best_dist = np.inf
+        best_step = None
+        for i in range(block_size):
+            for j in range(block_size):
+                bit_alloc[i, j] += 1
+                new_dist = bit_distortion(var_block, bit_alloc)
+                if new_dist < best_dist:
+                    # print("new_dist={} < {}=old_dist".format(new_dist,best_dist))
+                    best_step = (i, j)
+                    best_dist = new_dist
+                bit_alloc[i, j] -= 1
+        bit_alloc[best_step] += 1
+        print(bit_alloc)
+    return bit_alloc
 
 
 def csv_quant(csv_filename, out_filename, dim_x, dim_y):
@@ -418,14 +518,14 @@ def csv2ster(csv_filename_1, csv_filename_2, out_filename_1, out_filename_2,
                    np.empty((dim_x, dim_y), dtype=float)]
 
     # Read in image data from csv
-    ster_images[0] = _csv_read(csv_filename_1, dim_x, dim_y, block_order,
+    ster_images[0] = csv_read(csv_filename_1, dim_x, dim_y, block_order,
                                block_size)
-    ster_images[1] = _csv_read(csv_filename_2, dim_x, dim_y, block_order,
+    ster_images[1] = csv_read(csv_filename_2, dim_x, dim_y, block_order,
                                block_size)
 
     # Perform inverse DCT on blocks
     for img in ster_images:
-        for block in _iter_array(img, (block_size, block_size)):
+        for block in iter_array(img, (block_size, block_size)):
             block_dct = _2d_idct(block)
             for i in range(block_size):
                 for j in range(block_size):
