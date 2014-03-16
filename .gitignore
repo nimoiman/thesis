@@ -10,3 +10,4 @@ covq/covq
 vq/vq
 *.png
 octave-workspace
+python/training/*
