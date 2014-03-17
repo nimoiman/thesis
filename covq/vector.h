@@ -9,21 +9,22 @@ extern "C"{
 #include <stdlib.h> /* malloc, free, size_t */
 #include "vector.h"
 
-#define VECTOR_DIM 2
-
 typedef struct{
     size_t size;
-    double (*v)[VECTOR_DIM];
+    uint dim;
+    double **v;
 } vectorset;
 
-vectorset *init_vectorset(size_t size);
+vectorset *init_vectorset(size_t size, uint dim);
 void destroy_vectorset(vectorset *v);
-void print_vector(FILE *stream, double *v);
-void print_vectorset(FILE *stream, vectorset *v);
-int hamming_distance(int v_1, int v_2);
-int vector_equals(double *v_1, double *v_2);
 
-double dist(double *x, double *y);
+inline uint hamming_distance(uint v_1, uint v_2) {
+    return __builtin_popcount(v_1 ^ v_2);
+}
+
+int vector_equals(double *v_1, double *v_2, uint dim);
+
+double dist(double *x, double *y, uint dim);
 
 #ifdef __cplusplus
 }

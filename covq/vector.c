@@ -2,16 +2,27 @@
 
 // Initializes a vectorset for a given size. Returns 1 on success, otherwise 0
 // Remember to call destroy_vector when you are done
-vectorset *init_vectorset(size_t size){
-    int i;
+vectorset *init_vectorset(size_t size, uint dim){
+    size_t i, j;
     vectorset *vset;
-    double (*v)[VECTOR_DIM];
+    double **v;
 
     vset = (vectorset*) malloc(sizeof(vectorset));
-    if(vset){
-        v = (double(*)[VECTOR_DIM]) calloc(size*VECTOR_DIM,sizeof(double));
-        if(v){
+    if (vset) {
+        v = (double**) malloc(size * sizeof(double*));
+        for (i = 0; i < size; i++) {
+            v[i] = calloc(dim, sizeof(double));
+            if (!v[i]) {
+                for (j = 0; j < i; j++) {
+                    free(v[i]);
+                }
+                free(v);
+                break;
+            }
+        }
+        if (v) {
             vset->size = size;
+            vset->dim = dim;
             vset->v = v;
             return vset;
         }
@@ -21,57 +32,31 @@ vectorset *init_vectorset(size_t size){
 }
 
 void destroy_vectorset(vectorset *vset){
+    size_t i;
+    for (i = 0; i < vset->size; i++) {
+        free(vset->v[i]);
+    }
     free(vset->v);
-}
-
-void print_vector(FILE *stream, double *v) {
-    int i;
-    for (i = 0; i < VECTOR_DIM; i++) {
-        fprintf(stream, (i < VECTOR_DIM - 1) ? "%f\t": "%f\n", v[i]);
-    }
-}
-
-// Prints a vectorset to standard output
-// One vector per row, tab delimited
-void print_vectorset(FILE *stream, vectorset *vset) {
-    int i, j;
-    for(j = 0; j < VECTOR_DIM-1; j++)
-        fprintf(stream, "v%d\t", j+1);
-    fprintf(stream, "v%d\n", VECTOR_DIM);
-    for(i = 0; i < vset->size; i++) {
-        print_vector(stream, vset->v[i]);
-        // for(j = 0; j < VECTOR_DIM-1; j++)
-        //     fprintf(stream, "%f\t", vset->v[i][j]);
-        // fprintf(stream, "%f\n", vset->v[i][VECTOR_DIM-1]);
-    }
+    free(vset);
 }
     
 /* Distortion function. Returns the squared-error distortion between
    vector x and vector y. */
-double dist(double *x, double *y){
-    int i;
+double dist(double *x, double *y, uint dim){
+    uint i;
     double d = 0;
-    for(i = 0; i < VECTOR_DIM; i++) {
+    for (i = 0; i < dim; i++) {
         d += (x[i] - y[i])*(x[i] - y[i]);
-        // fprintf(stderr, "(%f - %f)*(%f - %f) = %f\n", x[i], y[i], x[i], y[i], d);
     }
 
     return d;
 }
 
-int hamming_distance(int v_1, int v_2) {
-    int i, count;
-    count = 0;
-    for (i = 0; i < sizeof(int)*8; i++) {
-        // count the different bits
-        count += ((v_1 & (1 << i)) ^ (v_2 & (1 << i))) >> i; // 1 or 0
-    }
-    return count;
-}
+extern uint hamming_distance(uint v_1, uint v_2);
 
-int vector_equals(double *v_1, double *v_2) {
-    int i;
-    for (i = 0; i < VECTOR_DIM; i++) {
+int vector_equals(double *v_1, double *v_2, uint dim) {
+    uint i;
+    for (i = 0; i < dim; i++) {
         if (v_1[i] != v_2[i]) {
             return 0;
         }
