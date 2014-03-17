@@ -12,9 +12,6 @@ def _2d_idct(a):
     from scipy.fftpack import idct
     return idct(idct(a.transpose(), norm='ortho').transpose(), norm='ortho')
 
-def lala(arg_1, arg_2, append=False):
-    print(append)
-
 def csv_read(filename, dims, block_order=False, block_size=None):
     """Read a single column newline-separated file of floats, return
     an numpy array of dim_x by dim_y
@@ -329,7 +326,7 @@ def bit_allocate(csv_filename_1, csv_filename_2, rate, dims,
                       np.zeros((block_size, block_size), dtype=int)]
 
         for idx, var_block in enumerate(var_blocks):
-            for bit in range(rate * block_size * block_size):
+            for bit in range(int(rate * block_size * block_size)):
                 best_dist = np.inf
                 best_step = None
                 for i in range(block_size):
@@ -344,152 +341,6 @@ def bit_allocate(csv_filename_1, csv_filename_2, rate, dims,
                 bit_allocs[idx][best_step] += 1
                 print(bit_allocs[idx])
     return (bit_allocs, var_blocks)
-
-
-def csv_quant(csv_filename, out_filename, dim_x, dim_y):
-    """Quantize and round DCT coefficients according to original JPEG
-    spec "typical" 8x8 quantization matrix"""
-    import numpy as np
-
-    block_size = 8
-    Q = np.matrix([[16, 11, 10, 16, 24, 40, 51, 61],
-                   [12, 12, 14, 19, 26, 58, 60, 55],
-                   [14, 13, 16, 24, 40, 57, 69, 56],
-                   [14, 17, 22, 29, 51, 87, 80, 62],
-                   [18, 22, 37, 56, 68, 109, 103, 77],
-                   [24, 35, 55, 64, 81, 104, 113, 92],
-                   [49, 64, 78, 87, 103, 121, 120, 101],
-                   [72, 92, 95, 98, 112, 100, 103, 99]])
-
-    dim_x = int(dim_x)
-    dim_y = int(dim_y)
-
-    # Find how many lines in csv_filename
-    lines = 0
-    for line in open(csv_filename, 'r'):
-        lines += 1
-
-    dim_x = int(dim_x)
-    dim_y = int(dim_y)
-
-    if lines != dim_x * dim_y:
-        print("The provided dimensions do not match the number of lines " +
-              "in the input file")
-        raise SystemExit(1)
-    elif dim_x % block_size != 0 or dim_y % block_size != 0:
-        print("The provided dimensions must be multiples of block " +
-              "size {}".format(block_size))
-        raise SystemExit(1)
-
-    # Allocate array for serial input
-    ster_images = [np.empty(dim_x * dim_y, dtype=float),
-                   np.empty(dim_x * dim_y, dtype=float)]
-
-    # Read in image data from csv
-    with open(csv_filename, 'r') as f:
-        for i in range(dim_x * dim_y):
-            line = f.readline().split(',')
-            ster_images[0][i] = float(line[0])
-            ster_images[1][i] = float(line[1])
-
-    # Reshape arrays to perform 8x8 matrix operations
-    ster_images = [a.reshape((dim_x, dim_y)) for a in ster_images]
-
-    # print("Prequantized DCT:")
-
-    # print(ster_images[0].astype(int))
-    # print(ster_images[1].astype(int))
-
-    # Divide component-wise by Q, evenly round to integers
-    for i in range(0, dim_x, block_size):
-        for j in range(0, dim_y, block_size):
-            ster_images[0][i:i+block_size, j:j+block_size] = \
-                np.divide(ster_images[0][i:i+block_size, j:j+block_size], Q)
-            ster_images[0][i:i+block_size, j:j+block_size] = \
-                np.around(ster_images[0][i:i+block_size, j:j+block_size])
-            ster_images[1][i:i+block_size, j:j+block_size] = \
-                np.divide(ster_images[1][i:i+block_size, j:j+block_size], Q)
-            ster_images[1][i:i+block_size, j:j+block_size] = \
-                np.around(ster_images[1][i:i+block_size, j:j+block_size])
-
-    # print("Post Quantized DCT:")
-    # print(ster_images[0].astype(int))
-    # print(ster_images[1].astype(int))
-
-    # Reshape for serial output
-    ster_images = [a.reshape(dim_x * dim_y) for a in ster_images]
-
-    # Output to file
-    with open(out_filename, 'w') as f:
-        [f.write(str(ster_images[0][i]) + ',' + str(ster_images[1][i]) + '\n')
-         for i in range(ster_images[0].size)]
-
-
-def csv_unquant(csv_filename, out_filename, dim_x, dim_y, block_size=8):
-    """Unquantize DCT coefficients by multiplying by Q"""
-    import numpy as np
-
-    Q = np.matrix([[16, 11, 10, 16, 24, 40, 51, 61],
-                   [12, 12, 14, 19, 26, 58, 60, 55],
-                   [14, 13, 16, 24, 40, 57, 69, 56],
-                   [14, 17, 22, 29, 51, 87, 80, 62],
-                   [18, 22, 37, 56, 68, 109, 103, 77],
-                   [24, 35, 55, 64, 81, 104, 113, 92],
-                   [49, 64, 78, 87, 103, 121, 120, 101],
-                   [72, 92, 95, 98, 112, 100, 103, 99]])
-    dim_x = int(dim_x)
-    dim_y = int(dim_y)
-
-    # Find how many lines in csv_filename
-    lines = 0
-    for line in open(csv_filename, 'r'):
-        lines += 1
-
-    dim_x = int(dim_x)
-    dim_y = int(dim_y)
-    # print("dim_x = {}".format(dim_x))
-    # print("dim_y = {}".format(dim_y))
-
-    if lines != dim_x * dim_y:
-        print("The provided dimensions do not match the number of lines " +
-              "in the input file")
-        raise SystemExit(1)
-    elif dim_x % block_size != 0 or dim_y % block_size != 0:
-        print("The provided dimensions must be multiples of block " +
-              "size {}".format(block_size))
-        raise SystemExit(1)
-
-    # Allocate array for serial input
-    ster_images = [np.empty(dim_x * dim_y, dtype=float),
-                   np.empty(dim_x * dim_y, dtype=float)]
-
-    # Read in image data from csv
-    with open(csv_filename, 'r') as f:
-        for i in range(dim_x * dim_y):
-            line = f.readline().split(',')
-            ster_images[0][i] = float(line[0])
-            ster_images[1][i] = float(line[1])
-
-    # Reshape arrays to perform 8x8 matrix operations
-    ster_images = [a.reshape((dim_x, dim_y)) for a in ster_images]
-
-    # Multiply component-wise by Q
-    for i in range(0, dim_x, block_size):
-        for j in range(0, dim_y, block_size):
-            ster_images[0][i:i+block_size, j:j+block_size] = \
-                np.multiply(ster_images[0][i:i+block_size, j:j+block_size], Q)
-            ster_images[1][i:i+block_size, j:j+block_size] = \
-                np.multiply(ster_images[1][i:i+block_size, j:j+block_size], Q)
-
-    # Reshape for serial output
-    ster_images = [a.reshape(dim_x * dim_y) for a in ster_images]
-
-
-    # Output to file
-    with open(out_filename, 'w') as f:
-        [f.write(str(ster_images[0][i]) + ',' + str(ster_images[1][i]) + '\n')
-         for i in range(ster_images[0].size)]
-
 
 def csv2ster(csv_filename_1, csv_filename_2, out_filenames_1, out_filenames_2,
              dims, block_order=False, block_size='8'):
