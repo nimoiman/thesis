@@ -1,2 +1,13 @@
 *.o
 vector_main
+__pycache__
+*.sublime*
+*.csv
+.tags
+dropbox
+covq_2/covq_2
+covq/covq
+vq/vq
+*.png
+octave-workspace
+python/training/*

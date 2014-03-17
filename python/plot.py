@@ -9,17 +9,27 @@ def plot_codevectors_vs_training_data(training_set_filename, codevector_filename
     """
     training_set_fp = open(training_set_filename, 'r')
 
-    training_set = [[float(n) for n in l.split()] for l in training_set_fp.readlines()[1:]]
+    training_set = [[float(n) for n in l.split(',')] for l in training_set_fp.readlines()]
 
     codevector_fp = open(codevector_filename, 'r')
 
-    codevectors = [[float(n) for n in c.split()] for c in codevector_fp.readlines()[1:]]
+    codevectors = [[float(n) for n in c.split(',')] for c in codevector_fp.readlines()]
 
     plt.scatter([t[0] for t in training_set], [t[1] for t in training_set], c='r')
     plt.scatter([t[0] for t in codevectors], [t[1] for t in codevectors], c='b')
 
     plt.show()
     
+@command
+def scatter_2d(*args):
+    colours = ['b', 'r', 'g']
+    i = 0
+    for filename in args:
+        fp = open(filename, 'r')
+        data = [[float(n) for n in l.split(',')] for l in fp.readlines()]
+        plt.scatter([t[0] for t in data], [t[1] for t in data], c=colours[i])
+        i += 1
+    plt.show()
 
 if __name__ == '__main__':
     parse_args()

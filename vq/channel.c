@@ -1,4 +1,6 @@
 #include "channel.h"
+/* Defines functions which model / simulate a Gaussian channel
+   (Binary Symmetric Channel) */
 
 /* Uniform(0,1] */
 double drand() {
@@ -28,7 +30,7 @@ void binary_symmetric_channel(char *index, double error_prob,
                               int fixed_length) {
     int i;
     for (i = 0; i < fixed_length; i++) {
-        if (bernoulli(BSC_ERROR_PROB)) {
+        if (bernoulli(error_prob)) {
             // flip the bit
             *index ^= (1 << (i % 8));
         }
@@ -37,4 +39,9 @@ void binary_symmetric_channel(char *index, double error_prob,
             index++;
         }
     }
+}
+
+double transition_probability(int i, int j, double error_prob, int length) {
+    return pow(error_prob, hamming_distance(i, j)) *
+        pow(1 - error_prob, length - hamming_distance(i, j));
 }
