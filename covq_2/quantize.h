@@ -12,26 +12,32 @@ extern "C"{
 #include <assert.h>
 #include <math.h>
 
-typedef struct{
-
-    int nbins_x, nbins_y;
+typedef struct
+{
+    int L_X, L_Y;
     double min_x, min_y;
     double max_x, max_y;
     int npoints;
     int *quant;
 
-}uniform_quantizer;
+}unif_quant;
 
+enum source
+{
+    src_X,
+    src_Y
+};
 
-int quantizer_init(uniform_quantizer *q, int nbins_x, int nbins_y,
-        double min_x, double max_x, double min_y, double max_y);
-void quantizer_destroy(uniform_quantizer *q);
+int quantizer_init
+(unif_quant *q, int L_X, int L_Y,
+ double min_x, double max_x, double min_y, double max_y);
+void quantizer_free(unif_quant *q);
 
-int quantizer_bin(double val_x, double val_y, uniform_quantizer *q);
-int quantizer_get_count(double val_x, double val_y, uniform_quantizer *q);
+double quant_to_val(int qval, enum source s, unif_quant *q);
+int val_to_quant(double val, enum source s, unif_quant *q);
 
-int quantizer_sum_marg(double val, uniform_quantizer *q);
-int quantizer_count_marg(double val, uniform_quantizer *q);
+int quantizer_bin(int qx, int qy, unif_quant *q);
+int quantizer_get_count(int qx, int qy, unif_quant *q);
 
 void quantizer_test();
 

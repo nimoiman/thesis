@@ -6,98 +6,76 @@ extern "C"{
 #endif
 
 #define POW2(x) ((x)*(x))    
-#define IN_RANGE(x, low, high) ((low) <= (x) && (x) <= (high))
 
-#define CODEBOOK_SIZE_X (1 << p->cwlen_x)
-#define CODEBOOK_SIZE_Y (1 << p->cwlen_y)
-#define CV_IDX(i,j) (j * CODEBOOK_SIZE_X + i)
-#define TS_IDX(i,j) (j * p->qlvls + i)
+#define CI(i,j) (j * v->N_X + i)
 
 // Includes
 #include <assert.h>
 #include <stdio.h> /* sprintf */
 #include <stdlib.h> /* malloc, free, size_t */
 #include <math.h> /* pow, exp */
-
-// Source Indicators
-#define SRC_X 0
-#define SRC_Y 1
+#include "quantize.h"
 
 // Codeword length should not exceed this value
-#define MAX_CODEWORD_LEN 4
+#define MAX_CODEWORD_LEN 5
 #define MAX_CODEBOOK_SIZE (1 << MAX_CODEWORD_LEN)
-#define TRSET_SIZE_MAX 20000
+
 typedef struct{
 
-    int qtrset_size;
-    int *qtrset;
-    int *encoder_x, *encoder_y;
-    double *codevec_x, *codevec_y;
-    int *cwmap_x, *cwmap_y;
+    // Number of codevectors
+    // Should be a power of 2
+    int N_X, N_Y;
+
+    // Encoder mappings
+    int *I_X, *I_Y;
+
+    // Codevectors
+    double *x_ij, *y_ij;
+
+    // Encoder index to transmission index
+    int *b_X, *b_Y;
+
+    // Training set
+    unif_quant *q;
+
+    // Channel
+    double (*trans_prob)(int i, int j, int k, int l, int *b_X, int *b_Y);
+
 } covq2;
 
-typedef struct params{
+/*
+ * anneal.c
+ */
+void anneal(covq2 *v);
 
-    /*
-     * Uniform Quantizer Parameters
-     * The number of uniform quantization levels is determined by qlvls. The
-     * length of the entire quantization interval is given by qlen_x for the
-     * x-source and qlen_y for the y-source. The width of each individual
-     * quantization interval is therefore qlen_x/qlvls for the x-source and
-     * qlen_y/qlvls for the y-source.
-     *
-     */
-    unsigned int qlvls;
-    double qlen_x, qlen_y;
+/*
+ * init.c
+ */
+int malloc_covq2(covq2 *v, int N_X, int N_Y, int L_X, int L_Y);
+void free_covq2(covq2 *v);
 
-    /*
-     * Encoder Parameters
-     * 
-     */
-    unsigned char cwlen_x, cwlen_y;
-
-    /*
-     * Training Set
-     *
-     */
-    double *trset_x;
-    double *trset_y;
-    unsigned int trset_size;
-
-    /*
-     * Channel Transition Probability Function
-     *
-     */
-    double (*transition_prob)(int i, int j, int k, int l, struct params *p, covq2 *c);
-} params_covq2;
-
-typedef struct{
-    double *simset_x;
-    double *simset_y;
-    int simset_size;
-    void (*channel_sim)(int i, int j, int *k, int *l);
-} sim_covq2;
-// Simulated Annealing (anneal.c)
-void anneal();
+/*
+ * covq.c
+ */
+double update1(covq2 *v);
+double update2(covq2 *v);
+double nearest_neighbour1_x(int qx, int *idx, covq2 *v);
+double nearest_neighbour1_y(int qy, int *idx, covq2 *v);
+double nearest_neighbour2_x(int qx, int *idx, covq2 *v);
+double nearest_neighbour2_y(int qy, int *idx, covq2 *v);
 
 /*
  * util.c
  */
-int vec_to_quant(double x, int *outlier, int src, params_covq2 *p);
-double quant_to_vec(int qlvl, int src, params_covq2 *p);
-void destroy_covq2_struct(covq2 *c);
 void print_double(FILE *stream, double *arr, int rows, int cols);
+void print_int(FILE *stream, int *arr, int rows, int cols);
 int fprintf_int(char *filename, int *arr, int rows, int cols);
 int fprintf_double(char *filename, double *arr, int rows, int cols);
-void assert_globals(covq2 *c, params_covq2 *p);
-int run(double *d, covq2 *c, params_covq2 *p);
-int init_covq2_struct(covq2 *c, params_covq2 *p);
 
-// COVQ (covq.c)
-double nn_update(int init, covq2 *c, params_covq2 *p);
-double nearest_neighbour(int qlvl1, int *idx, int init, int src, covq2 *c, params_covq2 *p);
-void centroid_update(int src, covq2 *c, params_covq2 *p);
-
+/*
+ * run.c
+ */
+double initilization_stage_covq2(covq2 *v, unif_quant *q, int N_X_final, int N_Y_final);
 
 #ifdef __cplusplus
 }
