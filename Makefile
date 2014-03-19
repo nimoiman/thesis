@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-I. -O2 -Wall -Wextra -Wpedantic -std=gnu99
 LDFLAGS=-lm
 
 vq_DIR=vq/
@@ -29,7 +29,7 @@ covq2_test: $(addprefix $(covq_2_DIR),$(covq2_test_OBJS))
 covq_2: $(addprefix $(covq_2_DIR),$(covq_2_OBJS))
 	$(CC) -o $(addprefix $(covq_2_DIR),$@) $^ $(LDFLAGS) $(CFLAGS)
 
-test: $(addprefix $(covq_2_DIR),$(test_OBJS))
+test_2: $(addprefix $(covq_2_DIR),$(test_2_OBJS))
 	$(CC) -o $(addprefix $(covq_2_DIR),$@) $^ $(LDFLAGS) $(CFLAGS)
 
 .PHONY : clean
@@ -38,8 +38,10 @@ clean:
 	   $(addprefix $(vq_DIR),vq) \
 	   $(addprefix $(covq_DIR),$(covq_OBJS)) \
 	   $(addprefix $(covq_DIR),covq) \
+	   $(addprefix $(covq_DIR),$(test_OBJS)) \
+	   $(addprefix $(covq_DIR),test) \
 	   $(addprefix $(covq_2_DIR),$(covq_2_OBJS)) \
 	   $(addprefix $(covq_2_DIR),$(covq2_test_OBJS)) \
 	   $(addprefix $(covq_2_DIR),covq_2) \
-	   $(addprefix $(covq_2_DIR),$(test_OBJS)) \
+	   $(addprefix $(covq_2_DIR),$(test_2_OBJS)) \
 	   $(addprefix $(covq_2_DIR),test)
