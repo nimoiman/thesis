@@ -108,8 +108,8 @@ def parse_args():
 
 def _signature(name, func):
     """Return string repr of function signature"""
-    defaults = inspect.getargspec(func).defaults or []
-    args = inspect.getargspec(func).args or []
+    defaults = inspect.getfullargspec(func).defaults or []
+    args = inspect.getfullargspec(func).args or []
     arg_str_list = []
 
     n_positional_args = len(args) - len(defaults)
@@ -125,11 +125,11 @@ def _signature(name, func):
     return '{} {}'.format(name, ' '.join(arg_str_list))
 
 
-def _indent(string, spaces=4, bullet='?'):
+def _indent(string, spaces=4, bullet='|'):
     lines = string.splitlines()
     for i, line in enumerate(lines):
         if line[:4] == ' ' * len(line[:4]):
-            # starts with 4 spaces, indent and add a '?'
+            # starts with 4 spaces, indent and add a '|'
             lines[i] = ' ' * spaces + bullet + ' ' + line[4:]
         else:
             lines[i] = ' ' * spaces + bullet + ' ' + line
@@ -148,7 +148,7 @@ def help(*args, **kwargs):
         try:
             func = command.__defaults__[0][f_name]
             text += "Usage: {} {}\n".format(sys.argv[0],
-                                          _signature(f_name, func))
+                                            _signature(f_name, func))
             if func.__doc__:
                 text += _indent(func.__doc__.strip(), spaces=2) + '\n'
             return text
@@ -168,7 +168,7 @@ def help(*args, **kwargs):
     for name, func in sorted(command.__defaults__[0].items()):  # _funcs={}
         text += _indent(_signature(name, func), 2, '*') + '\n'
         if func.__doc__:
-            text += _indent(func.__doc__.strip(), 4, '?') + '\n'
+            text += _indent(func.__doc__.strip(), 4, '|') + '\n'
     return text.strip()
 
 if __name__ == '__main__':
