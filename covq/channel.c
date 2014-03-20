@@ -117,20 +117,46 @@ uint test_decode(uint received_index, vectorset *codebook, uint *cw_map) {
     return i;
 }
 
-double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
-                char *test_out_csv, double error_prob) {
-    FILE *fp;
+double run_test(vectorset *test_set, double error_prob, vectorset *codebook,
+                uint *cw_map, vectorset *test_out, double *snr, double *psnr,
+                double *sqnr) {
     size_t i, k;
     uint channel_index;
     double distortion = 0;
+    double e_x_sq = 0;
+    double e_x = 0;
     int error_count = 0;
     int reconstruction_index = 0;
-    vectorset *test_out = init_vectorset(test_set->size, test_set->dim);
+    double max = 0;
+    double min = 0;
+    double q_distortion = 0;
 
     for (i = 0; i < test_set->size; i++) {
+        double this_energy = 0;
+        for (uint dim = 0; dim < test_set->dim; dim++) {
+            this_energy += test_set->v[i][dim]*test_set->v[i][dim];
+        }
+        double this_norm = sqrt(this_energy);
+
+        for (uint dim = 0; dim < test_set->dim; dim++) {
+            e_x_sq += this_energy;
+            e_x += this_norm;
+        }
+        
+        if (this_energy < min || i == 0) {
+            min = this_energy;
+        }
+        else if (this_energy > max) {
+            max = this_energy;
+        }
         // encode source index to nearest neighbour
         channel_index = test_encode(test_set->v[i], codebook, cw_map,
             error_prob);
+
+        // quantization noise (before channel)
+        q_distortion += dist(test_set->v[i], 
+            codebook->v[test_decode(channel_index, codebook, cw_map)],
+            test_set->dim);
 
         // pass channel_index through BSC
         binary_symmetric_channel(&channel_index, error_prob,
@@ -155,13 +181,20 @@ double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
 
     // printf("error_count = %d\n", error_count);
     distortion /= (test_set->size * test_set->dim);
+    q_distortion /= (test_set->size * test_set->dim);
+
+    e_x_sq /= (test_set->size * test_set->dim);
+    e_x /= (test_set->size * test_set->dim);
+
+    *snr = 10 * log10((e_x_sq - (e_x * e_x)) / distortion);
+    *psnr = 10 * log10(((max - min)*(max - min)) / distortion);
+    *sqnr = 10 * log10((e_x_sq - (e_x * e_x)) / q_distortion);
 
     /* Write to output file */
-    fprintf(stderr, "Writing test channel output data to %s\n", test_out_csv);
-    fp = fopen(test_out_csv, "w");
-    print_vectorset(fp, test_out);
-    fclose(fp);
+    // fprintf(stderr, "Writing test channel output data to %s\n", test_out_csv);
+    // fp = fopen(test_out_csv, "w");
+    // print_vectorset(fp, test_out);
+    // fclose(fp);
 
-    free(test_out);
     return distortion;
 }

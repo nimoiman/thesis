@@ -15,8 +15,9 @@ extern "C"{
 #include "io.h" /* print_vectorset */
 
 double channel_prob(uint i, uint j, double error_prob, uint length, uint *cw_map);
-double run_test(vectorset *codebook, uint *cw_map, vectorset *test_set,
-                char *test_out_csv, double error_prob);
+double run_test(vectorset *test_set, double error_prob, vectorset *codebook,
+                uint *cw_map, vectorset *test_out, double *snr, double *psnr,
+                double *sqnr);
 
 #ifdef __cplusplus
 }

@@ -45,12 +45,20 @@ uint rand_lim(uint limit) {
 
 void anneal(vectorset *codebook, size_t *count, uint *cw_map, size_t trset_size,
             double error_prob) {
+    if (codebook->size == 1) {
+        /* Save a bit of time */
+        return;
+    }
     double new_energy, old_energy;
     double T = TEMP_INIT;
+    uint *best_cw_map = malloc(codebook->size * sizeof(uint));
     uint drop_count = 0, fail_count = 0;
     uint i, j;
 
     old_energy = energy(codebook, count, cw_map, trset_size, error_prob);
+    for (uint k = 0; k < codebook->size; k++) {
+        best_cw_map[k] = cw_map[k];
+    }
 
     while (T > TEMP_FINAL) {
         // randomly choose two indices in [0, codebook->size-1]
@@ -65,8 +73,12 @@ void anneal(vectorset *codebook, size_t *count, uint *cw_map, size_t trset_size,
         
         // keep swap if energy drop
         // else keep swap with probability e^{-rise/T}
-        if (new_energy <= old_energy) {
+        if (new_energy < old_energy) {
             old_energy = new_energy;
+            /* Remember the state with lowest energy */
+            for (uint k = 0; k < codebook->size; k++) {
+                best_cw_map[k] = cw_map[k];
+            }
             drop_count++;
         }
         else if ((rand() / (double) RAND_MAX) < exp(-(new_energy-old_energy)/T)) {
@@ -87,6 +99,11 @@ void anneal(vectorset *codebook, size_t *count, uint *cw_map, size_t trset_size,
             fail_count = 0;
         }
     }
+    /* Restore the state with lowest energy */
+    for (uint k = 0; k < codebook->size; k++) {
+        cw_map[k] = best_cw_map[k];
+    }
+    free(best_cw_map);
 }
 
 int test_anneal(vectorset *codebook, size_t *count, uint *cw_map,

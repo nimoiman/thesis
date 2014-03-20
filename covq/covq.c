@@ -115,27 +115,20 @@ void update_centroids(vectorset *train, vectorset *codebook,
 }
 
 
-
 /* note: n_splits should be less than log_2(INT_MAX)=16 */
-vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
-                    double error_prob, double lbg_eps,
-                    double code_vector_displace) {
+double bsc_covq(vectorset *train, vectorset *codebook, uint *cw_map,
+                uint n_splits, double error_prob, double lbg_eps,
+                double code_vector_displace) {
     double d_new = 0, d_old = 0;
     uint i, j, k, *partition_index;
     size_t *count;
-    vectorset *codebook;
 
     if (!(partition_index = malloc(sizeof(uint) * train->size))) {
-        return NULL;
+        return -1;
     }
     else if (!(count = malloc(sizeof(size_t) * (1 << n_splits)))) {
         free(partition_index);
-        return NULL;
-    }
-    else if (!(codebook = init_vectorset(1 << n_splits, train->dim))) {
-        free(partition_index);
-        free(count);
-        return NULL;
+        return -1;
     }
 
     /* Initialize codebook as single zero vector */
@@ -177,13 +170,21 @@ vectorset *bsc_covq(vectorset *train, uint *cw_map, uint n_splits,
                         + code_vector_displace;
                 }
             }
+            if (i == 0) {
+                fprintf(stderr, "Split ");
+            }
+            else {
+                fprintf(stderr, ", ");
+            }
+            fprintf(stderr, "%u", i);
+            if (i == n_splits - 1) {
+                fprintf(stderr, "\n");
+            }
             // set codebook size
             codebook->size = 1 << (i+1); // 2^(i+1)
         }
-        printf("split number %d\n", i);
     }
-    printf("theoretical distortion = %f\n", d_new);
     free(partition_index);
     free(count);
-    return codebook;
+    return d_new;
 }
