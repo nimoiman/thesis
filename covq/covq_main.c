@@ -153,17 +153,6 @@ struct cmdline parse_args(int argc, char *argv[]) {
     return opts;
 }
 
-// struct retval *init_retval(struct cmdline *opts) {
-//     struct retval *rv = malloc(sizeof(struct retval));
-//     if (opts->test) {
-//         FILE *fp = fopen(opts->test_out_csv);
-//         size_t n = get_num_lines(fp);
-//         rv->test_out = init_vectorset(n, opts->dim);
-//         fclose(fp);
-//     }
-
-//     rv->test_out = 
-// }
 
 void free_retval(struct retval *rv, struct cmdline *opts) {
     if (opts->test) {
@@ -176,59 +165,11 @@ void free_retval(struct retval *rv, struct cmdline *opts) {
     free(rv);
 }
 
-int main(int argc, char *argv[]) {
-
-    /* Note this main function is hacked to run different simulations for
-     * the two source scalar case i.e.
-     * opts.dim is 1, opts.
-     * Make sure the two test/train csvs are same size then call
-     * and are names tr_left.csv,  tr_right.csv, test_left.csv test_right.csv
-     * ./covq/covq */
-    
-    /* Two source parameters */
-    struct cmdline opts_l;
-    struct cmdline opts_r;
-    struct retval *rv_l = malloc(sizeof(struct retval));
-    struct retval *rv_r = malloc(sizeof(struct retval));
-
-    opts_l.train = 1;
-    opts_r.train = 1;
-    opts_l.train_csv = "tr_left.csv";
-    opts_r.train_csv = "tr_right.csv";
-    opts_l.codebook_out = "cb_out_l.csv";
-    opts_r.codebook_out = "cb_out_r.csv";
-    opts_l.cw_map_out = "cw_out_l.csv";
-    opts_r.cw_map_out = "cw_out_r.csv";
-    opts_l.lbg_eps = 0.001;
-    opts_r.lbg_eps = 0.001;
-    opts_l.codevector_displace = 0.001;
-    opts_r.codevector_displace = 0.001;
-
-    opts_l.test = 1;
-    opts_r.test = 1;
-    opts_l.test_in_csv = "test_left.csv";
-    opts_r.test_in_csv = "test_right.csv";
-    opts_l.codebook_in = "cb_out_l.csv";
-    opts_r.codebook_in = "cb_out_r.csv";
-    opts_l.cw_map_in = "cw_out_l.csv";
-    opts_r.cw_map_in = "cw_out_r.csv";
-    opts_l.test_out_csv = "test_out_l.csv";
-    opts_r.test_out_csv = "test_out_r.csv";
-
-    opts_l.seed = 1234;
-    opts_r.seed = 1234;
-    opts_l.dim = 1;
-    opts_r.dim = 1;
-    opts_l.nsplits = 4;
-    opts_r.nsplits = 4;
-    opts_l.bep = 0.001;
-    opts_r.bep = 0.001;
-
-    /* Varying correlation */
-        
-
-    run(&opts_l, rv_l);
-    run(&opts_r, rv_r);
+void single_2src(struct cmdline *opts_l, struct cmdline *opts_r,
+                 struct retval *rv_l, struct retval *rv_r) {
+    /* Run a single iteration of 2 source COSQ */
+    run(opts_l, rv_l);
+    run(opts_r, rv_r);
 
     /* Measure the joint PSNR, SNR */
     double distortion = 0;
@@ -237,7 +178,7 @@ int main(int argc, char *argv[]) {
     double max_power = 0;
     double min_power = 0;
     for (size_t i = 0; i < rv_l->test_out->size; i++) {
-        for (uint dim = 0; dim < opts_l.dim; dim++) {
+        for (uint dim = 0; dim < opts_l->dim; dim++) {
             distortion += (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]) * (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]);
             distortion += (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]) * (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]);
             power += rv_l->test_in->v[i][dim] * rv_l->test_in->v[i][dim];
@@ -253,9 +194,9 @@ int main(int argc, char *argv[]) {
         }
         
     }
-    distortion /= (opts_l.dim * rv_l->test_out->size);
-    power /= (opts_l.dim * rv_l->test_out->size);
-    mean /= (opts_l.dim * rv_l->test_out->size);
+    distortion /= (opts_l->dim * rv_l->test_out->size);
+    power /= (opts_l->dim * rv_l->test_out->size);
+    mean /= (opts_l->dim * rv_l->test_out->size);
 
     double snr = 10*log10((power - (mean*mean)) / distortion);
     double psnr = 10*log10((max_power - min_power) / distortion);
@@ -266,120 +207,185 @@ int main(int argc, char *argv[]) {
     fp = fopen("psnr.out", "a");
     fprintf(fp, "%f\n", psnr);
     fclose(fp);
+}
+
+void iter_epsilon(struct cmdline *opts_l, struct cmdline *opts_r,
+                  struct retval *rv_l, struct retval *rv_r) {
+    /* Iterate through channel epsilons for 2 sources */
+    for (double epsilon = 0.001; epsilon < 0.1; epsilon *= 1.2) {
+        opts_l->bep = epsilon;
+        opts_r->bep = epsilon;
+        printf("epsilon=%f\n", epsilon);
+
+        run(opts_l, rv_l);
+        run(opts_r, rv_r);
+
+        /* Measure the joint PSNR, SNR */
+        double distortion = 0;
+        double power = 0;
+        double mean = 0;
+        double max_power = 0;
+        double min_power = 0;
+        for (size_t i = 0; i < rv_l->test_out->size; i++) {
+            for (uint dim = 0; dim < opts_l->dim; dim++) {
+                distortion += (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]) * (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]);
+                distortion += (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]) * (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]);
+                power += rv_l->test_in->v[i][dim] * rv_l->test_in->v[i][dim];
+                power += rv_r->test_in->v[i][dim] * rv_r->test_in->v[i][dim];
+                mean += rv_l->test_in->v[i][dim];
+                mean += rv_r->test_in->v[i][dim];
+            }
+            if (power < min_power || i == 0) {
+                min_power = power;
+            }
+            if (power > max_power || i == 0) {
+                max_power = power;
+            }
+            
+        }
+        distortion /= (opts_l->dim * rv_l->test_out->size);
+        power /= (opts_l->dim * rv_l->test_out->size);
+        mean /= (opts_l->dim * rv_l->test_out->size);
+
+        double snr = 10*log10((power - (mean*mean)) / distortion);
+        double psnr = 10*log10((max_power - min_power) / distortion);
+        printf("distortion=%f\n", distortion);
+        FILE *fp = fopen("snr.out", (epsilon == 0) ? "w":"a");
+        fprintf(fp, "%f,%f\n", epsilon, snr);
+        fclose(fp);
+        fp = fopen("psnr.out", (epsilon == 0) ? "w":"a");
+        fprintf(fp, "%f,%f\n", epsilon, psnr);
+        fclose(fp);
+    }
+}
+
+void iter_nsplits(struct cmdline *opts_l, struct cmdline *opts_r,
+                  struct retval *rv_l, struct retval *rv_r) {
+    /* Iterate through nsplits for two sources */
+    for (uint rate_x = 0; rate_x < 7; rate_x++) {
+        for (uint rate_y = 0; rate_y < 7; rate_y++) {
+            opts_l->nsplits = rate_x;
+            opts_r->nsplits = rate_y;
+
+            run(opts_l, rv_l);
+            run(opts_r, rv_r);
+
+            /* Measure the joint PSNR, SNR */
+            double distortion = 0;
+            double power = 0;
+            double mean = 0;
+            double max_power = 0;
+            double min_power = 0;
+            for (size_t i = 0; i < rv_l->test_out->size; i++) {
+                for (uint dim = 0; dim < opts_l->dim; dim++) {
+                    distortion += (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]) * (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]);
+                    distortion += (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]) * (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]);
+                    power += rv_l->test_in->v[i][dim] * rv_l->test_in->v[i][dim];
+                    power += rv_r->test_in->v[i][dim] * rv_r->test_in->v[i][dim];
+                    mean += rv_l->test_in->v[i][dim];
+                    mean += rv_r->test_in->v[i][dim];
+                }
+                if (power < min_power || i == 0) {
+                    min_power = power;
+                }
+                if (power > max_power || i == 0) {
+                    max_power = power;
+                }
+                
+            }
+            distortion /= (opts_l->dim * rv_l->test_out->size);
+            power /= (opts_l->dim * rv_l->test_out->size);
+            mean /= (opts_l->dim * rv_l->test_out->size);
+
+            double snr = 10*log10((power - (mean*mean)) / distortion);
+            double psnr = 10*log10((max_power - min_power) / distortion);
+            printf("distortion=%f\n", distortion);
+            FILE *fp = fopen("snr.out", "a");
+            fprintf(fp, "%f%s", snr, (rate_y < 7-1) ? "\t":"\n");
+            fclose(fp);
+            fp = fopen("psnr.out", "a");
+            fprintf(fp, "%f%s", psnr, (rate_y < 7-1) ? "\t":"\n");
+            fclose(fp);
+        }
+    }
+}
+
+
+int main(int argc, char *argv[]) {
+
+    /* Note this main function is hacked to run different simulations for
+     * the two source scalar case i.e.
+     * opts.dim is 1, opts.
+     * Make sure the two test/train csvs are same size then call
+     * and are names tr_left.csv,  tr_right.csv, test_left.csv test_right.csv
+     * ./covq/covq */
+    
+    /* Two source parameters */
+    // struct cmdline opts_l;
+    // struct cmdline opts_r;
+    // struct retval *rv_l = malloc(sizeof(struct retval));
+    // struct retval *rv_r = malloc(sizeof(struct retval));
+
+    // opts_l.train = 1;
+    // opts_r.train = 1;
+    // opts_l.train_csv = "tr_left.csv";
+    // opts_r.train_csv = "tr_right.csv";
+    // opts_l.codebook_out = "cb_out_l.csv";
+    // opts_r.codebook_out = "cb_out_r.csv";
+    // opts_l.cw_map_out = "cw_out_l.csv";
+    // opts_r.cw_map_out = "cw_out_r.csv";
+    // opts_l.lbg_eps = 0.001;
+    // opts_r.lbg_eps = 0.001;
+    // opts_l.codevector_displace = 0.001;
+    // opts_r.codevector_displace = 0.001;
+
+    // opts_l.test = 1;
+    // opts_r.test = 1;
+    // opts_l.test_in_csv = "test_left.csv";
+    // opts_r.test_in_csv = "test_right.csv";
+    // opts_l.codebook_in = "cb_out_l.csv";
+    // opts_r.codebook_in = "cb_out_r.csv";
+    // opts_l.cw_map_in = "cw_out_l.csv";
+    // opts_r.cw_map_in = "cw_out_r.csv";
+    // opts_l.test_out_csv = "test_out_l.csv";
+    // opts_r.test_out_csv = "test_out_r.csv";
+
+    // opts_l.seed = 1234;
+    // opts_r.seed = 1234;
+    // opts_l.dim = 1;
+    // opts_r.dim = 1;
+    // opts_l.nsplits = 4;
+    // opts_r.nsplits = 4;
+    // opts_l.bep = 0.001;
+    // opts_r.bep = 0.001;
+
+    /* Varying correlation */
+    // single_2src(&opts, rv);
+    // free_retval(rv_l, &opts_l);
+    // free_retval(rv_r, &opts_r);
+
 
     /* Varying channel epsilon */
-    // for (double epsilon = 0.001; epsilon < 0.1; epsilon *= 1.2) {
-    //     opts_l.bep = epsilon;
-    //     opts_r.bep = epsilon;
-    //     printf("epsilon=%f\n", epsilon);
-
-    //     run(&opts_l, rv_l);
-    //     run(&opts_r, rv_r);
-
-    //     /* Measure the joint PSNR, SNR */
-    //     double distortion = 0;
-    //     double power = 0;
-    //     double mean = 0;
-    //     double max_power = 0;
-    //     double min_power = 0;
-    //     for (size_t i = 0; i < rv_l->test_out->size; i++) {
-    //         for (uint dim = 0; dim < opts_l.dim; dim++) {
-    //             distortion += (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]) * (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]);
-    //             distortion += (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]) * (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]);
-    //             power += rv_l->test_in->v[i][dim] * rv_l->test_in->v[i][dim];
-    //             power += rv_r->test_in->v[i][dim] * rv_r->test_in->v[i][dim];
-    //             mean += rv_l->test_in->v[i][dim];
-    //             mean += rv_r->test_in->v[i][dim];
-    //         }
-    //         if (power < min_power || i == 0) {
-    //             min_power = power;
-    //         }
-    //         if (power > max_power || i == 0) {
-    //             max_power = power;
-    //         }
-            
-    //     }
-    //     distortion /= (opts_l.dim * rv_l->test_out->size);
-    //     power /= (opts_l.dim * rv_l->test_out->size);
-    //     mean /= (opts_l.dim * rv_l->test_out->size);
-
-    //     double snr = 10*log10((power - (mean*mean)) / distortion);
-    //     double psnr = 10*log10((max_power - min_power) / distortion);
-    //     printf("distortion=%f\n", distortion);
-    //     FILE *fp = fopen("snr.out", (epsilon == 0) ? "w":"a");
-    //     fprintf(fp, "%f,%f\n", epsilon, snr);
-    //     fclose(fp);
-    //     fp = fopen("psnr.out", (epsilon == 0) ? "w":"a");
-    //     fprintf(fp, "%f,%f\n", epsilon, psnr);
-    //     fclose(fp);
-    // }
-
+    // iter_epsilon(&opts_l, &opts_r, rv_l, rv_r)
     // free_retval(rv_l, &opts_l);
     // free_retval(rv_r, &opts_r);
 
     /* Varying bitrates */
-    // for (uint rate_x = 0; rate_x < 7; rate_x++) {
-    //     for (uint rate_y = 0; rate_y < 7; rate_y++) {
-    //         opts_l.nsplits = rate_x;
-    //         opts_r.nsplits = rate_y;
-
-    //         run(&opts_l, rv_l);
-    //         run(&opts_r, rv_r);
-
-    //         /* Measure the joint PSNR, SNR */
-    //         double distortion = 0;
-    //         double power = 0;
-    //         double mean = 0;
-    //         double max_power = 0;
-    //         double min_power = 0;
-    //         for (size_t i = 0; i < rv_l->test_out->size; i++) {
-    //             for (uint dim = 0; dim < opts_l.dim; dim++) {
-    //                 distortion += (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]) * (rv_l->test_out->v[i][dim] - rv_l->test_in->v[i][dim]);
-    //                 distortion += (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]) * (rv_r->test_out->v[i][dim] - rv_r->test_in->v[i][dim]);
-    //                 power += rv_l->test_in->v[i][dim] * rv_l->test_in->v[i][dim];
-    //                 power += rv_r->test_in->v[i][dim] * rv_r->test_in->v[i][dim];
-    //                 mean += rv_l->test_in->v[i][dim];
-    //                 mean += rv_r->test_in->v[i][dim];
-    //             }
-    //             if (power < min_power || i == 0) {
-    //                 min_power = power;
-    //             }
-    //             if (power > max_power || i == 0) {
-    //                 max_power = power;
-    //             }
-                
-    //         }
-    //         distortion /= (opts_l.dim * rv_l->test_out->size);
-    //         power /= (opts_l.dim * rv_l->test_out->size);
-    //         mean /= (opts_l.dim * rv_l->test_out->size);
-
-    //         double snr = 10*log10((power - (mean*mean)) / distortion);
-    //         double psnr = 10*log10((max_power - min_power) / distortion);
-    //         printf("distortion=%f\n", distortion);
-    //         FILE *fp = fopen("snr.out", "a");
-    //         fprintf(fp, "%f%s", snr, (rate_y < 7-1) ? "\t":"\n");
-    //         fclose(fp);
-    //         fp = fopen("psnr.out", "a");
-    //         fprintf(fp, "%f%s", psnr, (rate_y < 7-1) ? "\t":"\n");
-    //         fclose(fp);
-    //     }
-    // }
-
+    // iter_nsplits(&opts_l, &opts_r, rv_l, rv_r)
     // free_retval(rv_l, &opts_l);
     // free_retval(rv_r, &opts_r);
 
 
-    // /* BEGIN NORMAL (single source) CODE */
-    
-    // struct cmdline opts = parse_args(argc, argv);
+    /* BEGIN NORMAL (single source) CODE */
+    struct retval *rv = malloc(sizeof(struct retval));
+    struct cmdline opts = parse_args(argc, argv);
+    /* Write to files */
+    if (opts.test) {
+        FILE *fp = fopen(opts.test_out_csv, "w");
+        print_vectorset(fp, rv->test_out);
+        fclose(fp);
+    }
+    free_retval(rv, &opts);
 
-    // /* Write to files */
-    // if (opts.test) {
-    //     FILE *fp = fopen(opts.test_out_csv, "w");
-    //     print_vectorset(fp, rv->test_out);
-    //     fclose(fp);
-    // }
-
-    // free_retval(rv, &opts);
     return 0;
 }
