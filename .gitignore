@@ -11,3 +11,4 @@ vq/vq
 *.png
 octave-workspace
 python/training/*
+python/stereo_images
