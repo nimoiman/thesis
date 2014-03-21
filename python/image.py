@@ -255,6 +255,64 @@ def ster2csv(filename_1, filename_2, out_filename_1, out_filename_2,
     return dim
 
 
+@command
+def ster_corr(*pngs, block_size=8):
+    """Read in pngs in pairs, crop, take 2D DCT-II on each block of
+    block_size, print out matrix of correlation coefficients between
+    DCT coefficients of the pairs.
+    """
+
+    import numpy as np
+    from math import sqrt
+    block_size = int(block_size)
+
+    # Pair up the images
+    imgs = list(zip(pngs[0::2], pngs[1::2]))
+    
+    np.set_printoptions(precision=3)
+    np.set_printoptions(suppress=True)
+    for img_pair in imgs:
+        corr = np.zeros((block_size, block_size))
+        mean_l = np.zeros((block_size, block_size))
+        mean_r = np.zeros((block_size, block_size))
+        sigma_l = np.zeros((block_size, block_size))
+        sigma_r = np.zeros((block_size, block_size))
+
+        ster_images, dim = ster2arr(img_pair[0], img_pair[1], block_size)
+        ster_images = _img_dct(ster_images[0], ster_images[1], block_size)
+
+        # Find means of coefficients
+        n = 0
+        for block in iter_array(ster_images[0], (block_size, block_size)):
+            mean_l += block
+            n += 1
+        for block in iter_array(ster_images[1], (block_size, block_size)):
+            mean_r += block
+        mean_r /= n
+        mean_l /= n
+
+        n = 0
+        for block in iter_array(ster_images[0], (block_size, block_size)):
+            sigma_l += np.multiply(block - mean_l, block - mean_l)  # element-wise
+            n += 1
+        for block in iter_array(ster_images[1], (block_size, block_size)):
+            sigma_r += np.multiply(block - mean_r, block - mean_r,)  # element-wise
+            
+        sigma_l /= n
+        sigma_l = np.sqrt(sigma_l)
+        sigma_r /= n
+        sigma_r = np.sqrt(sigma_r)
+
+        iter_r = iter_array(ster_images[1], (block_size, block_size))
+        for block_l in iter_array(ster_images[0], (block_size, block_size)):
+            block_r = next(iter_r)
+            corr += np.multiply((block_l - mean_l), (block_r - mean_r))
+        corr /= n
+        corr = np.divide(corr, np.multiply(sigma_l, sigma_r))
+        
+        print(corr)
+
+
 def csv2ster(csv_filename_1, csv_filename_2, out_filenames_1, out_filenames_2,
              dims, block_order=False, block_size=8):
     """Extract DCT coefficiencts from 2-column csv_filename, perform 
