@@ -40,7 +40,7 @@ Other params:
 
 The resulting SNR and PSNR (in dB) are in `gauss_1d_corr_snr.csv` & `gauss_1d_corr_psnr.csv` First column is ρ, second column is {SNR,PSNR}.
 
-The same was run for channel epsilon = 0. The resulting SQNR, PSQNR (in dB) values are in `gauss_1d_corr_sqnr.csv` & `gauss_1d_corr_psqnr.csv` First column is ρ, second column is {SNR,PSNR}.out`
+The same was run for channel epsilon = 0, with 101 points - ρ=0.00, 0.01, ..., 0.99, 1.00. The resulting SQNR, PSQNR (in dB) values are in `gauss_1d_corr_sqnr.csv` & `gauss_1d_corr_psqnr.csv` First column is ρ, second column is {SNR,PSNR}.out`
 
 ## Images
 
