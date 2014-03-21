@@ -17,27 +17,29 @@ void swap(int *i, int *j) {
 
 /* get energy of current binary index assignment */
 double energy(int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE],
-        params_covq2 *p, covq2 *c) {
-    int i, j, k, el;
-    double eucl_dist;
+        covq2 *v) {
+    int i, j, k, l;
+    double d;
     double sum = 0;
     double inner_sum;
+    double p;
+    int m;
 
-    for (i = 0; i < CODEBOOK_SIZE_X; i++) {
-        for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
+    for (i = 0; i < v->N_X; i++) {
+        for (j = 0; j < v->N_Y; j++) {
             inner_sum = 0;
-            for (k = 0; k < CODEBOOK_SIZE_X; k++) {
-                for (el = 0; el < CODEBOOK_SIZE_Y; el++) {
-                    eucl_dist = POW2(c->codevec_x[CV_IDX(i,j)] - c->codevec_x[CV_IDX(k,el)]) +
-                                POW2(c->codevec_y[CV_IDX(i,j)] - c->codevec_y[CV_IDX(k, el)]);
-                    inner_sum += p->transition_prob(i, j, k, el, p, c) * eucl_dist;
+            for (k = 0; k < v->N_X; k++) {
+                for (l = 0; l < v->N_Y; l++) {
+                    p = v->trans_prob(i, j, k, l, v->b_X, v->b_Y);
+                    inner_sum += (POW2(v->x_ij[CI(i,j)] - v->x_ij[CI(k,l)]) +
+                                POW2(v->y_ij[CI(i,j)] - v->y_ij[CI(k,l)])) * p;
                 }
             }
             sum += inner_sum * codebook_count[i][j];
         }
     }
-    // assert( sum >= 0 );
-    return sum / p->trset_size;
+
+    return sum / v->q->npoints;
 }
 
 /* return a random number between 0 and limit-1 inclusive.
@@ -53,38 +55,38 @@ int rand_lim(int limit) {
     return retval;
 }
 
-void anneal( params_covq2 *p, covq2 *c ) {
+void anneal(covq2 *v) {
     double E_new, E_old;
     double T = TEMP_INIT;
     int drop_count = 0, fail_count = 0;
     int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
     int i1, j1, i2, j2;
     int i,j;
-    int q_x, q_y;
+    int qx, qy;
 
     /*
      * Compute codebook_count
      * Should contain number of training points that map to each transmission
      * pair (i,j).
      */
-    for (i = 0; i < CODEBOOK_SIZE_X; i++) {
-        for (j = 0; j < CODEBOOK_SIZE_Y; j++) {
+    for (i = 0; i < v->N_X; i++) {
+        for (j = 0; j < v->N_Y; j++) {
             codebook_count[i][j] = 0;
         }
     }
 
-    for (q_x = 0; q_x < p->qlvls; q_x++) {
-        i = c->encoder_x[q_x];
-        for (q_y = 0; q_y < p->qlvls; q_y++) {
-            j = c->encoder_y[q_y];
-            codebook_count[i][j] += c->qtrset[TS_IDX(i,j)];
+    for (qx = 0; qx < v->q->L_X; qx++) {
+        i = v->I_X[qx];
+        for (qy = 0; qy < v->q->L_Y; qy++) {
+            j = v->I_Y[qy];
+            codebook_count[i][j] += quantizer_get_count(qx, qy, v->q);
         }
     }
 
     /*
      * Get initial energy of system. Save as E_old.
      */
-    E_old = energy(codebook_count, p, c);
+    E_old = energy(codebook_count, v);
 
     /*
      * Begin annealing process.
@@ -96,17 +98,17 @@ void anneal( params_covq2 *p, covq2 *c ) {
          * Swap two random indexes for both sources. Swap i1 with i2 and j1
          * with j2.
          */
-        i1 = rand_lim(CODEBOOK_SIZE_X);
-        i2 = rand_lim(CODEBOOK_SIZE_X);
-        swap(c->cwmap_x + i1, c->cwmap_x + i2);
-        j1 = rand_lim(CODEBOOK_SIZE_Y);
-        j2 = rand_lim(CODEBOOK_SIZE_Y);
-        swap(c->cwmap_y + j1, c->cwmap_y + j2);
+        i1 = rand_lim(v->N_X);
+        i2 = rand_lim(v->N_X);
+        swap(v->b_X + i1, v->b_X + i2);
+        j1 = rand_lim(v->N_Y);
+        j2 = rand_lim(v->N_Y);
+        swap(v->b_Y + j1, v->b_Y + j2);
 
         /*
          * Compute energy of new system.
          */
-        E_new = energy(codebook_count, p, c);
+        E_new = energy(codebook_count, v);
         
         /*
          * If new state is better than old state, keep it. Otherwise keep the
@@ -123,8 +125,8 @@ void anneal( params_covq2 *p, covq2 *c ) {
         else {
             fail_count++;
             // Swap back to old system
-            swap(c->cwmap_x + i1, c->cwmap_x + i2);
-            swap(c->cwmap_y + j1, c->cwmap_y + j2);
+            swap(v->b_X + i1, v->b_X + i2);
+            swap(v->b_Y + j1, v->b_Y + j2);
         }
 
         /*
