@@ -360,7 +360,7 @@ int main(int argc, char *argv[]) {
     // opts_r.bep = 0.001;
 
     /* Varying correlation */
-    // single_2src(&opts, rv);
+    // single_2src(&opts_l, &opts_r, rv_l, rv_r);
     // free_retval(rv_l, &opts_l);
     // free_retval(rv_r, &opts_r);
 
@@ -371,7 +371,7 @@ int main(int argc, char *argv[]) {
     // free_retval(rv_r, &opts_r);
 
     /* Varying bitrates */
-    // iter_nsplits(&opts_l, &opts_r, rv_l, rv_r)
+    // iter_nsplits(&opts_l, &opts_r, rv_l, rv_r);
     // free_retval(rv_l, &opts_l);
     // free_retval(rv_r, &opts_r);
 
