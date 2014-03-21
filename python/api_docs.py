@@ -30,7 +30,10 @@ def command(func, _funcs={}):
     func_name = func.__name__.lower()
     if func_name in _funcs:
         raise Exception('Duplicate definition for command {}'.format(func_name))
-    _funcs[func_name] = func
+    if func.__module__ not in _funcs:
+        _funcs[func.__module__] = {}
+
+    _funcs[func.__module__][func_name] = func
 
     # play nice and leave the command where it was in this script
     @wraps(func)
@@ -89,7 +92,7 @@ def parse_args():
             args.append(arg)
 
     # Map the command to a function, falling back to 'help' if it's not found
-    funcs = command.__defaults__[0]  # _funcs={}
+    funcs = command.__defaults__[0]['__main__']  # _funcs={}
     if cmd not in funcs:
         output = funcs['help'](cmd)
         print(output)
@@ -146,7 +149,7 @@ def help(*args, **kwargs):
     for i, f_name in enumerate(args):
         # Find f_name in available commands
         try:
-            func = command.__defaults__[0][f_name]
+            func = command.__defaults__[0]['__main__'][f_name]
             text += "Usage: {} {}\n".format(sys.argv[0],
                                             _signature(f_name, func))
             if func.__doc__:
@@ -165,7 +168,7 @@ def help(*args, **kwargs):
 
     text += '\n'
     text += 'Available commands:\n'
-    for name, func in sorted(command.__defaults__[0].items()):  # _funcs={}
+    for name, func in sorted(command.__defaults__[0]['__main__'].items()):  # _funcs={}
         text += _indent(_signature(name, func), 2, '*') + '\n'
         if func.__doc__:
             text += _indent(func.__doc__.strip(), 4, '|') + '\n'
