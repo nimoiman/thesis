@@ -26,6 +26,8 @@ Other params:
 
 The resulting SNR and PSNR (in dB) tables are in `gauss_1d_nsplits_snr.out` & `gauss_1d_nsplits_psnr.out`
 
+The same was run for channel epsilon = 0. The resulting SQNR, PSQNR (in dB) tables are in `gauss_1d_nsplits_sqnr.out` & `gauss_1d_nsplits_psqnr.out`
+
 ### Varying Correlation
 A covariance matrix [1, ρ; ρ, 1] was used to generate 10,000 training vectors and 10,000 testing vectors for ρ=0.1...0.9 and tested on independent (1D) COSQ
 
