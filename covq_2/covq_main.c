@@ -17,8 +17,8 @@
 #define SEPS_INIT 0.35
 #define SEPS_INC 0.025
 
-double trans_prob_x = 0.01;
-double trans_prob_y = 0.01;
+double trans_prob_x = 0.001;
+double trans_prob_y = 0.001;
 
 int B_X, B_Y;
 
@@ -114,8 +114,125 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
     return SQNR;
 }
 
+int jamie_hack_train(int argc, const char* argv[])
+{
+    /* This runs the system up to (not including) the channel
+     * optimization stage. i.e. no cw_map, no epsilon */
+    FILE * pFile;
+    covq2 v;
+    unif_quant q;
+    char line[LINE_LEN];
+    int param_count;
+
+    double x, y;
+    int qx, qy;
+    double T_X=0, S_X=0;
+    double T_Y=0, S_Y=0;
+    double signal_power;
+    double quantized_noise_power;
+    double SQNR;
+    char *tr_file, *enc_x, *enc_y, *dec_x, *dec_y, *cw_map_out, *test_file, *test_out_file;
+    int N_X, N_Y, L_X, L_Y;
+
+    /* Get parameters */
+    if (argc != 9) {
+        fprintf(stderr, "Training Usage:\n");
+        fprintf(stderr, "%s\n",
+                "./covq_2/covq_2 train tr_set enc_x enc_y dec_x dec_y N_X N_Y L_X L_Y");
+        return 1;
+    }
+    else {
+        tr_file = argv[1];
+        enc_x = argv[2];
+        enc_y = argv[3];
+        dec_x = argv[4];
+        dec_x = argv[5]
+        N_X = atoi(argv[5]);
+        N_Y = atoi(argv[6]);
+        L_X = atoi(argv[7]);
+        L_Y = atoi(argv[8]);
+    }
+
+    quantizer_init( &q, L_X, L_Y, -1, 1, -1, 1);
+
+    /*
+     * Read training set from file.
+     */
+    pFile = fopen(tr_file, "r");
+    if( !pFile ){
+        fprintf(stderr, "Could not open training set file.\n");
+        return 1;
+    }
+
+    while(fgets(line, LINE_LEN, pFile) != NULL){
+        param_count = sscanf(line, "%lf, %lf", &x, &y);
+        if( param_count != 2 ){
+            fprintf(stderr, "Invalid training set format.\n");
+            return 0;
+        }
+        printf("%f, %f\n", x, y);
+        S_X += x;
+        S_Y += y;
+        T_X += POW2(x);
+        T_Y += POW2(y);
+        qx = val_to_quant(x, src_X, &q);
+        qy = val_to_quant(y, src_Y, &q);
+        quantizer_bin(qx, qy, &q);
+    }
+    fclose(pFile);
+
+    /* Output X codebook to file */
+    pFile = fopen(enc_x, "w");
+    for (int i = 0; i < N_X; i++) {
+        for (int j = 0; j < N_Y; j++) {
+            fprintf(pFile, "%f%s", v->x_ij[CI(i,j)], (j == N_Y-1) ? "\n":",");
+        }
+    }
+    fclose(enc_x);
+
+    /* Output Y codebook to file */
+    pFile = fopen(enc_y, "w");
+    for (int i = 0; i < N_X; i++) {
+        for (int j = 0; j < N_Y; j++) {
+            fprintf(pFile, "%f%s", v->y_ij[CI(i,j)], (j == N_Y-1) ? "\n":",");
+        }
+    }
+    fclose(enc_y);
+
+    /* Output decoder lookup X to file */
+    pFile = fopen(dec_x, "w");
+    for (int i = 0; i < N_X; i++)
+
+    S_X /= q.npoints;
+    S_Y /= q.npoints;
+    T_X /= q.npoints;
+    T_Y /= q.npoints;
+    signal_power = T_X + POW2(S_X) + T_Y + POW2(S_Y);
+
+    quantized_noise_power = initilization_stage_covq2(&v, &q, N_X, N_Y);
+
+    SQNR = 10 * log10(signal_power / quantized_noise_power);
+
+    free_covq2(&v);
+    quantizer_free(&q);
+
+    return 0;
+}
+
 int main( int argc, const char* argv[] )
 {
+    if (argc < 2) {
+        fprintf(stderr, "First arg is test or train\n");
+        return 1;
+    }
+    if (!(strcmp(argv[1], "train"))) {
+        return jamie_hack_train(argc, argv);
+    }
+    else if (!(strcmp(argv[1], "test"))) {
+        return jamie_hack_test(argc, argv)
+    }
+    
+
     int N_X, N_Y;
     int L_X, L_Y;
     double SQNR;
