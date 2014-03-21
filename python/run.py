@@ -10,8 +10,9 @@ import pickle
 import traceback
 import os, sys
 
-from api_docs import command, parse_args, help
+from api_docs import command, parse_args
 from image import *
+from util import *
 
 # Filenames
 csv_src_l = "l.csv"
@@ -37,25 +38,10 @@ t_out_2D_l = "t_out_2D_l.csv"
 t_out_2D_r = "t_out_2D_r.csv"
 
 
-def _stderr(msg):
-    print(msg, file=sys.stderr)
-
-
-def _mkdir(path):
-    try:
-        os.mkdir(path)
-    except FileExistsError as e:
-        if os.path.isdir(path):
-            return
-        else:
-            _stderr(("File by the name {} exists - " +
-                     "cannot write over").format(path))
-            raise e
-
 @command
-def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
-        lbg_eps='0.001', train_dir="training", block_size='8', make='True'):
-    """Train 2*1D COSQ on pairs of pngs in *pngs
+def png_train_1d(*pngs, bep=0.001, block_rate=256, seed=1234,
+        lbg_eps=0.001, train_dir="training_1d", block_size=8, make=True):
+    """Train 2*1D COSQ on DCT coefficients of pairs of pngs in *pngs
     Store training output in :param:`train_dir`
 
     e.g.
@@ -63,27 +49,32 @@ def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
     :code::
         python run.py png_train_1d left_1.png right_1.png left_2.png right_2.png
     """
+    # COSQ Parameters
     bep = float(bep)
     vector_dim = 1
     block_rate = int(block_rate)
     seed = int(seed)
     lbg_eps = float(lbg_eps)
     block_size = int(block_size)
-    make = bool(make)
-
+    if make in ['True', True]:
+        make = True
+    elif make in ['False', False]:
+        make = False
+    else:
+        stderr_("Invalid value for kwarg 'make'")
+        raise SystemExit(1)
 
     if len(pngs) % 2 != 0:
-        _stderr("Please provide a training images in pairs")
+        stderr_("Please provide training images in pairs")
         raise SystemExit(1)
 
     # Pair up the images
     imgs = zip(pngs[0::2], pngs[1::2])
     if make:
-        # Make COVQ programs
+        # Make COVQ program
         os.chdir("../")
         subprocess.check_call("make clean", shell=True)
         subprocess.check_call("make covq", shell=True)
-        # subprocess.check_call("make covq_2", shell=True)
         os.chdir("python/")
 
     dims = []
@@ -104,20 +95,16 @@ def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
 
     # Find optimal bit allocation for left, right images independently
     # See Julien Cheng's MSc Ch. 3
-    bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate, dims,
-                                          block_size=block_size)
+    bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate,
+                                          dims, block_size=block_size)
 
-    _stderr("DCT Coefficient Variance Matrix Left:")
-    _stderr(var_blocks[0])
-    _stderr("DCT Coefficient Variance Matrix Right:")
-    _stderr(var_blocks[1])
-    _stderr("DCT Coefficient Bit Allocation Matrix Left:")
-    _stderr(bit_allocs[0])
-    _stderr("DCT Coefficient Bit Allocation Matrix Right:")
-    _stderr(bit_allocs[1])
+    stderr_("DCT Coefficient Bit Allocation Matrix Left:")
+    stderr_(bit_allocs[0])
+    stderr_("DCT Coefficient Bit Allocation Matrix Right:")
+    stderr_(bit_allocs[1])
 
     # mkdir for training sets
-    _mkdir(train_dir)
+    mkdir_(train_dir)
 
     # Write bit_allocs to binary pickled file for use in testing code
     with open(os.path.join(train_dir, bit_allocs_pickle), "wb") as f:
@@ -129,7 +116,7 @@ def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
             # mkdir train_dir/ij
             # This dir is for storing the results of the training phase
             # namely, the codebook and codeword map for DCT frequency ij
-            _mkdir(os.path.join(train_dir, str(i)+str(j)))
+            mkdir_(os.path.join(train_dir, str(i)+str(j)))
 
             # Write DCT coefficients i,j to tmp csv files for training
             n = 0
@@ -143,8 +130,8 @@ def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
                     for block in iter_array(r, (block_size, block_size)):
                         f.write(str(block[i, j]) + "\n")
 
-            _stderr("training on DCT coefficient ({},{})".format(i, j))
-            _stderr("with {} bits per sample".format(bit_allocs[0][i,j]))
+            stderr_("training on DCT coefficient ({},{})".format(i, j))
+            stderr_("with {} bits per sample".format(bit_allocs[0][i,j]))
 
             # Train independent covq on each csv
             subprocess.check_call(["../covq/covq", "--train", tmp_l,
@@ -157,8 +144,8 @@ def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
                                    "--seed", str(seed), "--lbg-eps",
                                    str(lbg_eps)])
 
-            _stderr("training on DCT coefficient ({},{})".format(i, j))
-            _stderr("with {} bits per sample".format(bit_allocs[1][i,j]))
+            stderr_("training on DCT coefficient ({},{})".format(i, j))
+            stderr_("with {} bits per sample".format(bit_allocs[1][i,j]))
             subprocess.check_call(["../covq/covq", "--train", "_tmp_r.csv",
                                    os.path.join(train_dir, str(i)+str(j),
                                                 cb_1D_r),
@@ -174,11 +161,14 @@ def png_train_1d(*pngs, bep='0.001', block_rate='1', seed='1234',
     [os.remove(p) for p in (tmp_l, tmp_r)]
 
 @command
-def png_test_1d(*pngs, test_dir="testing", train_dir="training", block_size=8,
+def png_test_1d(*pngs, test_dir="testing_1d", train_dir="training_1d", block_size=8,
                 bep=0.001, seed=1234):
     """Accept png filenames in pairs"""
     if len(pngs) % 2 != 0:
         print("odd number of pngs not acceptable")
+        raise SystemExit(1)
+    if len(pngs) == 0:
+        print("Too few pngs provided!")
         raise SystemExit(1)
 
     vector_dim = 1
@@ -323,9 +313,9 @@ def png_test_1d(*pngs, test_dir="testing", train_dir="training", block_size=8,
 
 
 @command
-def png_train(*pngs, bep='0.001', vector_dim='1', block_rate='1', seed='1234',
-        lbg_eps='0.01', train_dir="training", block_size='8', make='True'):
-    """Train 2*1D COSQ, 1*2D COVQ on pairs of pngs in *pngs
+def png_train_1_5d(*pngs, bep=0.001, vector_dim=1, block_rate=256, seed=1234,
+        lbg_eps=0.01, train_dir="training_1_5d", block_size=8, make=True):
+    """Train 2*1.5D COVQ on pairs of pngs in *pngs
     Store training output in :param:`train_dir`
 
     e.g.
@@ -339,20 +329,25 @@ def png_train(*pngs, bep='0.001', vector_dim='1', block_rate='1', seed='1234',
     seed = int(seed)
     lbg_eps = float(lbg_eps)
     block_size = int(block_size)
-    make = bool(make)
+    if make in ['True', True]:
+        make = True
+    elif make in ['False', False]:
+        make = False
+    else:
+        stderr_("Invalid value for kwarg 'make'")
+        raise SystemExit(1)
 
     if len(pngs) % 2 != 0:
-        _stderr("Please provide a training images in pairs")
+        stderr_("Please provide a training images in pairs")
         raise SystemExit(1)
 
     # Pair up the images
     imgs = zip(pngs[0::2], pngs[1::2])
     if make:
-        # Make COVQ programs
+        # Make COVQ_2 program
         os.chdir("../")
         subprocess.check_call("make clean", shell=True)
-        subprocess.check_call("make covq", shell=True)
-        # subprocess.check_call("make covq_2", shell=True)
+        subprocess.check_call("make covq_2", shell=True)
         os.chdir("python/")
 
     dims = []
@@ -373,20 +368,18 @@ def png_train(*pngs, bep='0.001', vector_dim='1', block_rate='1', seed='1234',
 
     # Find optimal bit allocation for left, right images independently
     # See Julien Cheng's MSc Ch. 3
+    # TODO: derive optimal scheme for bit allocation in the 2 source case
+    # - for now, bits are allocated in same way as independent scheme
     bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate, dims,
                                           block_size=block_size)
 
-    _stderr("DCT Coefficient Variance Matrix Left:")
-    _stderr(var_blocks[0])
-    _stderr("DCT Coefficient Variance Matrix Right:")
-    _stderr(var_blocks[1])
-    _stderr("DCT Coefficient Bit Allocation Matrix Left:")
-    _stderr(bit_allocs[0])
-    _stderr("DCT Coefficient Bit Allocation Matrix Right:")
-    _stderr(bit_allocs[1])
+    stderr_("DCT Coefficient Bit Allocation Matrix Left:")
+    stderr_(bit_allocs[0])
+    stderr_("DCT Coefficient Bit Allocation Matrix Right:")
+    stderr_(bit_allocs[1])
 
     # mkdir for training sets
-    _mkdir(train_dir)
+    mkdir_(train_dir)
 
     # Write bit_allocs to binary pickled file for use in testing code
     with open(os.path.join(train_dir, bit_allocs_pickle), "wb") as f:
@@ -398,7 +391,7 @@ def png_train(*pngs, bep='0.001', vector_dim='1', block_rate='1', seed='1234',
             # mkdir train_dir/ij
             # This dir is for storing the results of the training phase
             # namely, the codebook and codeword map for DCT frequency ij
-            _mkdir(os.path.join(train_dir, str(i)+str(j)))
+            mkdir_(os.path.join(train_dir, str(i)+str(j)))
 
             # Write DCT coefficients i,j to tmp csv files for training
             n = 0
@@ -412,34 +405,11 @@ def png_train(*pngs, bep='0.001', vector_dim='1', block_rate='1', seed='1234',
                     for block in iter_array(r, (block_size, block_size)):
                         f.write(str(block[i, j]) + "\n")
 
-            _stderr("training on DCT coefficient ({},{})".format(i, j))
-            _stderr("with {} bits per sample".format(bit_allocs[0][i,j]))
+            stderr_("training on DCT coefficient ({},{})".format(i, j))
+            stderr_("with {} bits per sample".format(bit_allocs[0][i,j]))
 
-            # Train independent covq on each csv
-            subprocess.check_call(["../covq/covq", "--train", tmp_l,
-                                   os.path.join(train_dir, str(i)+str(j),
-                                                cb_1D_l),
-                                   os.path.join(train_dir, str(i)+str(j),
-                                                cwmap_1D_l),
-                                   "--bep", str(bep), "--dim", str(vector_dim),
-                                   "--nsplits", str(bit_allocs[0][i,j]),
-                                   "--seed", str(seed), "--lbg-eps",
-                                   str(lbg_eps)])
-
-            _stderr("training on DCT coefficient ({},{})".format(i, j))
-            _stderr("with {} bits per sample".format(bit_allocs[1][i,j]))
-            subprocess.check_call(["../covq/covq", "--train", "_tmp_r.csv",
-                                   os.path.join(train_dir, str(i)+str(j),
-                                                cb_1D_r),
-                                   os.path.join(train_dir, str(i)+str(j),
-                                                cwmap_1D_r),
-                                   "--bep", str(bep), "--dim", str(vector_dim),
-                                   "--nsplits", str(bit_allocs[1][i,j]),
-                                   "--seed", str(seed), "--lbg-eps",
-                                   str(lbg_eps)])
-
-            # # Zip the two csvs
-            # csv_zip("_tmp_l.csv", "_tmp_r.csv", "_tmp_both.csv")
+            # Zip the two csvs
+            csv_zip(tmp_l, tmp_r, tmp_both)
 
             # # Train on vector covq
             # subprocess.check_call(["../covq/covq", "--train", tmp_both,

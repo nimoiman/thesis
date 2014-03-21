@@ -6,8 +6,8 @@ and testing, and some generic Python I/O utility functions
 # Python 2 compat
 from __future__ import print_function
 
-import traceback, sys
-from api_docs import command, parse_args, help
+import traceback, sys, os
+from api_docs import command, parse_args
 
 
 def exit_(msg=1):
@@ -17,6 +17,18 @@ def exit_(msg=1):
 
 def stderr_(msg):
     print(msg, file=sys.stderr)
+
+
+def mkdir_(path):
+    try:
+        os.mkdir(path)
+    except FileExistsError as e:
+        if os.path.isdir(path):
+            return
+        else:
+            stderr_(("File by the name {} exists - " +
+                     "cannot write over").format(path))
+            raise e
 
 
 def iter_array(arr, vec_shape=(8,1)):

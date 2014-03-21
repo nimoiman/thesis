@@ -6,7 +6,7 @@ and testing
 # Python 2 compat
 from __future__ import print_function
 
-from api_docs import command, parse_args, help
+from api_docs import command, parse_args
 from util import *
 
 
