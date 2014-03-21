@@ -379,6 +379,7 @@ int main(int argc, char *argv[]) {
     /* BEGIN NORMAL (single source) CODE */
     struct retval *rv = malloc(sizeof(struct retval));
     struct cmdline opts = parse_args(argc, argv);
+    run(&opts, rv);
     /* Write to files */
     if (opts.test) {
         FILE *fp = fopen(opts.test_out_csv, "w");
