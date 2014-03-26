@@ -17,7 +17,7 @@ extern "C"{
 #include "quantize.h"
 
 // Codeword length should not exceed this value
-#define MAX_CODEWORD_LEN 5
+#define MAX_CODEWORD_LEN 7
 #define MAX_CODEBOOK_SIZE (1 << MAX_CODEWORD_LEN)
 
 typedef struct{

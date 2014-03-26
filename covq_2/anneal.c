@@ -19,11 +19,9 @@ void swap(int *i, int *j) {
 double energy(int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE],
         covq2 *v) {
     int i, j, k, l;
-    double d;
     double sum = 0;
     double inner_sum;
     double p;
-    int m;
 
     for (i = 0; i < v->N_X; i++) {
         for (j = 0; j < v->N_Y; j++) {

@@ -32,7 +32,6 @@ void free_covq2(covq2 *v)
 
 int malloc_covq2(covq2 *v, int N_X, int N_Y, int L_X, int L_Y)
 {
-    int q_init;
 
     v->N_X = N_X;
     v->N_Y = N_Y;

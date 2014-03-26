@@ -25,14 +25,12 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
         y = quant_to_val(qy, src_Y, v->q);
         j = v->I_Y[qy];
         m = quantizer_get_count(qx, qy, v->q);
-        assert(m >= 0);
 
         MM += m;
         M[j] += m;
         S[j] += y * m;
         T += POW2(y) * m;
     }
-    assert(T >= 0);
 
     if(MM == 0){
         *idx = 0;
@@ -47,18 +45,14 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
             x_ij = v->x_ij[CI(i,j)];
             y_ij = v->y_ij[CI(i,j)];
             d += (POW2(x-x_ij)+POW2(y_ij))*M[j]-2*y_ij*S[j];
-            assert(M[j] >= 0);
         }
         d = (T+d)/MM;
-        assert(d < 1000);
-        assert(d > 0);
         if(d_best < 0 || d < d_best){
             *idx = i;
             d_best = d;
         }
     }
 
-    assert(d_best >= -0.5);
     return d_best;
 }
 
@@ -87,14 +81,12 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
         x = quant_to_val(qx, src_X, v->q);
         i = v->I_X[qx];
         m = quantizer_get_count(qx, qy, v->q);
-        assert(m >= 0);
 
         MM += m;
         M[i] += m;
         S[i] += x * m;
         T += POW2(x) * m;
     }
-    assert(T >= 0);
 
     if(MM == 0){
         *idx = 0;
@@ -109,18 +101,14 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
             x_ij = v->x_ij[CI(i,j)];
             y_ij = v->y_ij[CI(i,j)];
             d += (POW2(y-y_ij)+POW2(x_ij))*M[i]-2*x_ij*S[i];
-            assert(M[i] >= 0);
         }
         d = (T+d)/MM;
-        assert(d < 1000);
-        assert(d > 0);
         if(d_best < 0 || d < d_best){
             *idx = j;
             d_best = d;
         }
     }
 
-    assert(d_best >= -0.5);
     return d_best;
 }
 
@@ -296,6 +284,7 @@ void centroid1(covq2 *v)
                 v->y_ij[CI(i,j)] = S_Y[i][j] / M[i][j];
             }
             else{
+                printf("Empty cell!\n");
                 v->x_ij[CI(i,j)] = 0;
                 v->y_ij[CI(i,j)] = 0;
             }
@@ -313,7 +302,6 @@ void centroid2(covq2 *v)
     int qx, qy;
     int m;
     double x, y;
-    double x_kl, y_kl;
     double p;
     double numer_x, numer_y;
     double denom;

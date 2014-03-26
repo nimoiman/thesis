@@ -1,6 +1,6 @@
 #include "covq.h"
-#define SPLIT_EPS 0.0001
-#define SPLIT_DELTA 0.0001
+#define SPLIT_EPS 0.001
+#define SPLIT_DELTA 0.00001
 
 double initilization_stage_covq2(covq2 *v, unif_quant *q, int N_X_final, int N_Y_final)
 {
@@ -9,7 +9,7 @@ double initilization_stage_covq2(covq2 *v, unif_quant *q, int N_X_final, int N_Y
     double x_ij, y_ij;
     double x, y;
     double D_avg, D_avg2;
-    int i, j;
+    int i;
 
 
     /*
