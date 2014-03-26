@@ -1,0 +1,26 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+
+\begin{document}
+
+\section{System Design and Implementation}
+% Section Overview
+
+\subsection{Conditions of Optimality}
+% Nearest neighbour condition depends on other encoder -> Need to apply NN condition seperatly. We chose to rotate between the three conditions of optimality in turn NN_X->NN_Y->CC.
+
+% Need conditional distributions for nearest neighbour condition -> Use Uniform Quantizer. Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation. Another thing to note: complexity depends on total number of bins rather than number of training points.
+
+% Present equations for conditions of optimality for training set/quantizer.
+
+\subsection{Codebook Initialization}
+% Considered different methods of codebook initialization. Tried Assigning codevectors to first N training points. Didn't work very well, also need to consider how to initialize encoders since you can't initialize one encoder using nearest neighbour conditions without having the other one already initialized.
+
+% Tried splitting Algorithm. Advantage: can initialize encoders more easily. Should converge to a more optimal solution.
+
+\subsection{Codeword Assignment}
+% Need to map indecies onto binary codewords. Present minimization problem. Problem is NP-complete. Show how we can use simulated annealing to approximate optimal solution.
+
+\subsection{Design Summary}
+% Summarize design and talk about complexity.
+\end{document}

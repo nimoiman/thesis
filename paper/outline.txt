@@ -1,0 +1,67 @@
+
+Abstract
+    
+
+Introduction
+
+Description
+    Section Overview
+        More specific problem description
+            Define terms
+            Give as an optimization problem
+        Discuss simpler cases: VQ, COVQ
+            How we will adapt solutions to our problem
+    Optimal Quantizer design
+        Distortion Measures
+        General Conditions of Optimality
+        Overview of conditions of optimality
+            Optimal choice of one component given that others fixed
+        Lloyd Algorithm (general)
+        LBG Splitting Algorithm (general)
+    Conditions of Optimality
+        Vector Quantization
+        Channel Optimized Vector Quantization
+        Joint Decoder
+    Codeword Assignment
+        Another minimization problem
+        Simulated Annealing (briefly)
+        Results for Joint Decoder (equation)
+    Bit Allocation and Transform Coding
+        Mention that we didn't get working for our system
+
+System Design and Implementation
+    Section Overview
+        Adapted VQ and COVQ for our problem
+        New design considerations
+    Uniform Quantizer
+        Bin size
+    Adapted Lloyd's Algorithm
+        Mention iteration pattern
+    Adapted LBG Splitting Algorithm
+        Mention splitting pattern
+    Simulated Annealing
+    Conclusion
+        Complexity
+            Depends more on bin size than training set size
+
+Testing and Results
+    (Focus more on method than discussion of results)
+    Testing overview
+        Training and Simulation set
+        Measure distortion vs. Theoretical distortion
+        Compare images visually
+        Want to compare vs independent decoder and joint encoders
+    Generated data 
+
+    Images
+        Using optimal bit allocation
+
+Discussion
+    Discuss results
+        Compare vs independent decoder and joint encoder
+
+Conclusion
+    Further work
+        Bit allocation for joint decoder
+            Discuss other work
+        Getting stuck in local optimum
