@@ -60,17 +60,8 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
     FILE * pFile;
     covq2 v;
     unif_quant q;
-    char line[LINE_LEN];
-    int param_count;
-
-    double x, y;
-    int qx, qy;
-    double T_X=0, S_X=0;
-    double T_Y=0, S_Y=0;
-    double signal_power;
-    double quantized_noise_power;
-    double SQNR;
-
+    
+    
 
     quantizer_init( &q, L_X, L_Y, -1, 1, -1, 1);
 
@@ -83,8 +74,12 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
         return 0;
     }
 
+    char line[LINE_LEN];
+    double T_X=0, S_X=0;
+    double T_Y=0, S_Y=0;
     while(fgets(line, LINE_LEN, pFile) != NULL){
-        param_count = sscanf(line, "%lf, %lf", &x, &y);
+        double x, y;
+        int param_count = sscanf(line, "%lf, %lf", &x, &y);
         if( param_count != 2 ){
             fprintf(stderr, "Invalid training set format.\n");
             return 0;
@@ -93,20 +88,21 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
         S_Y += y;
         T_X += POW2(x);
         T_Y += POW2(y);
-        qx = val_to_quant(x, src_X, &q);
-        qy = val_to_quant(y, src_Y, &q);
+        int qx = val_to_quant(x, src_X, &q);
+        int qy = val_to_quant(y, src_Y, &q);
         quantizer_bin(qx, qy, &q);
     }
+    fclose(pFile);
 
     S_X /= q.npoints;
     S_Y /= q.npoints;
     T_X /= q.npoints;
     T_Y /= q.npoints;
-    signal_power = T_X + POW2(S_X) + T_Y + POW2(S_Y);
+    double signal_power = T_X + POW2(S_X) + T_Y + POW2(S_Y);
 
-    quantized_noise_power = initilization_stage_covq2(&v, &q, N_X, N_Y);
+    double quantized_noise_power = initilization_stage_covq2(&v, &q, N_X, N_Y);
 
-    SQNR = 10 * log10(signal_power / quantized_noise_power);
+    double SQNR = 10 * log10(signal_power / quantized_noise_power);
 
     free_covq2(&v);
     quantizer_free(&q);
