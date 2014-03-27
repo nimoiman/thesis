@@ -7,20 +7,48 @@
 % Section Overview
 
 \subsection{Conditions of Optimality}
-% Nearest neighbour condition depends on other encoder -> Need to apply NN condition seperatly. We chose to rotate between the three conditions of optimality in turn NN_X->NN_Y->CC.
+% Nearest neighbour condition depends on other encoder -> Need to apply NN condition seperately. We chose to rotate between the three conditions of optimality in turn NN_X->NN_Y->CC.
 
-% Need conditional distributions for nearest neighbour condition -> Use Uniform Quantizer. Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation. Another thing to note: complexity depends on total number of bins rather than number of training points.
+% Note this decision is somewhat arbitrary, the effects of other choices of order haven't been studied
+
+% Design Problems: 
+% Need conditional distributions for nearest neighbour condition -> Use Uniform Quantizer.
+% Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation. 
+% Another thing to note: complexity depends on total number of bins rather than number of training points.
 
 % Present equations for conditions of optimality for training set/quantizer.
 
 \subsection{Codebook Initialization}
-% Considered different methods of codebook initialization. Tried Assigning codevectors to first N training points. Didn't work very well, also need to consider how to initialize encoders since you can't initialize one encoder using nearest neighbour conditions without having the other one already initialized.
+% Describe problem
+% Considered different methods of codebook initialization.
 
+% Implementation:
+% Tried Assigning codevectors to first N training points. Didn't work very well
 % Tried splitting Algorithm. Advantage: can initialize encoders more easily. Should converge to a more optimal solution.
 
+% Need to consider how to initialize encoders since you can't initialize one encoder using nearest neighbour conditions without having the other one already initialized.
+% Splitting makes this simple
+
 \subsection{Codeword Assignment}
-% Need to map indecies onto binary codewords. Present minimization problem. Problem is NP-complete. Show how we can use simulated annealing to approximate optimal solution.
+% Need to map indices onto binary codewords. Present minimization problem. Problem is NP-complete.
+% build this up from point-to-point case
+% show minimization objective function of the codeword maps b_X, b_Y
+
+%Implementation:
+% Simulated annealing
+% show 
+
+\subsection{Image Coding}
+% Presented problems with what to input to quantizer -> DCT blocks
+% Bit allocation (we did not explore this for joint decoder case)
+
+% Implementation:
+% Python PILLOW library & scipy
 
 \subsection{Design Summary}
 % Summarize design and talk about complexity.
+% [unif Q_X] -> [enc X] -> [b_X] \ 
+%                                 --> [MAC]-- [Joint decode]
+% [unif Q_Y] -> [enc Y] -> [b_Y] /
+
 \end{document}

@@ -5,7 +5,6 @@
 #define QLVLS 25
 #define LINE_LEN 100
 
-#define TRSET_FILE "training_set.csv"
 #define ENCODER_X_FILE "encoder_x.csv"
 #define ENCODER_Y_FILE "encoder_y.csv"
 #define CODEVEC_X_FILE "x_ij.csv"
@@ -55,7 +54,7 @@ double trans_prob(int i, int j, int k, int l, int *b_X, int *b_Y)
     return prob;
 }
 
-double run(int L_X, int L_Y, int N_X, int N_Y)
+double run(int L_X, int L_Y, int N_X, int N_Y, char *trset_file)
 {
     FILE * pFile;
     covq2 v;
@@ -77,7 +76,11 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
     /*
      * Read training set from file.
      */
+<<<<<<< Updated upstream
     pFile = fopen(TRSET_FILE, "r");
+=======
+    FILE *pFile = fopen(trset_file, "r");
+>>>>>>> Stashed changes
     if( !pFile ){
         fprintf(stderr, "Could not open training set file.\n");
         return 0;
@@ -114,7 +117,7 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
     return SQNR;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     int N_X, N_Y;
     int L_X, L_Y;
@@ -126,6 +129,7 @@ int main()
 
     L_X = L_Y = 100;
 
+<<<<<<< Updated upstream
     printf("\t");
     for(N_X = 1; N_X <= N_X_final; N_X *= 2)
         printf("%d\t\t", N_X);
@@ -137,6 +141,29 @@ int main()
             printf("\t%f",SQNR);
         }
     }
+=======
+    if (argc != 5) {
+        printf("Usage: covq_2 tr_set.csv test_set.csv output.csv rho");
+    }
+
+    double SQNR = run(L_X, L_Y, N_X_final, N_Y_final, argv[1]);
+    double rho = atof(argv[4]);
+
+    // printf("\t");
+    // for (int N_X = 1; N_X <= N_X_final; N_X *= 2) {
+    //     printf("%d\t\t", N_X);
+    // }
+
+    // for (int N_Y = 1; N_Y <= N_Y_final; N_Y *= 2) {
+    //     printf("\n%d", N_Y);
+    //     for (int N_X = 1; N_X <= N_X_final; N_X *= 2) {
+    //         double SQNR = run(L_X, L_Y, N_X, N_Y);
+    //         printf("\t%f",SQNR);
+    //     }
+    // }
+    FILE *fp = fopen(argv[3], "a");
+    fprintf(fp, "%f,%f\n", rho, SQNR);
+>>>>>>> Stashed changes
 
     printf("\n");
 
