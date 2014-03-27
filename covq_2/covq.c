@@ -223,16 +223,12 @@ void centroid1(covq2 *v)
     int M[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
     double S_X[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
     double S_Y[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
-    int i, j;
-    int qx, qy;
-    int m;
-    double x, y;
 
     /*
      * Zero Initialize arrays
      */
-    for(i = 0; i < v->N_X; i++){
-        for(j = 0; j < v->N_Y; j++){
+    for(int i = 0; i < v->N_X; i++){
+        for(int j = 0; j < v->N_Y; j++){
             M[i][j] = 0;
             S_X[i][j] = 0;
             S_Y[i][j] = 0;
@@ -242,13 +238,13 @@ void centroid1(covq2 *v)
     /*
      * Compute M(i,j), S_X(i,j), and S_Y(i,j)
      */
-    for(qx = 0; qx < v->q->L_X; qx++){
-        x = quant_to_val(qx, src_X, v->q);
-        for(qy = 0; qy < v->q->L_Y; qy++){
-            y = quant_to_val(qy, src_Y, v->q);
-            m = quantizer_get_count(qx, qy, v->q);
-            i = v->I_X[qx];
-            j = v->I_Y[qy];
+    for(int qx = 0; qx < v->q->L_X; qx++){
+        double x = quant_to_val(qx, src_X, v->q);
+        for(int qy = 0; qy < v->q->L_Y; qy++){
+            double y = quant_to_val(qy, src_Y, v->q);
+            int m = quantizer_get_count(qx, qy, v->q);
+            int i = v->I_X[qx];
+            int j = v->I_Y[qy];
 
             M[i][j] += m;
             S_X[i][j] += x*m;
@@ -259,8 +255,8 @@ void centroid1(covq2 *v)
     /*
      * compute x_ij, and y_ij
      */
-    for(i = 0; i < v->N_X; i++){
-        for(j = 0; j < v->N_Y; j++){
+    for(int i = 0; i < v->N_X; i++){
+        for(int j = 0; j < v->N_Y; j++){
             if(M[i][j] > 0){
                 v->x_ij[CI(i,j)] = S_X[i][j] / M[i][j];
                 v->y_ij[CI(i,j)] = S_Y[i][j] / M[i][j];
@@ -279,20 +275,12 @@ void centroid2(covq2 *v)
     int M[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
     double S_X[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
     double S_Y[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
-    int i, j, k, l;
-    int qx, qy;
-    int m;
-    double x, y;
-    double p;
-    double numer_x, numer_y;
-    double denom;
-
 
     /*
      * Zero Initialize arrays
      */
-    for(i = 0; i < v->N_X; i++){
-        for(j = 0; j < v->N_Y; j++){
+    for(int i = 0; i < v->N_X; i++){
+        for(int j = 0; j < v->N_Y; j++){
             M[i][j] = 0;
             S_X[i][j] = 0;
             S_Y[i][j] = 0;
@@ -302,13 +290,13 @@ void centroid2(covq2 *v)
     /*
      * Compute M(i,j), S_X(i,j), and S_Y(i,j)
      */
-    for(qx = 0; qx < v->q->L_X; qx++){
-        x = quant_to_val(qx, src_X, v->q);
-        for(qy = 0; qy < v->q->L_Y; qy++){
-            y = quant_to_val(qy, src_Y, v->q);
-            m = quantizer_get_count(qx, qy, v->q);
-            i = v->I_X[qx];
-            j = v->I_Y[qy];
+    for(int qx = 0; qx < v->q->L_X; qx++){
+        double x = quant_to_val(qx, src_X, v->q);
+        for(int qy = 0; qy < v->q->L_Y; qy++){
+            double y = quant_to_val(qy, src_Y, v->q);
+            int m = quantizer_get_count(qx, qy, v->q);
+            int i = v->I_X[qx];
+            int j = v->I_Y[qy];
 
             M[i][j] += m;
             S_X[i][j] += x*m;
@@ -319,14 +307,14 @@ void centroid2(covq2 *v)
     /*
      * Compute x_kl (numer_x/denom), and y_kl (numer_y/denom)
      */
-    for(k = 0; k < v->N_X; k++){
-        for(l = 0; l < v->N_Y; l++){
-            numer_x = 0;
-            numer_y = 0;
-            denom = 0;
-            for(i = 0; i < v->N_X; i++){
-                for(j = 0; j < v->N_Y; j++){
-                    p = v->trans_prob(i,j,k,l,v->b_X,v->b_Y);
+    for(int k = 0; k < v->N_X; k++){
+        for(int l = 0; l < v->N_Y; l++){
+            double numer_x = 0;
+            double numer_y = 0;
+            double denom = 0;
+            for(int i = 0; i < v->N_X; i++){
+                for(int j = 0; j < v->N_Y; j++){
+                    double p = v->trans_prob(i,j,k,l,v->b_X,v->b_Y);
                     numer_x += S_X[i][j] * p;
                     numer_y += S_Y[i][j] * p;
                     denom += M[i][j] * p;
@@ -341,16 +329,13 @@ void centroid2(covq2 *v)
 
 double update(covq2 *v, int t)
 {
-    int qx, qy;
-    int i, j;
-    double d;
-    int m;
     double d_total = 0;
 
     /*
      * Apply Nearest Neighbour Condition for X
      */
-    for(qx = 0; qx < v->q->L_X; qx++){
+    for(int qx = 0; qx < v->q->L_X; qx++){
+        int i;
         if(t == 1)
             nearest_neighbour1_x(qx, &i, v);
         else
@@ -366,10 +351,13 @@ double update(covq2 *v, int t)
      * distortion should be slightly lower. We compute the average distortion
      * by going over the marginal in Y.
      */
-    for(qy = 0; qy < v->q->L_Y; qy++){
-        m = 0;
-        for(qx = 0; qx < v->q->L_X; qx++)
+    for(int qy = 0; qy < v->q->L_Y; qy++){        
+        int m = 0;
+        for(int qx = 0; qx < v->q->L_X; qx++)
             m += quantizer_get_count(qx, qy, v->q);
+
+        double d;
+        int j;
         if(t == 1)
             d = nearest_neighbour1_y(qy, &j, v);
         else
