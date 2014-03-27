@@ -1,0 +1,183 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\begin{document}
+
+\begin{equation*}
+    d(x,i)=E[Y^2 | X = x] +
+    \sum_{j=1}^{N_Y} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(x-x_{(k,l)})}^2 -
+    2y_{(k,l)}E[Y|X=x,Y\in S_j] + y_{(k,l)}^2 )P(Y\in S_j|X=x)
+    P(k,l|i,j)
+\end{equation*}
+
+\begin{equation*}
+    d(y,j)=E[X^2 | Y = y] +
+    \sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(y-y_{(k,l)})}^2 -
+    2x_{(k,l)}E[X|Y=y,X\in R_i] + x_{(k,l)}^2 )P(X\in R_i|Y=y)
+    P(k,l|i,j)
+\end{equation*}
+
+\begin{equation*}
+    x_i = \argmin_x E[d(X,x)|X\in R_i]
+\end{equation*}
+
+The quantizer design algorithm is broken into two separate
+stages\textemdash{}the initialization stage, followed by the channel
+optimization stage. The purpose of the initialization stage is to initialize
+the quantizer so a globally optimal average distortion can be achieved in the
+channel optimization stage. In the initialization stage, we initialize the
+quantizer according to a noiseless channel. In the channel optimization stage,
+channel noise is slowly introduced while adjusting the codevectors and encoders
+until the desired channel parameters are obtained.
+
+\section*{Initialization Stage}
+The following adaption of the LBG algorithm is used to initialize the quantizer.
+
+\begin{enumerate}
+
+    \item Apply uniform quantizer to training set $\mathcal{T}$. Let
+        $q'_X(x):\mathbb{R} \rightarrow \{1,\ldots,L_X\}$
+        and
+        $q'_Y(y):\mathbb{R} \rightarrow \{1,\ldots,L_Y\}$
+        denote the uniform quantizer functions for $X$ and $Y$ respectively and
+        let $q_X(x'):\{1,\ldots,L_X\} \rightarrow \mathbb{R}$
+        and
+        $q_Y(y'):\{1,\ldots,L_Y\} \rightarrow \mathbb{R}$
+        denote the reconstruction functions.
+
+        For each $x'\in \{1,\ldots,L_X\}$, $y'\in \{1,\ldots,L_Y\}$ let
+        \begin{equation*}
+            m(x',y') = |\{(x,y) \in \mathcal{T} : q'_X(x) = x', q'_Y(y) = y'\}|
+        \end{equation*}
+
+    \item Let $N_X = 1$, $N_Y = 1$ and let
+        \begin{align*}
+            x_{(1,1)} &= \frac{1}{M}
+            \sum_{x'=1}^{L_X} \sum_{y'=1}^{L_Y} q_X(x') m(x',y')
+            \\
+            y_{(1,1)} &= \frac{1}{M}
+            \sum_{x'=1}^{L_X} \sum_{y'=1}^{L_Y} q_Y(y') m(x',y')
+            \\
+            D^*_{avg} &= \frac{1}{M} \sum_{x'=1}^{L_X} \sum_{y'=1}^{L_Y}
+            \big( {(q_X(x')-x_{(1,1)})}^2 + {(q_Y(y')-y_{(1,1)})}^2 \big)
+            m(x',y')
+        \end{align*}
+
+    \item Perform following splitting routine until desired value of $N_X$ is
+        reached.
+        \begin{enumerate}
+
+            \item For each $i = 1,\ldots, N_X$, $j = 1,\ldots, N_Y$, let
+                \begin{align*}
+                    x_{(N_X+i,j)} &= (1+\epsilon)x_{(i,j)} \\
+                    x_{(i,j)} &= (1-\epsilon)x_{(i,j)}
+                \end{align*}
+                for some small value of $\epsilon$.
+
+            \item Let $N_X = 2N_X$.
+
+            \item Let $D_{avg} = D^*_{avg}$
+
+            \item For each $x'\in \{1,\ldots,L_X\}$ let 
+                \begin{equation*}
+                    I_X(x')=\argmin_{i \in \{1,\dots,N_X\}}d_X(x',i)
+                \end{equation*}
+                where
+                \begin{equation*}
+                    d_X(x',i) =
+                    \frac{1}{M(x')} \bigg(T(x') + 
+                    \sum_{j=1}^{N_Y}
+                    \Big(\big({(q_X(x')-x_{(i,j)})}^2 +
+                    y_{(i,j)}^2\big)M_j(x') -2y_{(i,j)}S_j(x')\Big)\bigg)
+                \end{equation*}
+                and
+                \begin{align*}
+                    M(x') &= {\sum_{y'=1}^{L_Y}m(x',y')} \\
+                    M_j(x') &= \sum_{y':I_Y(y')=j}m(x',y') \\
+                    S_j(x') &= \sum_{y':I_Y(y')=j}q_Y(y')m(x',y') \\
+                    T(x') &= \sum_{y'=1}^{L_Y}{q_Y}^2(y')m(x',y')
+                \end{align*}
+
+            \item For each $k\in\{1,\ldots,N_X\}$, $l\in\{1,\ldots,N_Y\}$ let
+                \begin{equation*}
+                    x_{(i,j)} = 
+                    \frac{\sum_{\substack{x':I_X(x')=i\\y':I_Y(y')=j}}q_X(x')m(x',y')}
+                    {\sum_{\substack{x':I_X(x')=i\\y':I_Y(y')=j}}m(x',y')}
+                \end{equation*}
+
+            \item For each $y'\in \{1,\ldots,L_Y\}$ let 
+                \begin{equation*}
+                    I_Y(y')=\argmin_{j \in \{1,\dots,N_Y\}}d_Y(y',j)
+                \end{equation*}
+                where $d_Y(y',j)$ is defined in the same way as $d_X(x',i)$
+                above.
+
+            \item For each $k\in\{1,\ldots,N_X\}$, $l\in\{1,\ldots,N_Y\}$ let
+                \begin{equation*}
+                    y_{(i,j)} = 
+                    \frac{\sum_{\substack{x':I_X(x')=i\\y':I_Y(y')=j}}q_Y(y')m(x',y')}
+                    {\sum_{\substack{x':I_X(x')=i\\y':I_Y(y')=j}}m(x',y')}
+                \end{equation*}
+
+            \item Let 
+                \begin{equation*}
+                    D^*_{avg} = \frac{1}{M} \sum_{y'=1}^{L_Y}
+                    d(y',I_Y(y')) \Big(\sum_{x'=1}^{L_X} m(x',y')\Big)
+                \end{equation*}
+
+            \item If
+                $\frac
+                {(D_{avg} - D^*_{avg})}
+                {D_{avg}}
+                > \delta$
+                then return to step (c).
+        \end{enumerate}
+
+    \item Perform the same process as above for the $Y$ source until the
+        desired value of $N_Y$ is reached.
+
+\end{enumerate}
+
+\section*{Channel Optimization Stage}
+
+\begin{enumerate}
+    \item For each $x'\in \{1,\ldots,L_X\}$ let 
+        \begin{equation*}
+            I_X(x')=\argmin_{i \in \{1,\dots,N_X\}}d_X(x',i)
+        \end{equation*}
+        where
+        \begin{equation*}
+            d_X(x',i) =
+            \frac{1}{M(x')} \bigg(T(x') + 
+            \sum_{j=1}^{N_Y} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y}
+            \Big(\big({(q_X(x')-x_{(k,l)})}^2 +
+            y_{(k,l)}^2\big)M_j(x') -2y_{(k,l)}S_j(x')\Big)P(k,l|i,j)\bigg)
+        \end{equation*}
+        and
+        \begin{align*}
+            M(x') &= {\sum_{y'=1}^{L_Y}m(x',y')} \\
+            M_j(x') &= \sum_{y':I_Y(y')=j}m(x',y') \\
+            S_j(x') &= \sum_{y':I_Y(y')=j}q_Y(y')m(x',y') \\
+            T(x') &= \sum_{y'=1}^{L_Y}{q_Y}^2(y')m(x',y')
+        \end{align*}
+    \item For each $k\in\{1,\ldots,N_X\}$, $l\in\{1,\ldots,N_Y\}$ let
+        \begin{equation*}
+            x_{(k,l)} = 
+            \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
+            S_{(i,j)}^X P(k,l|i,j)}
+            {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
+            M_{(i,j)} P(k,l|i,j)}
+        \end{equation*}
+        where
+        \begin{align*}
+            M_{(i,j)} &=
+            \sum_{\substack{x':I_X(x')=i\\y':I_Y(y')=j}}m(x',y') \\
+            S^X_{(i,j)} &=
+            \sum_{\substack{x':I_X(x')=i\\y':I_Y(y')=j}}q(x')m(x',y')
+        \end{align*}
+\end{enumerate}
+\end{document}
+

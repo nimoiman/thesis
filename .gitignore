@@ -2,6 +2,7 @@
 vector_main
 __pycache__
 *.sublime*
+*.swp
 *.csv
 .tags
 dropbox
@@ -12,3 +13,9 @@ vq/vq
 octave-workspace
 python/training/*
 python/stereo_images
+tags
+*.dvi
+*.pdf
+*.aux
+*.log
+*.fls
