@@ -114,7 +114,7 @@ double run(int L_X, int L_Y, int N_X, int N_Y)
     return SQNR;
 }
 
-int main( int argc, const char* argv[] )
+int main()
 {
     int N_X, N_Y;
     int L_X, L_Y;

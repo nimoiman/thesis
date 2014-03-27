@@ -18,19 +18,14 @@ void swap(int *i, int *j) {
 /* get energy of current binary index assignment */
 double energy(int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE],
         covq2 *v) {
-    int i, j, k, l;
-    double d;
     double sum = 0;
-    double inner_sum;
-    double p;
-    int m;
 
-    for (i = 0; i < v->N_X; i++) {
-        for (j = 0; j < v->N_Y; j++) {
-            inner_sum = 0;
-            for (k = 0; k < v->N_X; k++) {
-                for (l = 0; l < v->N_Y; l++) {
-                    p = v->trans_prob(i, j, k, l, v->b_X, v->b_Y);
+    for (int i = 0; i < v->N_X; i++) {
+        for (int j = 0; j < v->N_Y; j++) {
+            double inner_sum = 0;
+            for (int k = 0; k < v->N_X; k++) {
+                for (int l = 0; l < v->N_Y; l++) {
+                    double p = v->trans_prob(i, j, k, l, v->b_X, v->b_Y);
                     inner_sum += (POW2(v->x_ij[CI(i,j)] - v->x_ij[CI(k,l)]) +
                                 POW2(v->y_ij[CI(i,j)] - v->y_ij[CI(k,l)])) * p;
                 }

@@ -313,7 +313,6 @@ void centroid2(covq2 *v)
     int qx, qy;
     int m;
     double x, y;
-    double x_kl, y_kl;
     double p;
     double numer_x, numer_y;
     double denom;
