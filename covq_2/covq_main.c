@@ -129,19 +129,6 @@ int main(int argc, char *argv[])
 
     L_X = L_Y = 100;
 
-<<<<<<< Updated upstream
-    printf("\t");
-    for(N_X = 1; N_X <= N_X_final; N_X *= 2)
-        printf("%d\t\t", N_X);
-
-    for(N_Y = 1; N_Y <= N_Y_final; N_Y *= 2){
-        printf("\n%d", N_Y);
-        for(N_X = 1; N_X <= N_X_final; N_X *= 2){
-            SQNR = run(L_X, L_Y, N_X, N_Y);
-            printf("\t%f",SQNR);
-        }
-    }
-=======
     if (argc != 5) {
         printf("Usage: covq_2 tr_set.csv test_set.csv output.csv rho");
     }
@@ -163,7 +150,6 @@ int main(int argc, char *argv[])
     // }
     FILE *fp = fopen(argv[3], "a");
     fprintf(fp, "%f,%f\n", rho, SQNR);
->>>>>>> Stashed changes
 
     printf("\n");
 
