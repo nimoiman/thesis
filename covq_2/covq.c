@@ -5,26 +5,20 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
     int M[MAX_CODEBOOK_SIZE];
     int MM = 0;
     double S[MAX_CODEBOOK_SIZE];
-    double T = 0;
-    int qy;
-    int i, j;
-    int m;
-    double x, y;
-    double d, d_best;
-    double x_ij, y_ij;
 
     /*
      * Zero Initialize arrays
      */
-    for(j = 0; j < v->N_Y; j++){
+    for (int j = 0; j < v->N_Y; j++) {
         S[j] = 0;
         M[j] = 0;
     }
 
-    for(qy = 0; qy < v->q->L_Y; qy++){
-        y = quant_to_val(qy, src_Y, v->q);
-        j = v->I_Y[qy];
-        m = quantizer_get_count(qx, qy, v->q);
+    double T = 0;
+    for (int qy = 0; qy < v->q->L_Y; qy++) {
+        double y = quant_to_val(qy, src_Y, v->q);
+        int j = v->I_Y[qy];
+        double m = quantizer_get_count(qx, qy, v->q);
         assert(m >= 0);
 
         MM += m;
@@ -34,23 +28,23 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
     }
     assert(T >= 0);
 
-    if(MM == 0){
+    if (MM == 0) {
         *idx = 0;
         return -1;
     }
 
-    d_best = -1;
-    x = quant_to_val(qx, src_X, v->q);
-    for(i = 0; i < v->N_X; i++){
-        d = 0;
-        for(j = 0; j < v->N_Y; j++){
-            x_ij = v->x_ij[CI(i,j)];
-            y_ij = v->y_ij[CI(i,j)];
+    double d_best = -1;
+    double x = quant_to_val(qx, src_X, v->q);
+    for (int i = 0; i < v->N_X; i++) {
+        double d = 0;
+        for (int j = 0; j < v->N_Y; j++) {
+            double x_ij = v->x_ij[CI(i,j)];
+            double y_ij = v->y_ij[CI(i,j)];
             d += (POW2(x-x_ij)+POW2(y_ij))*M[j]-2*y_ij*S[j];
             assert(M[j] >= 0);
         }
         d = (T+d)/MM;
-        if(d_best < 0 || d < d_best){
+        if (d_best < 0 || d < d_best) {
             *idx = i;
             d_best = d;
         }
@@ -65,26 +59,20 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
     int M[MAX_CODEBOOK_SIZE];
     int MM = 0;
     double S[MAX_CODEBOOK_SIZE];
-    double T = 0;
-    int qx;
-    int i, j;
-    int m;
-    double x, y;
-    double d, d_best;
-    double x_ij, y_ij;
 
     /*
      * Zero Initialize arrays
      */
-    for(i = 0; i < v->N_X; i++){
+    for (int i = 0; i < v->N_X; i++) {
         S[i] = 0;
         M[i] = 0;
     }
 
-    for(qx = 0; qx < v->q->L_X; qx++){
-        x = quant_to_val(qx, src_X, v->q);
-        i = v->I_X[qx];
-        m = quantizer_get_count(qx, qy, v->q);
+    double T = 0;
+    for (int qx = 0; qx < v->q->L_X; qx++) {
+        double x = quant_to_val(qx, src_X, v->q);
+        int i = v->I_X[qx];
+        int m = quantizer_get_count(qx, qy, v->q);
         assert(m >= 0);
 
         MM += m;
@@ -99,18 +87,18 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
         return -1;
     }
 
-    d_best = -1;
-    y = quant_to_val(qy, src_Y, v->q);
-    for(j = 0; j < v->N_Y; j++){
-        d = 0;
-        for(i = 0; i < v->N_X; i++){
-            x_ij = v->x_ij[CI(i,j)];
-            y_ij = v->y_ij[CI(i,j)];
+    double d_best = -1;
+    double y = quant_to_val(qy, src_Y, v->q);
+    for (int j = 0; j < v->N_Y; j++) {
+        double d = 0;
+        for (int i = 0; i < v->N_X; i++) {
+            double x_ij = v->x_ij[CI(i,j)];
+            double y_ij = v->y_ij[CI(i,j)];
             d += (POW2(y-y_ij)+POW2(x_ij))*M[i]-2*x_ij*S[i];
             assert(M[i] >= 0);
         }
         d = (T+d)/MM;
-        if(d_best < 0 || d < d_best){
+        if (d_best < 0 || d < d_best) {
             *idx = j;
             d_best = d;
         }
