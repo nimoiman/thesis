@@ -50,8 +50,6 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
             assert(M[j] >= 0);
         }
         d = (T+d)/MM;
-        assert(d < 1000);
-        assert(d > 0);
         if(d_best < 0 || d < d_best){
             *idx = i;
             d_best = d;
@@ -112,8 +110,6 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
             assert(M[i] >= 0);
         }
         d = (T+d)/MM;
-        assert(d < 1000);
-        assert(d > 0);
         if(d_best < 0 || d < d_best){
             *idx = j;
             d_best = d;
