@@ -5,10 +5,9 @@ double simulate( sim_covq2 *s, params_covq2 *p, covq2 *c){
     int i,j,k,l;
     int count = 0;
     int q_lvl;
-    int loop;
     double d_total = 0, x, y, x_hat, y_hat;
 
-    for(loop = 0; loop < s->simset_size; loop++){
+    for(int loop = 0; loop < s->simset_size; loop++){
         x = s->simset_x[loop];
         y = s->simset_y[loop];
         
