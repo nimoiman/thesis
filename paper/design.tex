@@ -5,14 +5,16 @@
 
 \section{System Design and Implementation}
 % Section Overview
+% Before we designed our system, we first implemented VQ and covq. We did this so we could expand on our code, but also so we could implement the independent decoders for comparing our system. We did implementation is C and Python, we also did some plotting in MATLAB. Mention that detailed design description is covered in design summary.
+
 \subsection{Conditions of Optimality}
 % Nearest neighbour condition depends on other encoder -> Need to apply NN condition seperately. We chose to rotate between the three conditions of optimality in turn NN_X->NN_Y->CC.
 
-% Note this decision is somewhat arbitrary, the effects of other choices of order haven't been studied
+% Note this ordering is somewhat arbitrary, the effects of other choices of order haven't been studied
 
-% Design Problems: 
+% Design Problems:
 % Need conditional distributions for nearest neighbour condition -> Use Uniform Quantizer.
-% Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation. 
+% Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation.
 % Another thing to note: complexity depends on total number of bins rather than number of training points.
 
 % Present equations for conditions of optimality for training set/quantizer.
@@ -35,7 +37,7 @@
 
 %Implementation:
 % Simulated annealing
-% show 
+% show
 
 \subsection{Image Coding}
 % Presented problems with what to input to quantizer -> DCT blocks
@@ -45,8 +47,9 @@
 % Python PILLOW library & scipy
 
 \subsection{Design Summary}
+% Summary initialization scheme in summary. We also have two stages : training stage (which is performed offline) and running stage which is used during simulation.
 % Summarize design and talk about complexity.
-% [unif Q_X] -> [enc X] -> [b_X] \ 
+% [unif Q_X] -> [enc X] -> [b_X] \
 %                                 --> [MAC]-- [Joint decode]
 % [unif Q_Y] -> [enc Y] -> [b_Y] /
 

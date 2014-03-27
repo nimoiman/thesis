@@ -19,3 +19,5 @@ tags
 *.aux
 *.log
 *.fls
+.DS_Store
+*.fdb_latexmk
