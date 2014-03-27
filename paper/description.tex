@@ -4,15 +4,16 @@
 \begin{document}
 
 \section{Problem Description and Background}
-% Section Overview
-
-\subsection{Optimal Quantizer Design}
+% Give an overview of the section: We will first give a more well defined problem description will well defined terms and present the problem as an optimization problem. We will mention the parallels between out problem and regular VQ and COVQ. We will adapt the methods to our problem. Mention how we can use conditions of optimality in quantizer design, also mention the bit allocation problem and how the LBG splitting algorithm can resolve the issues. We will discuss (in following section) conditions of optimality in an optimal quantizer for vq, covq, and the joint decoder system. We will introduce optimal codeword assignment for a noisy channel and then mention Bit allocation and transform coding techniques used in image coding.
 
 \subsection{Conditions of Optimality}
+% Begin with conditions of optimality for VQ, that is the centroid and nearest neighbour condition. Presenting them as theorems, that is, if the codevectors are fixed, then applying the nearest neighbour conditions provide and optimal quantizer and so on. Do the same for COVQ, and for the joint decoder. Recall for the joint decoder that the nearest neighbour theorem relies on the other encoder being fixed.
 
 \subsection{Codeword Assignment}
+% Show how the distortion measure can be separated into two separate terms, with only one term that depends on the distortion. That way, we only need to minimize that term to minimize the overall distortion. Mention the complexity of the problem, and an approximate solution will be discussed later.
 
 \subsection{Bit Allocation and Transform Coding}
+% Discuss bit allocation and transform coding in the context of images. Follow Julian's notes and the lecture slides. Mention how when we use scalar quantization, we want to allocate more bits to the components carrying more energy. We also want to transform the information before processing so we can get better performance.
 
 \end{document}
 

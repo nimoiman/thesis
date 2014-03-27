@@ -1,6 +1,5 @@
 
 Abstract
-    
 
 Introduction
 
@@ -51,7 +50,7 @@ Testing and Results
         Measure distortion vs. Theoretical distortion
         Compare images visually
         Want to compare vs independent decoder and joint encoders
-    Generated data 
+    Generated data
 
     Images
         Using optimal bit allocation
@@ -65,3 +64,4 @@ Conclusion
         Bit allocation for joint decoder
             Discuss other work
         Getting stuck in local optimum
+        Expand results for a vector quantizer
