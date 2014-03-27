@@ -210,7 +210,7 @@ double nearest_neighbour2_y(int qy, int *idx, covq2 *v)
         }
         d = (T+d)/MM;
         if(d_best < 0 || d < d_best){
-            *idx = i;
+            *idx = j;
             d_best = d;
         }
     }
