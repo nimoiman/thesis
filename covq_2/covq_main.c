@@ -4,9 +4,6 @@
 
 #define LINE_LEN 100
 
-#define TRSET_FILE "training_set.csv"
-#define SIM_FILE "simulation_set.txt"
-
 double trans_prob_x = 0.01;
 double trans_prob_y = 0.01;
 
@@ -188,6 +185,7 @@ double run(int N_X, int N_Y, int L, char *filename)
         param_count = sscanf(line, "%lf, %lf", &x, &y);
         if( param_count != 2 ){
             fprintf(stderr, "Invalid simulation set format.\n");
+            fclose(pFile);
             return 0;
         }
 
@@ -238,6 +236,7 @@ double run(int N_X, int N_Y, int L, char *filename)
 
     free_covq2(&v);
     quantizer_free(&q);
+    fclose(outFile);
 
     return SQNR;
 }
