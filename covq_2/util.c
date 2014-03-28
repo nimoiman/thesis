@@ -1,8 +1,5 @@
 #include "covq.h"
 
-
-#define ANNEAL_LOOP_NUM 1
-#define ROTATE_LOOP_NUM 50
 #define IO_DELIM ", "
 
 void print_int(FILE *stream, int *arr, int rows, int cols){

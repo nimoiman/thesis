@@ -9,8 +9,7 @@
 
 /* Helper function to swap integers *i and *j */
 void swap(int *i, int *j) {
-    int tmp;
-    tmp = *i;
+    int tmp = *i;
     *i = *j;
     *j = tmp;
 }
@@ -51,29 +50,24 @@ int rand_lim(int limit) {
 }
 
 void anneal(covq2 *v) {
-    double E_new, E_old;
-    double T = TEMP_INIT;
     int drop_count = 0, fail_count = 0;
     int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
-    int i1, j1, i2, j2;
-    int i,j;
-    int qx, qy;
 
     /*
      * Compute codebook_count
      * Should contain number of training points that map to each transmission
      * pair (i,j).
      */
-    for (i = 0; i < v->N_X; i++) {
-        for (j = 0; j < v->N_Y; j++) {
+    for (int i = 0; i < v->N_X; i++) {
+        for (int j = 0; j < v->N_Y; j++) {
             codebook_count[i][j] = 0;
         }
     }
 
-    for (qx = 0; qx < v->q->L_X; qx++) {
-        i = v->I_X[qx];
-        for (qy = 0; qy < v->q->L_Y; qy++) {
-            j = v->I_Y[qy];
+    for (int qx = 0; qx < v->q->L_X; qx++) {
+        int i = v->I_X[qx];
+        for (int qy = 0; qy < v->q->L_Y; qy++) {
+            int j = v->I_Y[qy];
             codebook_count[i][j] += quantizer_get_count(qx, qy, v->q);
         }
     }
@@ -81,29 +75,30 @@ void anneal(covq2 *v) {
     /*
      * Get initial energy of system. Save as E_old.
      */
-    E_old = energy(codebook_count, v);
+    double E_old = energy(codebook_count, v);
 
     /*
      * Begin annealing process.
      * Loop until we reach final temperature.
      */
+    double T = TEMP_INIT;
     while (T > TEMP_FINAL) {
 
         /*
          * Swap two random indexes for both sources. Swap i1 with i2 and j1
          * with j2.
          */
-        i1 = rand_lim(v->N_X);
-        i2 = rand_lim(v->N_X);
+        int i1 = rand_lim(v->N_X);
+        int i2 = rand_lim(v->N_X);
         swap(v->b_X + i1, v->b_X + i2);
-        j1 = rand_lim(v->N_Y);
-        j2 = rand_lim(v->N_Y);
+        int j1 = rand_lim(v->N_Y);
+        int j2 = rand_lim(v->N_Y);
         swap(v->b_Y + j1, v->b_Y + j2);
 
         /*
          * Compute energy of new system.
          */
-        E_new = energy(codebook_count, v);
+        double E_new = energy(codebook_count, v);
         
         /*
          * If new state is better than old state, keep it. Otherwise keep the
