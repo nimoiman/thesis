@@ -43,6 +43,7 @@ double trans_prob(int i, int j, int k, int l, int *b_X, int *b_Y)
     return prob;
 }
 
+<<<<<<< Updated upstream
 int get_range(char *filename, double *min_x, double *max_x, double *min_y, double *max_y)
 {
     FILE *pFile;
@@ -242,6 +243,7 @@ double run(int N_X, int N_Y, int L, char *filename)
     return SQNR;
 }
 
+<<<<<<< Updated upstream
 // 
 // void cov_run(int L)
 // {

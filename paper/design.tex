@@ -10,11 +10,12 @@
 \subsection{Conditions of Optimality}
 % Nearest neighbour condition depends on other encoder -> Need to apply NN condition seperately. We chose to rotate between the three conditions of optimality in turn NN_X->NN_Y->CC.
 
-% Note this ordering is somewhat arbitrary, the effects of other choices of order haven't been studied
+% Note this decision is somewhat arbitrary, the effects of other choices of order haven't been studied
 
-% Design Problems:
+% Design Problems: 
 % Need conditional distributions for nearest neighbour condition -> Use Uniform Quantizer.
-% Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation.
+% Need to consider bin size. Bins too big and uniform quantizer adds distortion. Make bins too small and you can't approximate conditional distribution very well. Need a lot of training points for good approximation. 
+
 % Another thing to note: complexity depends on total number of bins rather than number of training points.
 
 % Present equations for conditions of optimality for training set/quantizer.
@@ -37,7 +38,7 @@
 
 %Implementation:
 % Simulated annealing
-% show
+% show 
 
 \subsection{Image Coding}
 % Presented problems with what to input to quantizer -> DCT blocks
