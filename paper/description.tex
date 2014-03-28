@@ -28,7 +28,7 @@ where $I_X$ is the encoder mapping for $X$ and $I_Y$ is the encoder mapping for 
 \end{equation*}
 These indecies $i$ and $j$ are then transmitted over the channel to the receiver. If the channel is noiseless, then the receiver will receive the transmitted indecies $i$ and $j$. For a noisy channel, channel interference may influence which indecies are received. In this project, we will be considering channels that are independent of the source and memoryless. Memoryless channels are channels whose properties do not change between each channel use. It will be assumed however, that the two channels themselves may be dependent. Such a channel can be expressed using channel transition probabilities of the form $P(k,l|i,j)$. This term corresponds to the probability of receiving the index $k$ from the $X$ source and the index $l$ from the $Y$ source given that $i$ and $j$ were transmitted from the $X$ and $Y$ sources respectively. Note that for the memoryless channel, $P(i,j|i,j)=1$ for all $i$ and $j$. Throughout the rest of the paper, we will use the convention that $i$ and $j$ correspond to the transmitted indecies and $k$ and $l$ correspond to the received indecies for $X$ and $Y$ respectively.
 
-The decoder is then responsible for mapping the indecies ($k$ and $l$ for the noisy channel, and $i$ and $j$ for the noiseless channel) onto estimates of $X$ and $Y$. For independnet decoders, the reconstruction for $X$ only depends on $k$ (or $i$ for the noiseless channel), and the reconstruction for $Y$ only depends on $j$ (or $l$). That is, we have mappings
+The decoder is then responsible for mapping the indecies ($k$ and $l$ for the noisy channel, and $i$ and $j$ for the noiseless channel) onto estimates of $X$ and $Y$. For independent decoders, the reconstruction for $X$ only depends on $k$ (or $i$ for the noiseless channel), and the reconstruction for $Y$ only depends on $j$ (or $l$). That is, we have mappings
 \begin{gather*}
     x_{\cdot} : \{1,\ldots,N_X\} \to \real \\
     y_{\cdot} : \{1,\ldots,N_Y\} \to \real.
@@ -42,27 +42,36 @@ In quantizer design, the goal is to minimize the average distortion between the 
 \begin{equation*}
     D_{avg} = E[{(X-\hat{X})}^2 + {(Y-\hat{Y})}^2]
 \end{equation*}
-where $\hat{X}$ and $\hat{Y}$ represent the reconstructions. We can re express the average distortion in more meaningful ways for our different systems. For the independent decoders with a noiseless channel,
+where $\hat{X}$ and $\hat{Y}$ represent the reconstructions. We can re express the average distortion in more meaningful ways for our different systems. For the independent decoders and encoders with a noiseless channel,
 \begin{equation}
     \label{eq:dist_indep_nonoise}
     D_{avg} = \sum_{i=1}^{N_X}E[{(X-x_i)}^2 | I_X(X) = i]P(I_X(X) = i) + \sum_{j=1}^{N_Y}E[{(Y-y_j)}^2 | I_Y(Y) = j]P(I_Y(Y) = j).
 \end{equation}
-For the independent decoders with a noisy channel,
+For the independent decoders and encoders with a noisy channel,
 \begin{equation}
     \label{eq:dist_indep_noise}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k})}^2 +
-    {(Y-y_{k})}^2 | X\in R_i^X, Y\in R_j^Y]P(k,l|i,j)P(X\in R_i^X, Y\in R_j^Y).
+    {(Y-y_{k})}^2 | I_X(X)=i, I_Y(Y)=j]P(k,l|i,j)P(I_X(X)=i, I_Y(Y)=j).
 \end{equation}
-For a joint decoder with a noiseless channel,
+For a joint decoder and independent encoders with a noiseless channel,
 \begin{equation}
     \label{eq:dist_joint_nonoise}
-    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | X\in R_i^X, Y\in R_j^Y]P(X\in R_i^X, Y\in R_j^Y).
+    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | I_X(X)=i, I_Y(Y)=j]P(I_X(X) = i, I_Y(Y) = j).
 \end{equation}
-For a joint decoder with a noisy channel,
+For a joint decoder and independent encoders with a noisy channel,
 \begin{equation}
     \label{eq:dist_joint_noise}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k,l})}^2 +
-    {(Y-y_{k,l})}^2 | X\in R_i^X, Y\in R_j^Y]P(k,l|i,j)P(X\in R_i^X, Y\in R_j^Y).
+    {(Y-y_{k,l})}^2 | I_X(X) = i, I_Y(Y) = j]P(k,l|i,j)P(I_X(X) = i, I_Y(Y) = j).
+\end{equation}
+For a joint decoder and joint encoder with a noiseless channel,
+\begin{equation}
+    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | I(X,Y) = (i,j)]P(I(X,Y) = (i,j)).
+\end{equation}
+For a joint decoder and joint encoder with a noisy channel,
+\begin{equation}
+    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k,l})}^2 +
+    {(Y-y_{k,l})}^2 | I(X,Y) = (i,j)]P(k,l|i,j)P(I(X,Y) = (i,j)).
 \end{equation}
 An important note is that the average distortion in Equation~\ref{eq:dist_indep_nonoise} can be minimized by optimizing the quantizers for the two sources separately. This is not true in Equation~\ref{eq:dist_indep_noise} however, unless we assume that the channels are independent so that $P(k,l|i,j) = P(k|i)P(l|j)$. We will therefore make this assumption about the channel to simplify the following analysis and implementation of the independent decoder system.
 
