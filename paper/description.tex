@@ -1,18 +1,58 @@
 \documentclass[10pt]{article}
+\usepackage{amssymb}
+\usepackage{fullpage}
 \usepackage{amsmath}
 
+\newcommand{\real}{\mathbb{R}}
 \begin{document}
 
 \section{Problem Description and Background}
 % Give an overview of the section: We will first give a more well defined problem description will well defined terms and present the problem as an optimization problem. We will mention the parallels between out problem and regular VQ and COVQ. We will adapt the methods to our problem. Mention how we can use conditions of optimality in quantizer design, also mention the bit allocation problem and how the LBG splitting algorithm can resolve the issues. We will discuss (in following section) conditions of optimality in an optimal quantizer for vq, covq, and the joint decoder system. We will introduce optimal codeword assignment for a noisy channel and then mention Bit allocation and transform coding techniques used in image coding.
+This section will cover the background related to the single encoder/single decoder and independent encoders/joint decoder schemes mentioned in the previous section. As previously mentioned, analysis of each system is important so they can be quantitatively compared. Recall that the two independent encoder/two dependent decoder system provides a lower bound on performance for the joint decoder system, while the single encoder/single decoder system provides an upper bound. The formal problem statement for the different systems and a glossary of terms is covered in Section~\ref{sec:prob_state}.
 
+In addition to covering these three different systems, we will also be analyzing noiseless and noisy channels. There are a few additional design consideration one must consider when dealing with a noisy channel. In particular, it is important that a proper mapping between codeword indecies and respective binary representations is chosen. This is because transition probabilities for the indecies depend only on the binary representation of the indecies. Equations for conditions of optimality of the different systems are given in Section~\ref{sec:optim_conds_deriv}. Analysis of codeword assignment for noisy channels is done is Section~\ref{sec:code_assign_deriv}.
+
+Finally, quantizer bit allocation and transform coding will be covered in Section~\ref{sec:bit_trans_deriv}. The material will be covered with an emphasis on image encoding, since this is the focus of the project. Applications to the JPEG image compression method will also be mentioned.
+
+\subsection{Problem Statement}
+\label{sec:prob_state}
+% This section should reintroduce the problem while providing the list of terms. In particular, this should include codevector, index, channel transition probability, distortion.
+Assume that the source random vector $(X,Y)\in\real^2$ is independent and identically distributed, such that $X$ and $Y$ share a joint density function. Next, let
+\begin{gather*}
+    I_X : \real\to\{1,\ldots,N_X\} \\
+    I_Y : \real\to\{1,\ldots,N_Y\}
+\end{gather*}
+denote the encoder mapping for the $X$ and $Y$ source respectively. That is, functions that map values of $X$ and $Y$ onto the set of indecies $1,\ldots,N_X$ and $1,\ldots,N_Y$. The \emph{encoding regions} are set of points that map onto a given index, that is
+\begin{align*}
+    R_i^X &= \{x\in\real : I_X(x) = i\} \\
+    R_j^Y &= \{y\in\real : I_Y(y) = j\}
+\end{align*}
+for all $i=1,\ldots,N_X$ and $j=1,\ldots,N_Y$. We will use the notation that $i$ represents an encoding index for the $X$ source, and $j$ represents an encoding index for the $Y$ source. We denote the reconstruction mappings at the decoder by
+\begin{gather*}
+    x_{\cdot,\cdot} : \{1,\ldots,N_X\} \times \{1,\ldots,N_Y\} \to \real \\
+    y_{\cdot,\cdot} : \{1,\ldots,N_X\} \times \{1,\ldots,N_Y\} \to \real.
+\end{gather*}
+Note that these mappings take the \emph{pair} of indecies for $X$ and $Y$ to reconstruct $X$ and $Y$.
+
+An optimal encoder is one which minimized the squared-error distortion between the original source values, and their reconstructions. For the noiseless channel, this is given by
+\begin{equation*}
+    D_{noiseless} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | X\in R_i^X, Y\in R_j^Y]P(X\in R_i^X, Y\in R_j^Y)
+\end{equation*}
+and for the noisy channel, we have
+\begin{equation*}
+    D_{noisy} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k,l})}^2 + {(Y-y_{k,l})}^2 | X\in R_i^X, Y\in R_j^Y]P(k,l|i,j)P(X\in R_i^X, Y\in R_j^Y)
+\end{equation*}
+where $P(k,l|i,j)$ represents the channel transition probability, that is, the probability of receiving indecies $k$ and $l$ for the $X$ and $Y$ source respectively, given than $i$ was transmitted from $X$, and $j$ was transmitted from $Y$. We will use the convention that $k$ represents the received index for the $X$ source, and $l$ represents the received index for the $Y$ source. It will also be assumed that the channels for the two sources are independent of the sources, but the two channels themselves may be dependent.
 \subsection{Conditions of Optimality}
-% Begin with conditions of optimality for VQ, that is the centroid and nearest neighbour condition. Presenting them as theorems, that is, if the codevectors are fixed, then applying the nearest neighbour conditions provide and optimal quantizer and so on. Do the same for COVQ, and for the joint decoder. Recall for the joint decoder that the nearest neighbour theorem relies on the other encoder being fixed.
+\label{sec:optim_conds_deriv}
+% Begin with conditions of optimality for VQ, that is the centroid and nearest neighbour condition. Presenting them as theorems, that is, if the codevectors are fixed, then applying the nearest neighbour conditions provide and optimal quantizer and so on. Do the same for COVQ, and for the joint decoder. Recall for the joint decoder that the nearest neighbour theorem relies on the other encoder being fixed. Make sure to derive the conditions of optimality for the case when the channel is noiseless first.
 
 \subsection{Codeword Assignment}
+\label{sec:code_assign_deriv}
 % Show how the distortion measure can be separated into two separate terms, with only one term that depends on the distortion. That way, we only need to minimize that term to minimize the overall distortion. Mention the complexity of the problem, and an approximate solution will be discussed later.
 
 \subsection{Bit Allocation and Transform Coding}
+\label{sec:bit_trans_deriv}
 % Discuss bit allocation and transform coding in the context of images. Follow Julian's notes and the lecture slides. Mention how when we use scalar quantization, we want to allocate more bits to the components carrying more energy. We also want to transform the information before processing so we can get better performance.
 
 \end{document}
