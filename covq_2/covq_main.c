@@ -175,8 +175,9 @@ double run(int N_X, int N_Y, int L, char *filename)
      * Open output file
      */
     outFile = fopen(out_file, "w");
-    if( !pFile ){
+    if( !outFile ){
         fprintf(stderr, "Could not open output file.\n");
+        fclose(pFile);
         return 0;
     }
     
