@@ -19,7 +19,6 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
         double y = quant_to_val(qy, src_Y, v->q);
         int j = v->I_Y[qy];
         double m = quantizer_get_count(qx, qy, v->q);
-        assert(m >= 0);
 
         MM += m;
         M[j] += m;
@@ -32,22 +31,22 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v)
         return -1;
     }
 
-    double d_best = -1;
+    double d_best;
     double x = quant_to_val(qx, src_X, v->q);
     for (int i = 0; i < v->N_X; i++) {
         double d = 0;
         for (int j = 0; j < v->N_Y; j++) {
-            double x_ij = v->x_ij[CI(i,j)];
-            double y_ij = v->y_ij[CI(i,j)];
+            double x_ij = v->x_ij[i][j];
+            double y_ij = v->y_ij[i][j];
             d += (POW2(x-x_ij)+POW2(y_ij))*M[j]-2*y_ij*S[j];
         }
-        d = (T+d)/MM;
-        if (d_best < 0 || d < d_best) {
+        if (i == 0 || d < d_best) {
             *idx = i;
             d_best = d;
         }
     }
 
+    d_best = (T+d_best)/MM;
     return d_best;
 }
 
@@ -70,7 +69,6 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
         double x = quant_to_val(qx, src_X, v->q);
         int i = v->I_X[qx];
         int m = quantizer_get_count(qx, qy, v->q);
-        assert(m >= 0);
 
         MM += m;
         M[i] += m;
@@ -83,22 +81,22 @@ double nearest_neighbour1_y(int qy, int *idx, covq2 *v)
         return -1;
     }
 
-    double d_best = -1;
+    double d_best;
     double y = quant_to_val(qy, src_Y, v->q);
     for (int j = 0; j < v->N_Y; j++) {
         double d = 0;
         for (int i = 0; i < v->N_X; i++) {
-            double x_ij = v->x_ij[CI(i,j)];
-            double y_ij = v->y_ij[CI(i,j)];
+            double x_ij = v->x_ij[i][j];
+            double y_ij = v->y_ij[i][j];
             d += (POW2(y-y_ij)+POW2(x_ij))*M[i]-2*x_ij*S[i];
         }
-        d = (T+d)/MM;
-        if (d_best < 0 || d < d_best) {
+        if (j == 0 || d < d_best) {
             *idx = j;
             d_best = d;
         }
     }
 
+    d_best = (T+d_best)/MM;
     return d_best;
 }
 
@@ -140,8 +138,8 @@ double nearest_neighbour2_x(int qx, int *idx, covq2 *v)
         for(int j = 0; j < v->N_Y; i++){
             for(int k = 0; k < v->N_X; k++){
                 for(int l = 0; l < v->N_Y; l++){
-                    double x_kl = v->x_ij[CI(k,l)];
-                    double y_kl = v->y_ij[CI(k,l)];
+                    double x_kl = v->x_ij[k][l];
+                    double y_kl = v->y_ij[k][l];
                     double p = v->trans_prob(i,j,k,l,v->b_X,v->b_Y);
                     d += ((POW2(x-x_kl)+POW2(y_kl))*M[j]-2*y_kl*S[j])*p;
                 }
@@ -195,8 +193,8 @@ double nearest_neighbour2_y(int qy, int *idx, covq2 *v)
         for(int i = 0; i < v->N_X; i++){
             for(int k = 0; k < v->N_X; k++){
                 for(int l = 0; l < v->N_Y; l++){
-                    double x_kl = v->x_ij[CI(k,l)];
-                    double y_kl = v->y_ij[CI(k,l)];
+                    double x_kl = v->x_ij[k][l];
+                    double y_kl = v->y_ij[k][l];
                     double p = v->trans_prob(i,j,k,l,v->b_X,v->b_Y);
                     d += ((POW2(y-y_kl)+POW2(x_kl))*M[i]-2*x_kl*S[i])*p;
                 }
@@ -252,13 +250,11 @@ void centroid1(covq2 *v)
     for(int i = 0; i < v->N_X; i++){
         for(int j = 0; j < v->N_Y; j++){
             if(M[i][j] > 0){
-                v->x_ij[CI(i,j)] = S_X[i][j] / M[i][j];
-                v->y_ij[CI(i,j)] = S_Y[i][j] / M[i][j];
+                v->x_ij[i][j] = S_X[i][j] / M[i][j];
+                v->y_ij[i][j] = S_Y[i][j] / M[i][j];
             }
             else{
-                printf("Empty cell!\n");
-                v->x_ij[CI(i,j)] = 0;
-                v->y_ij[CI(i,j)] = 0;
+                //printf("Empty cell!\n");
             }
 
         }
@@ -316,8 +312,8 @@ void centroid2(covq2 *v)
                 }
             }
 
-            v->x_ij[CI(k,l)] = numer_x / denom;
-            v->y_ij[CI(k,l)] = numer_y / denom;
+            v->x_ij[k][l] = numer_x / denom;
+            v->y_ij[k][l] = numer_y / denom;
         }
     }
 }
@@ -361,12 +357,16 @@ double update(covq2 *v, int t)
         d_total += d * m;
     }
 
-    if(t == 1)
+    if(t == 1){
         centroid1(v);
-    else
+        return dist1(v);
+    }
+    else{
         centroid2(v);
+        /* TODO implement dist2 */
+        return dist1(v);
+    }
 
-    return d_total / v->q->npoints;
 }
 
 double update1(covq2 *v)
@@ -379,3 +379,20 @@ double update2(covq2 *v)
     return update(v, 2);
 }
 
+double dist1(covq2 *v){
+    double dist = 0;
+    for(int qx = 0; qx < v->q->L_X; qx++){
+        double x = quant_to_val(qx, src_X, v->q);
+        int i = v->I_X[qx];
+        for(int qy = 0; qy < v->q->L_Y; qy++){
+            double y = quant_to_val(qy, src_Y, v->q);
+            int j = v->I_Y[qy];
+
+            double x_ij = v->x_ij[i][j];
+            double y_ij = v->y_ij[i][j];
+            int m = quantizer_get_count(qx,qy,v->q);
+            dist += (POW2(x-x_ij) + POW2(y-y_ij))*m;
+        }
+    }
+    return dist / v->q->npoints;
+}

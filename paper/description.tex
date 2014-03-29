@@ -19,13 +19,6 @@
 
 \section{Problem Description and Background}
 % Give an overview of the section: We will first give a more well defined problem description will well defined terms and present the problem as an optimization problem. We will mention the parallels between out problem and regular VQ and COVQ. We will adapt the methods to our problem. Mention how we can use conditions of optimality in quantizer design, also mention the bit allocation problem and how the LBG splitting algorithm can resolve the issues. We will discuss (in following section) conditions of optimality in an optimal quantizer for vq, covq, and the joint decoder system. We will introduce optimal codeword assignment for a noisy channel and then mention Bit allocation and transform coding techniques used in image coding.
-\begin{enumerate}
-    \item Looking at the transmission of images, across possibly noisy channels, and this involves the use of encoders and decoders to compress the amount of information.
-    \item 
-
-\end{enumerate}
-\sysII, \sysIIN, \sysIJ, \sysIJN, \sysJJ, \sysJJN, test.
-
 
 This section provides background related to the independent encoder/independent decoder, independent encoders/joint decoder, and joint encoder/joint decoder schemes mentioned in the previous section. As previously mentioned, analysis of each system is important so they can be quantitatively compared. Recall that the two independent encoder/two dependent decoder system provides a lower bound on performance for the joint decoder system, while the single encoder/single decoder system provides an upper bound. The formal problem statement for the different systems and a glossary of terms is covered in Section~\ref{sec:prob_state}.
 
@@ -51,32 +44,32 @@ For the joint encoder systems \sysJJ\ and \sysJJN, the encoders jointly maps $X$
 \end{equation*}
 Notice that a joint encoder mapping $E$ can be used to describe any pair of independent encoder mappings $E_X$ and $E_Y$ if $E(X,Y) = (E_X(X),E_Y(Y))$. The converse, however, is not true.
 
-After $X$ and $Y$ are encoded onto indices $i$ and $j$, they are transmitted over the channel to the receiver. If the channel is noiseless, the transmitted indices $i$ and $j$ will be received. For a noisy channel, channel interference will influence the received indices. In this project, we will consider channels that are both independent of the source and memoryless. The two channels themselves, however, may be dependent. Such channels can be expressed using channel transition probabilities $P(k,l|i,j)$. This corresponds to the probability of receiving index $k$ given index $i$ was transmitted from the $X$ source, and receiving index $l$ given index $j$ was transmitted from the $Y$ source. Note that the channel transition probabilities for the noiseless channel are given by $P(i,j|i,j)=1$ for all $i$ and $j$. Throughout the rest of the paper, we will use the convention that $i$ and $j$ correspond to the transmitted indices and $k$ and $l$ correspond to the received indices for $X$ and $Y$ respectively.
+After $X$ and $Y$ are encoded onto indices $i$ and $j$, they are transmitted over the channel to the receiver. If the channel is noiseless, the transmitted indices $i$ and $j$ will be received. For a noisy channel, channel interference will influence the received indices. In this project, we will consider channels that are both independent of the source and memoryless. The two channels themselves, however, may be dependent. Such channels can be expressed using channel transition probabilities $P(k,l|i,j)$. This corresponds to the probability of receiving index $k$ given index $i$ was transmitted from the $X$ source, and receiving index $l$ given index $j$ was transmitted from the $Y$ source. Note that the channel transition probabilities for the noiseless channel are given by $P(i,j|i,j)=1$ for all $i$ and $j$. Throughout the rest of the paper, we will use the convention that $i$ and $j$ correspond to the transmitted indices for $X$ and $Y$, while $k$ and $l$ correspond to the received indices for $X$ and $Y$ respectively.
 
-When the indices are received at the receiver, they are then decoded to construct estimates of $X$ and $Y$. For independent decoders, the estimate of $X$ only depends on the received index from the $X$ source $k$, and the estimate for $Y$ only depends on the received index from the $Y$ source $l$. The sets of estimates, or \emph{codebook}, for $X$ and $Y$ are given by
+When the indices $k$ and $l$ are received at the receiver, they are decoded to construct estimates of $X$ and $Y$. For independent decoders, the estimate of $X$ only depends on the index $k$, and the estimate of $Y$ only depends index $l$. The sets of estimates, or \emph{codebook}, for $X$ and $Y$ are given by
 \begin{gather*}
     \{x_k \in \real : k = 1,\ldots,N_X\} \\
     \{y_l \in \real : l = 1,\ldots,N_Y\}
 \end{gather*}
 where $x_k$ is the estimate of $X$ at the decoder given index $k$ was received from the $X$ source, and $y_l$ is the estimate of $Y$ given index $l$ was received from the $Y$ source. We call the elements of the codebook \emph{codevectors}.
 
-When using joint decoders, the estimates for $X$ and $Y$ will depend on both $k$ and $l$. The codebook for the joint decoder for $X$ and $Y$ can be described as the sets
+For3 a joint decoder, estimates of $X$ and $Y$ will each depend on the received indices $k$ and $l$. The codebook for the joint decoder for $X$ and $Y$ can be described as
 \begin{gather*}
     \{x_{k,l} \in \real : k = 1,\ldots,N_X, l = 1,\ldots,N_Y\} \\
     \{y_{k,l} \in \real : k = 1,\ldots,N_X, l = 1,\ldots,N_Y\}
 \end{gather*}
-where the codevectors $x_{k,l}$ and $y_{k,l}$ are the decoder's estimate of $X$ and $Y$ given index $k$ was received from the $X$ source and index $l$ was received from the $Y$ source.
+where the codevectors $x_{k,l}$ and $y_{k,l}$ are the decoder's estimate of $X$ and $Y$ given index $k$ and index $l$ were received.
 
-Notice that any independent codebook $\{x_k : k = 1,\ldots,N_X\}$ and $\{y_l : l = 1,\ldots,N_Y\}$ can be obtained with the joint codebook $\{x_{k,l'}=x_k : k=1,\ldots,N_X, l'=1,\ldots,N_Y\}$ and $\{y_{k',l}=y_l : k'=1,\ldots,N_X, l=1,\ldots,N_Y\}$.
+Notice that any independent codebook $\{x_k : k = 1,\ldots,N_X\}$ and $\{y_l : l = 1,\ldots,N_Y\}$ can be obtained with the joint codebook $\{x_{k,l'}=x_k : k=1,\ldots,N_X, l'=1,\ldots,N_Y\}$ and $\{y_{k',l}=y_l : k'=1,\ldots,N_X, l=1,\ldots,N_Y\}$ (here the prime is denoting a dummy variable).
 
-In quantizer design, the goal is to minimize the average distortion between the source and estimate at the receiver with respect to some defined distortion measure. In this project, we will consider squared error distortion, so the average distortion between $X$ and $Y$ can be expressed as
+In quantizer design, the goal is to minimize the average distortion between the source and estimate at the receiver with respect to some distortion measure. In this project, we consider squared error distortion, so the average distortion between $X$ and $Y$ can be expressed as
 \begin{equation}
     \label{eq:D_avg}
     D_{avg} = E[{(X-\hat{X})}^2 + {(Y-\hat{Y})}^2]
 \end{equation}
-where $\hat{X}$ and $\hat{Y}$ represent the estimates of $X$ and $Y$ at the receiver. An \emph{optimal quantizer} is one which minimizes Equation~\ref{eq:D_avg} across all other quantizers of the same number of output levels in $X$ and $Y$.
+where $\hat{X}$ and $\hat{Y}$ represent the estimates of $X$ and $Y$ at the receiver, residing in the codebook. An \emph{optimal quantizer} is one which minimizes Equation~\ref{eq:D_avg} across all other quantizers of the same number of output levels in $X$ and $Y$.
 
-Explicit expressions for $D_{avg}$ are given in subsection 1.2 for the following following six systems: \sysII, \sysIIN, \sysIJ, \sysIJN, \sysJJ, \sysJJN\@.
+Explicit expressions for $D_{avg}$ are given in subsection 1.2 for the six systems: \sysII, \sysIIN, \sysIJ, \sysIJN, \sysJJ, \sysJJN\@.
 
 \subsection{Explicit Expressions for Average Distortion}
 We can re express Equation~\ref{eq:D_avg} in more meaningful ways for our different systems. For the independent decoders and encoders with a noiseless channel,

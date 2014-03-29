@@ -25,8 +25,8 @@ double energy(int codebook_count[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE],
             for (int k = 0; k < v->N_X; k++) {
                 for (int l = 0; l < v->N_Y; l++) {
                     double p = v->trans_prob(i, j, k, l, v->b_X, v->b_Y);
-                    inner_sum += (POW2(v->x_ij[CI(i,j)] - v->x_ij[CI(k,l)]) +
-                                POW2(v->y_ij[CI(i,j)] - v->y_ij[CI(k,l)])) * p;
+                    inner_sum += (POW2(v->x_ij[i][j] - v->x_ij[k][l]) +
+                                POW2(v->y_ij[i][j] - v->y_ij[k][l])) * p;
                 }
             }
             sum += inner_sum * codebook_count[i][j];

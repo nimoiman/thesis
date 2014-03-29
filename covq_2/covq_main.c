@@ -1,4 +1,5 @@
 #include <math.h>
+#include <limits.h>
 #include <stdio.h>
 #include "covq.h"
 
@@ -40,85 +41,16 @@ double trans_prob(int i, int j, int k, int l, int *b_X, int *b_Y)
     return prob;
 }
 
-int get_range(char *filename, double *min_x, double *max_x, double *min_y, double *max_y)
-{
-    FILE *pFile;
-    char line[LINE_LEN];
-    int first = 1;
-
-    pFile = fopen(filename, "r");
-    if(!pFile){
-        fprintf(stderr,"Couln't read get_range file.\n");
-        return 0;
-    }
-
-    while(fgets(line, LINE_LEN, pFile) != NULL){
-        double x, y;
-        int param_count = sscanf(line, "%lf, %lf", &x, &y);
-        if( param_count != 2 ){
-            fprintf(stderr, "Invalid training set format.\n");
-            fclose(pFile);
-            return 0;
-        }
-        if(first){
-            first = 0;
-            *min_x = x;
-            *max_x = x;
-            *min_y = y;
-            *max_y = y;
-        }
-        if(x < *min_x)
-            *min_x = x;
-        if(x > *max_x)
-            *max_x = x;
-        if(y < *min_y)
-            *min_y = y;
-        if(y > *max_y)
-            *max_y = y;
-    }
-    fclose(pFile);
-    return 1;
-}
-
-double min(double x, double y)
-{
-    return x < y ? x : y;
-}
-
-double max(double x, double y)
-{
-        return x > y ? x : y;
-}
-
-double run(int N_X, int N_Y, int L, char *filename)
+double run(int N_X, int N_Y, int L, double min_x, double max_x, double min_y, double max_y, const char *filename)
 {
 
     char train_file[LINE_LEN];
-    char sim_file[LINE_LEN];
-    char out_file[LINE_LEN];
+    sprintf(train_file, "%s.train", filename);
 
-    double L_X, L_Y;
     covq2 v;
     unif_quant q;
 
-    double min_x, max_x, min_y, max_y;
-    double min_x_sim, max_x_sim, min_y_sim, max_y_sim;
-    double min_x_train, max_x_train, min_y_train, max_y_train;
-
-    sprintf(train_file, "%s.train", filename);
-    sprintf(sim_file, "%s.sim", filename);
-    sprintf(out_file, "%s.out", filename);
-
-    get_range(train_file, &min_x_train, &max_x_train, &min_y_train, &max_y_train);
-    get_range(sim_file, &min_x_sim, &max_x_sim, &min_y_sim, &max_y_sim);
-    min_x = min(min_x_sim, min_x_train) - 0.0001;
-    max_x = max(max_x_sim, max_x_train) + 0.0001;
-    min_y = min(min_y_sim, min_y_train) - 0.0001;
-    max_y = max(max_y_sim, max_y_train) + 0.0001;
-
-    L_X = L_Y = L;
-
-    quantizer_init( &q, L_X, L_Y, min_x, max_x, min_y, max_y);
+    quantizer_init( &q, L, L, min_x, max_x, min_y, max_y);
 
     /*
      * Read training set from file.
@@ -130,8 +62,6 @@ double run(int N_X, int N_Y, int L, char *filename)
     }
 
     char line[LINE_LEN];
-    double T_X=0, S_X=0;
-    double T_Y=0, S_Y=0;
     while(fgets(line, LINE_LEN, pFile) != NULL){
         double x, y;
         int param_count = sscanf(line, "%lf, %lf", &x, &y);
@@ -149,11 +79,18 @@ double run(int N_X, int N_Y, int L, char *filename)
 
     initilization_stage_covq2(&v, &q, N_X, N_Y);
 
+    return dist1(&v);
+}
+
+double simulate(covq2 *v, const char *filename){
+
     /*
      * Read simulation set from file.
      */
-    pFile = fopen(sim_file, "r");
-    if( !pFile ){
+    char simFile_name[LINE_LEN];
+    sprintf(simFile_name, "%s.sim", filename);
+    FILE *simFile = fopen(simFile_name, "r");
+    if( !simFile ){
         fprintf(stderr, "Could not open training set file.\n");
         return 0;
     }
@@ -161,118 +98,98 @@ double run(int N_X, int N_Y, int L, char *filename)
     /*
      * Open output file
      */
-    FILE *outFile = fopen(out_file, "w");
+    char outFile_name[LINE_LEN];
+    sprintf(outFile_name, "%s.out", filename);
+    FILE *outFile = fopen(outFile_name, "w");
     if( !outFile ){
         fprintf(stderr, "Could not open output file.\n");
-        fclose(pFile);
+        fclose(outFile);
         return 0;
     }
     
-    double total_noise = 0;
-    while(fgets(line, LINE_LEN, pFile) != NULL){
+    double err = 0;
+    int num_sim = 0;
+
+    char line[LINE_LEN];
+    while(fgets(line, LINE_LEN, simFile) != NULL){
         double x, y;
         int param_count = sscanf(line, "%lf, %lf", &x, &y);
+        num_sim++;
         if( param_count != 2 ){
             fprintf(stderr, "Invalid simulation set format.\n");
-            fclose(pFile);
+            fclose(outFile);
+            fclose(simFile);
             return 0;
         }
 
         /*
          * Quantize X and Y
          */
-        int qx = val_to_quant(x, src_X, &q);
-        int qy = val_to_quant(y, src_Y, &q);
+        int qx = val_to_quant(x, src_X, v->q);
+        int qy = val_to_quant(y, src_Y, v->q);
 
         /*
          * Ignore point if outside of uniform quantizer range.
          */
-        if( qx == -1 || qy == -1)
-            continue;
+        if( qx == -1 || qy == -1){
+            fprintf(stderr, "Invalid Point!\n");
+            fclose(outFile);
+            fclose(simFile);
+            return 0;
+        }
 
-        int i = v.I_X[qx];
-        int j = v.I_Y[qy];
+        int i = v->I_X[qx];
+        int j = v->I_Y[qy];
 
-        double x_ij = v.x_ij[j * v.N_X + i];
-        double y_ij = v.y_ij[j * v.N_X + i];
+        double x_ij = v->x_ij[i][j];
+        double y_ij = v->y_ij[i][j];
 
         fprintf(outFile, "%lf,%lf\n", x_ij, y_ij);
 
 
-        /*
-         * Compute SQNR
-         */
-        S_X += x;
-        S_Y += y;
-        T_X += POW2(x);
-        T_Y += POW2(y);
-
-        qx = val_to_quant(x, src_X, &q);
-        qy = val_to_quant(y, src_Y, &q);
-        quantizer_bin(qx, qy, &q);
+        err += POW2(x-x_ij) + POW2(y-y_ij);
     }
 
-    fclose(pFile);
-
-    S_X /= q.npoints;
-    S_Y /= q.npoints;
-    T_X /= q.npoints;
-    T_Y /= q.npoints;
-    double signal_power = T_X + POW2(S_X) + T_Y + POW2(S_Y);
-
-    double quantized_noise_power = initilization_stage_covq2(&v, &q, N_X, N_Y);
-
-    double SQNR = 10 * log10(signal_power / quantized_noise_power);
-
-    free_covq2(&v);
-    quantizer_free(&q);
     fclose(outFile);
+    fclose(simFile);
 
-    return SQNR;
+    err /= num_sim;
+    err = dist1(v);
+
+    free_covq2(v);
+    quantizer_free(v->q);
+
+    return err;
 }
 
+int main(int argc, const char **argv)
+{
+    int N_X, N_Y;
+    double min_x, max_x, min_y, max_y;
 
-// 
-// void cov_run(int L)
-// {
-//     int N_final = 4;
-//     int L_X = L;
-//     int L_Y = L;
-//     char train_file[100];
-//     char sim_file[100];
-// 
-//     printf("L:%d\n",L);
-//     for(int cov_idx = 0; cov_idx <= 100; cov_idx++){
-//         sprintf(train_file, "train_%.2f.csv", 0.01*cov_idx);
-//         sprintf(sim_file, "sim_%.2f.csv", 0.01*cov_idx);
-// 
-//         for(int N = 4; N <= N_final; N *= 2){
-//             double SQNR = run(L_X, L_Y, N, N, sim_file);
-//             printf("%lf ", SQNR);
-//         }
-//         printf("\n");
-//     }
-// }
-// 
+    if(argc != 8){
+        fprintf(stderr, "Need 8 arguments: N_X, N_Y, min_x, max_x, min_y, max_y, filename\n");
+        return 1;
+    }
 
-int image_run(){
+    N_X   = atoi(argv[1]);
+    N_Y   = atoi(argv[2]);
+    min_x = atof(argv[3]);
+    max_x = atof(argv[4]);
+    min_y = atof(argv[5]);
+    max_y = atof(argv[6]);
 
-    char name[LINE_LEN];
-
-    for(int i=0; i <= 7; i++){
-        for(int j=0; j <= 7; j++){
-            sprintf(name, "%d%d", i,j);
-            printf( "%lf\n", run(4, 4, 200, name) );
+    double err_best = MAXFLOAT;
+    int L_best;
+    for(int L = 25; L <= 600; L+= 25){
+        double err = run(N_X, N_Y, L, min_x, max_x, min_y, max_y, argv[7]);
+        if(err < err_best){
+            err_best = err;
+            L_best = L;
         }
     }
-    return 1;
-}
-int main()
-{
-    int N_X_final, N_Y_final;
-    N_X_final = 64;
-    N_Y_final = 64;
-    image_run();
+
+    printf("%f\t%d\n",err_best,L_best);
     return 0;
 }
 

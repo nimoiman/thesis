@@ -7,8 +7,6 @@ extern "C"{
 
 #define POW2(x) ((x)*(x))    
 
-#define CI(i,j) (j * v->N_X + i)
-
 // Includes
 #include <assert.h>
 #include <stdio.h> /* sprintf */
@@ -30,7 +28,8 @@ typedef struct{
     int *I_X, *I_Y;
 
     // Codevectors
-    double *x_ij, *y_ij;
+    double x_ij[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
+    double y_ij[MAX_CODEBOOK_SIZE][MAX_CODEBOOK_SIZE];
 
     // Encoder index to transmission index
     int *b_X, *b_Y;
@@ -63,6 +62,7 @@ double nearest_neighbour1_x(int qx, int *idx, covq2 *v);
 double nearest_neighbour1_y(int qy, int *idx, covq2 *v);
 double nearest_neighbour2_x(int qx, int *idx, covq2 *v);
 double nearest_neighbour2_y(int qy, int *idx, covq2 *v);
+double dist1(covq2 *v);
 
 /*
  * util.c
