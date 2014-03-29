@@ -24,14 +24,6 @@ def _2d_idct(a):
     return idct(idct(a.transpose(), norm='ortho').transpose(), norm='ortho')
 
 
-def _count_lines(f):
-    """Return number of newlines in f"""
-    n_lines = 0
-    for line in open(f):
-        n_lines += 1
-    return n_lines
-
-
 def ster2arr(filename_1, filename_2, block_size=8):
     """Read pngs filename_1, filename_2, return tuple of np.arrays
     cropped to correct size"""
