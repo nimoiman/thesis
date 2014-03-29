@@ -4,20 +4,35 @@
 \usepackage{amsmath}
 
 \newcommand{\real}{\mathbb{R}}
+\newcommand{\sysIIN}{\mbox{$I \overset{N}{\rightarrow} I$}}
+\newcommand{\sysII}{\mbox{$I \rightarrow I$}}
+\newcommand{\sysIJN}{\mbox{$I \overset{N}{\rightarrow} J$}}
+\newcommand{\sysIJ}{\mbox{$I \rightarrow J$}}
+\newcommand{\sysJJN}{\mbox{$J \overset{N}{\rightarrow} J$}}
+\newcommand{\sysJJ}{\mbox{$J \rightarrow J$}}
+
 \begin{document}
 
 \section{Problem Description and Background}
 % Give an overview of the section: We will first give a more well defined problem description will well defined terms and present the problem as an optimization problem. We will mention the parallels between out problem and regular VQ and COVQ. We will adapt the methods to our problem. Mention how we can use conditions of optimality in quantizer design, also mention the bit allocation problem and how the LBG splitting algorithm can resolve the issues. We will discuss (in following section) conditions of optimality in an optimal quantizer for vq, covq, and the joint decoder system. We will introduce optimal codeword assignment for a noisy channel and then mention Bit allocation and transform coding techniques used in image coding.
-This section will cover the background related to the single encoder/single decoder and independent encoders/joint decoder schemes mentioned in the previous section. As previously mentioned, analysis of each system is important so they can be quantitatively compared. Recall that the two independent encoder/two dependent decoder system provides a lower bound on performance for the joint decoder system, while the single encoder/single decoder system provides an upper bound. The formal problem statement for the different systems and a glossary of terms is covered in Section~\ref{sec:prob_state}.
+\begin{enumerate}
+    \item Looking at the transmission of images, across possibly noisy channels, and this involves the use of encoders and decoders to compress the amount of information.
+    \item 
 
-In addition to covering these three different systems, we will also be analyzing noiseless and noisy channels. There are a few additional design consideration one must consider when dealing with a noisy channel. In particular, it is important that a proper mapping between codeword indecies and respective binary representations is chosen. This is because transition probabilities for the indecies depend only on the binary representation of the indecies. Equations for conditions of optimality of the different systems are given in Section~\ref{sec:optim_conds_deriv}. Analysis of codeword assignment for noisy channels is done is Section~\ref{sec:code_assign_deriv}.
+\end{enumerate}
+\sysII, \sysIIN, \sysIJ, \sysIJN, \sysJJ, \sysJJN, test.
+
+
+This section provides background related to the independent encoder/independent decoder, independent encoders/joint decoder, and joint encoder/joint decoder schemes mentioned in the previous section. As previously mentioned, analysis of each system is important so they can be quantitatively compared. Recall that the two independent encoder/two dependent decoder system provides a lower bound on performance for the joint decoder system, while the single encoder/single decoder system provides an upper bound. The formal problem statement for the different systems and a glossary of terms is covered in Section~\ref{sec:prob_state}.
+
+In addition to covering these three different systems, we will also be analyzing noiseless and noisy channels. There are a few additional design consideration one must consider when dealing with a noisy channel. In particular, it is important that a proper mapping between codeword indices and respective binary representations is chosen. This is because transition probabilities for the indices depend only on the binary representation of the indices. Equations for conditions of optimality of the different systems are given in Section~\ref{sec:optim_conds_deriv}. Analysis of codeword assignment for noisy channels is done is Section~\ref{sec:code_assign_deriv}.
 
 Finally, quantizer bit allocation and transform coding will be covered in Section~\ref{sec:bit_trans_deriv}. The material will be covered with an emphasis on image encoding, since this is the focus of the project. Applications to the JPEG image compression method will also be mentioned.
 
 \subsection{Problem Statement}
 \label{sec:prob_state}
 % This section should reintroduce the problem while providing the list of terms. In particular, this should include codevector, index, channel transition probability, distortion.
-Assume that the source random vector $(X,Y)\in\real^2$ is independent and identically distributed, such that $X$ and $Y$ share a joint density function. The quantizer maps the values of $X$ and $Y$ onto a finite set of indecies: $i\in\{1,\ldots,N_X\}$ for $X$ and $j\in\{1,\ldots,N_Y\}$ for $Y$. When considering the independent encoder/independent decoder and independent encoder/join decoder systems, these index mappings are done separately. That is, we can describe the encoder mappings as
+Assume that the source random vector $(X,Y)\in\real^2$ is independent and identically distributed, such that $X$ and $Y$ share a joint density function. The quantizer maps the values of $X$ and $Y$ onto a finite set of indices: $i\in\{1,\ldots,N_X\}$ for $X$ and $j\in\{1,\ldots,N_Y\}$ for $Y$. $N_X$ and $N_Y$ are the number of \emph{output levels} for the quantizer. When considering the independent encoder/independent decoder and independent encoder/join decoder systems, these index mappings are done separately. That is, we can describe the encoder mappings as
 \begin{gather*}
     I_X : \real\to\{1,\ldots,N_X\} \\
     I_Y : \real\to\{1,\ldots,N_Y\}
@@ -26,28 +41,42 @@ where $I_X$ is the encoder mapping for $X$ and $I_Y$ is the encoder mapping for 
 \begin{equation*}
     I : \real^2\to\{1,\ldots,N_X\} \times \{1,\ldots,N_Y\}.
 \end{equation*}
-These indecies $i$ and $j$ are then transmitted over the channel to the receiver. If the channel is noiseless, then the receiver will receive the transmitted indecies $i$ and $j$. For a noisy channel, channel interference may influence which indecies are received. In this project, we will be considering channels that are independent of the source and memoryless. Memoryless channels are channels whose properties do not change between each channel use. It will be assumed however, that the two channels themselves may be dependent. Such a channel can be expressed using channel transition probabilities of the form $P(k,l|i,j)$. This term corresponds to the probability of receiving the index $k$ from the $X$ source and the index $l$ from the $Y$ source given that $i$ and $j$ were transmitted from the $X$ and $Y$ sources respectively. Note that for the memoryless channel, $P(i,j|i,j)=1$ for all $i$ and $j$. Throughout the rest of the paper, we will use the convention that $i$ and $j$ correspond to the transmitted indecies and $k$ and $l$ correspond to the received indecies for $X$ and $Y$ respectively.
+These indices $i$ and $j$ are then transmitted over the channel to the receiver. If the channel is noiseless, then the receiver will receive the transmitted indices $i$ and $j$. For a noisy channel, channel interference may influence which indices are received. In this project, we will be considering channels that are independent of the source and memoryless. Memoryless channels are channels whose properties do not change between each channel use. It will be assumed however, that the two channels themselves may be dependent. Such a channel can be expressed using channel transition probabilities of the form $P(k,l|i,j)$. This term corresponds to the probability of receiving the index $k$ from the $X$ source and the index $l$ from the $Y$ source given that $i$ and $j$ were transmitted from the $X$ and $Y$ sources respectively. Note that for the memoryless channel, $P(i,j|i,j)=1$ for all $i$ and $j$. Throughout the rest of the paper, we will use the convention that $i$ and $j$ correspond to the transmitted indices and $k$ and $l$ correspond to the received indices for $X$ and $Y$ respectively.
 
-The decoder is then responsible for mapping the indecies ($k$ and $l$ for the noisy channel, and $i$ and $j$ for the noiseless channel) onto estimates of $X$ and $Y$. For independent decoders, the reconstruction for $X$ only depends on $k$ (or $i$ for the noiseless channel), and the reconstruction for $Y$ only depends on $j$ (or $l$). That is, we have mappings
+The decoder is then responsible for mapping the indices ($k$ and $l$ for the noisy channel, and $i$ and $j$ for the noiseless channel) onto estimates of $X$ and $Y$. For independent decoders, the reconstruction for $X$ only depends on $k$ (or $i$ for the noiseless channel), and the reconstruction for $Y$ only depends on $j$ (or $l$). That is, we have mappings
 \begin{gather*}
     x_{\cdot} : \{1,\ldots,N_X\} \to \real \\
     y_{\cdot} : \{1,\ldots,N_Y\} \to \real.
 \end{gather*}
-When using joint decoders, reconstructions of $X$ and $Y$ will depend on both $k$ and $l$ (or $i$ and $i$). As $X$ and $Y$ are dependent, the joint decoder should provide better performance over the independent decoders. The decoder reconstruction mappings can be described as 
+When using joint decoders, reconstructions of $X$ and $Y$ will depend on both $k$ and $l$ (or $i$ and $j$). As $X$ and $Y$ are dependent, the joint decoder should provide better performance over the independent decoders. The decoder reconstruction mappings can be described as 
 \begin{gather*}
     x_{\cdot,\cdot} : \{1,\ldots,N_X\} \times \{1,\ldots,N_Y\} \to \real \\
     y_{\cdot,\cdot} : \{1,\ldots,N_X\} \times \{1,\ldots,N_Y\} \to \real.
 \end{gather*}
 In quantizer design, the goal is to minimize the average distortion between the source and reconstruction. In this project, we will consider squared error distortion, so the average distortion can be expressed as
-\begin{equation*}
+\begin{equation}
+    \label{eq:D_avg}
     D_{avg} = E[{(X-\hat{X})}^2 + {(Y-\hat{Y})}^2]
-\end{equation*}
-where $\hat{X}$ and $\hat{Y}$ represent the reconstructions. We can re express the average distortion in more meaningful ways for our different systems. For the independent decoders and encoders with a noiseless channel,
+\end{equation}
+where $\hat{X}$ and $\hat{Y}$ represent the reconstructions. An \emph{optimal quantizer} is one which minimizes Equation~\ref{eq:D_avg} across all other quantizers with the same number of output levels.
+
+Explicit expressions for $D_{avg}$ are given in subsection 1.2 for the following following six systems: \sysII, \sysIIN, \sysIJ, \sysIJN, \sysJJ, \sysJJN\@. For all the systems except for \sysIJ\ and \sysIJN, we know how to do it. The problem tackled in this study, is how to design an encoder/decoder system when we have a join decoder (\sysIJ~and \sysIJN).
+
+\subsection{Explicit Expressions for Average Distortion}
+We can re express Equation~\ref{eq:D_avg} in more meaningful ways for our different systems. For the independent decoders and encoders with a noiseless channel,
+
+\medskip
+
+{\sc \noindent Independent Encoder And Decoder, No Noise (\sysII):}
 \begin{equation}
     \label{eq:dist_indep_nonoise}
-    D_{avg} = \sum_{i=1}^{N_X}E[{(X-x_i)}^2 | I_X(X) = i]P(I_X(X) = i) + \sum_{j=1}^{N_Y}E[{(Y-y_j)}^2 | I_Y(Y) = j]P(I_Y(Y) = j).
+    D_{avg} = \sum_{i=1}^{N_X}E[{(X-x_i)}^2 | I_X(X) = i]P(I_X(X) = i) + \sum_{j=1}^{N_Y}E[{(Y-y_j)}^2 | I_Y(Y) = j]P(I_Y(Y) = j)
 \end{equation}
-For the independent decoders and encoders with a noisy channel,
+say something.
+
+\medskip
+
+{\sc \noindent Independent Encoder And Decoder, With Noise (\sysIIN):}
 \begin{equation}
     \label{eq:dist_indep_noise}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k})}^2 +
@@ -56,24 +85,27 @@ For the independent decoders and encoders with a noisy channel,
 For a joint decoder and independent encoders with a noiseless channel,
 \begin{equation}
     \label{eq:dist_joint_nonoise}
-    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | I_X(X)=i, I_Y(Y)=j]P(I_X(X) = i, I_Y(Y) = j).
+    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | I_X(X)=i, I_Y(Y)=j]P(I_X(X) = i, I_Y(Y) = j)
 \end{equation}
 For a joint decoder and independent encoders with a noisy channel,
 \begin{equation}
     \label{eq:dist_joint_noise}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k,l})}^2 +
-    {(Y-y_{k,l})}^2 | I_X(X) = i, I_Y(Y) = j]P(k,l|i,j)P(I_X(X) = i, I_Y(Y) = j).
+    {(Y-y_{k,l})}^2 | I_X(X) = i, I_Y(Y) = j]P(k,l|i,j)P(I_X(X) = i, I_Y(Y) = j)
 \end{equation}
 For a joint decoder and joint encoder with a noiseless channel,
 \begin{equation}
-    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | I(X,Y) = (i,j)]P(I(X,Y) = (i,j)).
+    D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | I(X,Y) = (i,j)]P(I(X,Y) = (i,j))
 \end{equation}
 For a joint decoder and joint encoder with a noisy channel,
 \begin{equation}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k,l})}^2 +
-    {(Y-y_{k,l})}^2 | I(X,Y) = (i,j)]P(k,l|i,j)P(I(X,Y) = (i,j)).
+    {(Y-y_{k,l})}^2 | I(X,Y) = (i,j)]P(k,l|i,j)P(I(X,Y) = (i,j))
 \end{equation}
 An important note is that the average distortion in Equation~\ref{eq:dist_indep_nonoise} can be minimized by optimizing the quantizers for the two sources separately. This is not true in Equation~\ref{eq:dist_indep_noise} however, unless we assume that the channels are independent so that $P(k,l|i,j) = P(k|i)P(l|j)$. We will therefore make this assumption about the channel to simplify the following analysis and implementation of the independent decoder system.
+
+The problem that will be studied will be the design and implementation of the three systems
+In the following subsection we will present some conditions of optimality that an optimum quantizer.
 
 \subsection{Conditions of Optimality}
 \label{sec:optim_conds_deriv}
