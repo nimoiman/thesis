@@ -8,7 +8,6 @@
 double trans_prob_x = 0.01;
 double trans_prob_y = 0.01;
 
-
 int B_X, B_Y;
 
 /* Channel transition probability
@@ -29,7 +28,7 @@ double trans_prob(int i, int j, int k, int l, int *b_X, int *b_Y)
     int j_cw = b_Y[j];
     int k_cw = b_X[k];
     int l_cw = b_Y[l];
-    
+
     // Compute transition probability
     int diff = i_cw ^ k_cw;
     for(int n = 0; n < B_X; n++)
@@ -37,7 +36,7 @@ double trans_prob(int i, int j, int k, int l, int *b_X, int *b_Y)
     diff = j_cw ^ l_cw;
     for(int n = 0; n < B_Y; n++)
         prob *= (diff>>n & 1) ? trans_prob_y: (1-trans_prob_y);
-    
+
     return prob;
 }
 
@@ -79,11 +78,6 @@ double run(int N_X, int N_Y, int L, double min_x, double max_x, double min_y, do
 
     initilization_stage_covq2(&v, &q, N_X, N_Y);
 
-    return dist1(&v);
-}
-
-double simulate(covq2 *v, const char *filename){
-
     /*
      * Read simulation set from file.
      */
@@ -106,11 +100,10 @@ double simulate(covq2 *v, const char *filename){
         fclose(outFile);
         return 0;
     }
-    
+
     double err = 0;
     int num_sim = 0;
 
-    char line[LINE_LEN];
     while(fgets(line, LINE_LEN, simFile) != NULL){
         double x, y;
         int param_count = sscanf(line, "%lf, %lf", &x, &y);
@@ -125,8 +118,8 @@ double simulate(covq2 *v, const char *filename){
         /*
          * Quantize X and Y
          */
-        int qx = val_to_quant(x, src_X, v->q);
-        int qy = val_to_quant(y, src_Y, v->q);
+        int qx = val_to_quant(x, src_X, v.q);
+        int qy = val_to_quant(y, src_Y, v.q);
 
         /*
          * Ignore point if outside of uniform quantizer range.
@@ -138,11 +131,11 @@ double simulate(covq2 *v, const char *filename){
             return 0;
         }
 
-        int i = v->I_X[qx];
-        int j = v->I_Y[qy];
+        int i = v.I_X[qx];
+        int j = v.I_Y[qy];
 
-        double x_ij = v->x_ij[i][j];
-        double y_ij = v->y_ij[i][j];
+        double x_ij = v.x_ij[i][j];
+        double y_ij = v.y_ij[i][j];
 
         fprintf(outFile, "%lf,%lf\n", x_ij, y_ij);
 
@@ -150,17 +143,16 @@ double simulate(covq2 *v, const char *filename){
         err += POW2(x-x_ij) + POW2(y-y_ij);
     }
 
+    err /= num_sim;
+
     fclose(outFile);
     fclose(simFile);
-
-    err /= num_sim;
-    err = dist1(v);
-
-    free_covq2(v);
-    quantizer_free(v->q);
+    quantizer_free(v.q);
+    free_covq2(&v);
 
     return err;
 }
+
 
 int main(int argc, const char **argv)
 {
@@ -183,13 +175,17 @@ int main(int argc, const char **argv)
     int L_best;
     for(int L = 25; L <= 600; L+= 25){
         double err = run(N_X, N_Y, L, min_x, max_x, min_y, max_y, argv[7]);
+        if(err == 0){
+            fprintf(stderr,"An error occured\n");
+            return 1;
+        }
         if(err < err_best){
             err_best = err;
             L_best = L;
         }
     }
 
-    printf("%f\t%d\n",err_best,L_best);
+    printf("%f\t\n",err_best);
     return 0;
 }
 
