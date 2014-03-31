@@ -2,19 +2,23 @@
 make covq
 
 # Parameters
-snr_out=snr_i-i.out
 nsplits=2
 bep=0.0
 lbg_eps=0.001
 cv_disp=0.0001
+
+# tmp files
 tr_1=tr_1.csv
 tr_2=tr_2.csv
 sim_1=sim_1.csv
 sim_2=sim_2.csv
 out_1=out_1.csv
 out_2=out_2.csv
-cb=cb.csv
-cw=cw_map.csv
+
+suff=i-i
+snr_out=snr_$suff.out
+cb=cb_$suff.csv
+cw=cw_map_$suff.csv
 
 
 # Clear SNR output file
@@ -27,8 +31,8 @@ do
     do
         train=corr_$k.$i$j.train
         sim=corr_$k.$i$j.sim
-        if [ ! -e train ] || [ ! -e sim ]
-            then echo "Cannot find train/sim files, rho=$k.$i$j"
+        if [ ! -f $train ] || [ ! -f $sim ]
+            then echo "Cannot find train/sim files $train, $sim; rho=$k.$i$j"
             exit 1
         fi
 
@@ -44,7 +48,7 @@ do
 
         if [ $? -ne 0 ]
             then echo "Returned non-zero status"
-            exit
+            exit 1
         fi
 
         # Run on right column
@@ -55,7 +59,7 @@ do
 
         if [ $? -ne 0 ]
             then echo "Returned non-zero status"
-            exit
+            exit 1
         fi
 
         # Zip the results back into 2 column csv
@@ -75,8 +79,8 @@ j=0
 
 train=$train
 sim=$sim
-if [ ! -e train ] || [ ! -e sim ]
-    then echo "Cannot find train/sim files, rho=$k.$i$j"
+if [ ! -f $train ] || [ ! -f $sim ]
+    then echo "Cannot find train/sim files $train, $sim; rho=$k.$i$j"
     exit 1
 fi
 
@@ -92,7 +96,7 @@ python python/util.py csv_unzip $sim $sim_1 $sim_2
 
 if [ $? -ne 0 ]
     then echo "Returned non-zero status"
-    exit
+    exit 1
 fi
 
 # Run on right column
@@ -103,7 +107,7 @@ fi
 
 if [ $? -ne 0 ]
     then echo "Returned non-zero status"
-    exit
+    exit 1
 fi
 
 # Zip the results back into 2 column csv
