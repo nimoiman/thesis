@@ -9,7 +9,7 @@ lbg_eps=0.001
 cv_disp=0.0001
 
 # tmp files
-suff=d-d
+suff=j-j
 snr_out=snr_$suff.out
 cb=cb_$suff.csv
 cw=cw_map_$suff.csv
