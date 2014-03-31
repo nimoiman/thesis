@@ -1,7 +1,7 @@
 #!/bin/bash
 
-N_X=8
-N_Y=8
+N_X=4
+N_Y=4
 X_MIN=-4
 X_MAX=4
 Y_MIN=-4
