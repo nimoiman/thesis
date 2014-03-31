@@ -38,6 +38,13 @@ def count_lines(f):
     return n_lines
 
 
+def count_dim(f):
+    """Return number of entries in first line of f"""
+    dim = 0
+    with open(f) as fp:
+        return len(fp.readline().split(","))
+
+
 def iter_array(arr, vec_shape=(8,1)):
     """Iterate through numpy array arr in left-to-right, then
     top-to-bottom order, outputting windowed views of arr of shape
