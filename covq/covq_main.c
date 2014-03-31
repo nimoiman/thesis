@@ -125,7 +125,7 @@ struct cmdline parse_args(int argc, char *argv[]) {
         else if (!strcmp(argv[i], "-e") || !strcmp(argv[i], "--lbg-eps")) {
             if (i + 1 < argc) {
                 i += 1;
-                opts.lbg_eps = atoi(argv[i]);
+                opts.lbg_eps = atof(argv[i]);
             }
             else {
                 fprintf(stderr, "No lbg eps provided with option %s.\n", argv[i]);
@@ -136,7 +136,7 @@ struct cmdline parse_args(int argc, char *argv[]) {
         else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--cv-disp")) {
             if (i + 1 < argc) {
                 i += 1;
-                opts.codevector_displace = atoi(argv[i]);
+                opts.codevector_displace = atof(argv[i]);
             }
             else {
                 fprintf(stderr, "No codevector displacement provided with option %s.\n", argv[i]);

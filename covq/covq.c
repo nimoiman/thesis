@@ -33,7 +33,6 @@ double nearest_neighbour(vectorset *train, vectorset *codebook,
                     (uint) log2(codebook->size), cw_map) * dist(train->v[i],
                     codebook->v[j], train->dim);
             }
-            
             if (new_distance < best_distance) {
                 count[partition_index[i]] -= 1;
                 partition_index[i] = j;
