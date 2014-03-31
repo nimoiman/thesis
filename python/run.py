@@ -880,24 +880,43 @@ def gaussian_train_test(bit_rate, rho, tr_size=10000, test_size=10000,
 
 
 def snr(orig_signal, new_signal):
-    """Return SNR in dB"""
+    """Return SNR in dB expect signals in np arrays"""
 
-    from math import log
+    from math import log, sqrt
+    # E[||X-X'||^2]
     mse = 0
+    # E[||X-mean||^2]
     energy = 0
-    mean = 0
 
-    for orig_val, new_val in zip(orig_signal, new_signal):
-        mse += (orig_val - new_val) ** 2
-        energy += orig_val ** 2
-        mean += orig_val
+    # Vector Case
+    if len(orig_signal.shape) == 2:
+        N = orig_signal.shape[0]
+        dim = orig_signal.shape[1]
 
-    mean /= len(orig_signal)
-    mean_sq = mean**2
-    mse /= len(orig_signal)
-    energy /= len(orig_signal)
+        # find mean E[X]
+        mean = sum([orig_vec for orig_vec in orig_signal])/N
 
-    return 10*log((energy - mean_sq) / mse, 10)
+        for orig_vec, new_vec in zip(orig_signal, new_signal):
+            mse += sum([d**2 for d in (orig_vec - new_vec)])
+            energy += sum([(v - mu)**2 for (v, mu) in zip(orig_vec, mean)])
+        mse /= (N * dim)
+        energy /= (N * dim)
+    # Scalar Case
+    elif len(orig_signal.shape) == 1:
+        N = orig_signal.shape[0]
+
+        # find mean
+        mean = sum(list(orig_signal))/N
+
+        for orig_val, new_val in zip(orig_signal, new_signal):
+            mse += (orig_val - new_val)**2
+            energy += orig_val**2
+        mse /= N
+        energy /= N
+    else:
+        stderr_("Dunno how to deal with array of shape {}".format(orig_signal.shape))
+
+    return 10*log(energy / mse, 10)
 
 
 def psnr(orig_signal, new_signal):
@@ -912,7 +931,35 @@ def psnr(orig_signal, new_signal):
 
 
 @command
-def get_psnr(orig_left, orig_right, new_left, new_right):
+def get_snr(csv_1, csv_2):
+    """Command line wrapper for SNR of two csvs"""
+
+    import numpy as np
+
+    lines_1 = count_lines(csv_1)
+    lines_2 = count_lines(csv_2)
+
+    dim_1 = count_dim(csv_1)
+    dim_2 = count_dim(csv_2)
+
+    if lines_1 != lines_2 or dim_1 != dim_2:
+        print("The csvs do not match size!")
+        exit_(1)
+
+    sig_1 = np.empty((lines_1, dim_1))
+    sig_2 = np.empty((lines_2, dim_2))
+
+    for i, line in enumerate(open(csv_1)):
+        sig_1[i, :] = [float(n) for n in line.split(",")]
+
+    for i, line in enumerate(open(csv_2)):
+        sig_2[i, :] = [float(n) for n in line.split(",")]
+
+    return snr(sig_1, sig_2)
+
+
+@command
+def png_psnr(orig_left, orig_right, new_left, new_right):
     """Return PSNR of pixel values in original pngs to reconstructed pngs"""
 
     from PIL import Image

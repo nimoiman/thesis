@@ -30,6 +30,20 @@ def mkdir_(path):
                      "cannot write over").format(path))
             raise e
 
+def count_lines(f):
+    """Return number of newlines in f"""
+    n_lines = 0
+    for line in open(f):
+        n_lines += 1
+    return n_lines
+
+
+def count_dim(f):
+    """Return number of entries in first line of f"""
+    dim = 0
+    with open(f) as fp:
+        return len(fp.readline().split(","))
+
 
 def iter_array(arr, vec_shape=(8,1)):
     """Iterate through numpy array arr in left-to-right, then
@@ -131,7 +145,7 @@ def csv_zip(filename_1, filename_2, out_file):
     """Zip two files together line-by-line"""
 
     # Check that the number of lines is the same
-    if _count_lines(filename_1) != _count_lines(filename_2):
+    if count_lines(filename_1) != count_lines(filename_2):
         stderr_("Files provided do not have the same number of lines")
         exit_(1)
 
