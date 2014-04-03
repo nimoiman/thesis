@@ -1,0 +1,79 @@
+* Introduction
+** Purpose and Motivation
+   - Communication Systems
+   - Quantization
+   - Channel Noise
+   - Muliple Agents in Network
+** Overview of Project
+   - Consider two encoders and joint decoder
+   - Compare results against independent decoder
+   - Vector Quantization
+* Background
+** DONE Section Overview
+     - Vector Quantization
+     - Channel Optimzed Vector Quantization
+     - Quantizer Design Algorithms
+       - Uses conditions of optimality
+** DONE Vector Quantizaton
+   - Overview of vector Quantization
+   - Conditions of Optimality
+     - Centroid Condition
+     - Nearest Neighbour Condition
+** DONE Channel Optimized Vector Quantization
+   - Overview of Channel Optimized Vector Quantization
+   - Conditions of Optimality
+     - Centroid Condition
+     - Nearest Neighbour Condition
+   - Advantages of channel optimized quantization
+** DONE Quantizer Design Algorithms
+   - Lloyd's Algorithm
+   - Linde-Buzo-Gray Splitting Algorithm
+** DONE Binary Codeword Assignment
+** TODO Bit Allocation and Transform Coding
+   - Perform preprocessing to improve quantizer performance
+   - Bit Allocation
+   - Transform Coding
+* Problem Description
+** DONE Section Overview
+   - Present problem in formal context
+     - Problem model
+     - Present different schemes
+     - I->I, I->J, J->J
+     - Problem Statement
+   - Expressions for Average Distortion
+     - Shed light on the problem
+   - Conditions of Optimality for Joint Decoder Scheme
+** DONE Formal Problem Statement
+   - Problem model
+     - Two sources, two transmitted indecies, two received indecies
+     - Source Model (IID, jointly distributed)
+     - Channel transition properties
+     - Distortion Measure
+   - Different encoder schemes
+     - I->I
+     - J->J
+     - I->J
+   - Problem statement
+     - Design I->J encoder scheme to minimize distortion
+     - Wish to compare against baseline I->I, J->J
+     - Similarity between I->I and COSQ and J->J and COVQ
+** TODO Explicit Expressions for Average Distortion
+   - I->I
+   - I->I (noise)
+     - Benefit of independent channels
+   - I->J
+   - I->J (noise)
+   - J->J
+   - J->J (noise)
+** TODO Conditions of Optimality for Joint Decoder Scheme
+   - Centroid Contion
+   - Nearest Neighbour Condition
+     
+     
+
+* DONE Mention how we can define quantizer just using codebook
+* DONE Show equations for average distortion for VQ and COVQ
+* TODO Insert references
+* TODO Fix references to other files
+* TODO add table caption
+* TODO add figures
