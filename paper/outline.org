@@ -1,13 +1,13 @@
 * Introduction
-** Purpose and Motivation
-   - Communication Systems
-   - Quantization
-   - Channel Noise
-   - Muliple Agents in Network
-** Overview of Project
-   - Consider two encoders and joint decoder
-   - Compare results against independent decoder
-   - Vector Quantization
+** TODO Purpose and Motivation
+- Communication Systems
+- Quantization
+- Channel Noise
+- Muliple Agents in Network
+** TODO Overview of Project
+- Consider two encoders and joint decoder
+- Compare results against independent decoder
+- Vector Quantization
 * Background
 ** DONE Section Overview
      - Vector Quantization
@@ -57,7 +57,7 @@
      - Design I->J encoder scheme to minimize distortion
      - Wish to compare against baseline I->I, J->J
      - Similarity between I->I and COSQ and J->J and COVQ
-** TODO Explicit Expressions for Average Distortion
+** DONE Explicit Expressions for Average Distortion
    - I->I
    - I->I (noise)
      - Benefit of independent channels
