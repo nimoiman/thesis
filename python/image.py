@@ -160,6 +160,7 @@ def _ranges(imgs, block_size):
     return ranges
 
 
+@command
 def bit_allocate(csv_filename_1, csv_filename_2, block_bit_rate, dims,
                  block_size=8):
     """Use greedy steepest descent algorithm to find optimum bit
@@ -169,8 +170,12 @@ def bit_allocate(csv_filename_1, csv_filename_2, block_bit_rate, dims,
 
     import numpy as np
 
-    n_lines_1 = _count_lines(csv_filename_1)
-    n_lines_2 = _count_lines(csv_filename_2)
+    n_lines_1 = count_lines(csv_filename_1)
+    n_lines_2 = count_lines(csv_filename_2)
+    block_bit_rate = int(block_bit_rate)
+    if isinstance(dims, str):
+        # convert to tuple
+        dims = [tuple((int(d) for d in dims.split()))]
 
     if n_lines_1 != n_lines_2:
         stderr_("size of input csvs don't match")
@@ -263,6 +268,7 @@ def ster_corr(*pngs, block_size=8):
     
     np.set_printoptions(precision=3)
     np.set_printoptions(suppress=True)
+    corr_avg = np.zeros((block_size, block_size))
     for img_pair in imgs:
         corr = np.zeros((block_size, block_size))
         mean_l = np.zeros((block_size, block_size))
@@ -301,8 +307,55 @@ def ster_corr(*pngs, block_size=8):
             corr += np.multiply((block_l - mean_l), (block_r - mean_r))
         corr /= n
         corr = np.divide(corr, np.multiply(sigma_l, sigma_r))
-        
+        corr_avg += corr
         print(corr)
+        average = sum([sum(row)/corr.shape[0] for row in list(corr)])/corr.shape[1]
+        print("average={}".format(average))
+    corr_avg /= len(imgs)
+    print("Average:")
+    print(corr_avg)
+
+@command
+def ster_pix_corr(*pngs):
+    """Read in pngs in pairs, return average pixel correlation"""
+    from math import sqrt
+    # Pair up the images
+    imgs = list(zip(pngs[0::2], pngs[1::2]))
+
+    for img_pair in imgs:
+        ster_images, dim = ster2arr(img_pair[0], img_pair[1])
+        pixels_l = list(ster_images[0].getdata())
+        pixels_r = list(ster_images[1].getdata())
+        corr = 0
+        mean_l = 0
+        mean_r = 0
+        sigma_l = 0
+        sigma_r = 0
+        for (pix_l, pix_r) in zip(pixels_l, pixels_r):
+            mean_l += pix_l
+            mean_r += pix_r
+
+        mean_l /= len(pixels_l)
+        mean_r /= len(pixels_r)
+
+        for (pix_l, pix_r) in zip(pixels_l, pixels_r):
+            sigma_l += (pix_l - mean_l)**2
+            sigma_r += (pix_r - mean_r)**2
+
+        sigma_l /= len(pixels_l)
+        sigma_r /= len(pixels_r)
+        sigma_l = sqrt(sigma_l)
+        sigma_r = sqrt(sigma_r)
+
+        for (pix_l, pix_r) in zip(pixels_l, pixels_r):
+            corr += (pix_l-mean_l)*(pix_r-mean_r)
+
+        corr /= len(pixels_l)
+        corr /= sigma_l*sigma_r
+
+        print(corr)
+
+
 
 
 def csv2ster(csv_filename_1, csv_filename_2, out_filenames_1, out_filenames_2,
