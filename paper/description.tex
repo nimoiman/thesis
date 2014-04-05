@@ -22,52 +22,48 @@
 \section{Introduction}
 
 \section{Background}
-This section will cover the necessary background material related to the project. In particular, scalar and vector quantization will be introduced in Section~\ref{sec:quantization}, along with associated conditions of optimally. In Section~\ref{sec:channel_optimized}, quantizers used for transmission of information over noisy channels will be discussed. In Section~\ref{sec:quant_design_algos}, it will be shown how the theory derived in the previous two sections can be used in optimal quantizer design. In Section~\ref{sec:code_assign}, proper codeword assignment for transmission over noisy channels will be discussed. Finally, bit allocation and transform coding techniques with a focus on images will be covered in Section~\ref{sec:bit_alloc}.
+This section covers the background material related to the project. In particular, scalar and vector quantization with conditions of optimality will be introduced in Section~\ref{sec:quantization}. In Section~\ref{sec:channel_optimized}, quantizers used for transmission of information over noisy channels will be discussed. In Section~\ref{sec:quant_design_algos}, it will be shown how the conditions of optimality can be use in quantizer design. In Section~\ref{sec:code_assign}, proper codeword assignment for transmission over noisy channels will be discussed. Finally, bit allocation and transform coding techniques will be covered in Section~\ref{sec:bit_alloc} with a focus on images. After the above framework is introduced, a formal problem description results will be covered in the following Section~\ref{sec:design}.
 
-After the above framework is introduced, a more formal problem description and theoretical results will be covered in the following section.
 \subsection{Quantization}
 \label{sec:quantization}
-As previously mentioned, quantization is the process of mapping data from some large set onto a smaller, finite set. Quantization is a form of \emph{lossy compression}, which means the data can not be exactly recovered after quantization.
+Quantization is the process of mapping data from some large set onto a smaller, finite set. Quantization is a form of \emph{lossy compression}, which means the data can not be exactly recovered after quantization is performed on it.
 
-As the number of possible outputs, or \emph{output levels}, of a quantizer is finite, each quantized point can be represented by an index over a finite range. A quantizer with $N$ distinct output levels is called an $N$-level quantizer. 
-
-If the data originally lies in some space $\mathcal{S}$, the encoder $\mathcal{E}$ can be defined as a mapping
+A quantizer with $N$ distinct output levels is called an $N$-level quantizer. The output levels of an $N$-level quantizer can be indexed from $1$ to $N$. The \emph{encoder} is a mapping which maps a point from the input space $\mathcal{S}$ onto one of these indices. The encoder mapping is denoted by $\mathcal{E}$ and can be expressed as
 \begin{equation}
 \mathcal{E} : \mathcal{S} \rightarrow \{1,\ldots,N\}
 \end{equation}
-The \emph{encoding region} associated with index $i$ is the set of points in $\mathcal{S}$ that the quantizer maps onto index $i$ and is denoted $R_i$. It follows that
+The \emph{encoding region} $\R_i$ is the set of points in $\mathcal{S}$ that the quantizer maps onto index $i$:
 \begin{equation}
 R_i = \{x \in \mathcal{S} : \mathcal{E}(x) = i\}
 \end{equation}
-The set of encoding regions partition $\mathcal{S}$ and uniquely defines $\mathcal{E}$.
+The encoding regions partition $\mathcal{S}$ and uniquely define $\mathcal{E}$.
 
-Each index output of the encoder has a unique point in $\mathcal{S}$ corresponding to the estimate of the original value. These points are called \emph{code vectors}. The set of code vectors is called the \emph{codebook} and is denoted by $\mathcal{C}$. The code vector corresponding to index $i$ is denoted by $x_i$ for all $i \in \{1,\ldots,N\}$.
+The encoder indices have associated points in $\mathcal{S}$ that are used to estimate the original value of the data source and are called \emph{code vectors}. The set of code vectors is called the \emph{codebook} and is denoted by $\mathcal{C}$. There is a code vector for each index $i \in \{1,\ldots,N\}$ and is denotes $x_i$.
 
-Notice that any $N$-level quantizer can be defined by the encoder-codebook pair $(\mathcal{E}, \mathcal{C})$. Moreover, the quantizer mapping $Q : \mathcal{S} \rightarrow \mathcal{C}$ is given by
+Any $N$-level quantizer can be defined by the pair $(\mathcal{E}, \mathcal{C})$. Moreover, the quantizer mapping $Q : \mathcal{S} \rightarrow \mathcal{S}$ is given by
 \begin{equation}
 Q(x) = x_{\mathcal{E}(x)}
 \end{equation}
-Quantizer performance and optimal quantizers will now be discussed. A distortion measure $d(x,y) : \mathcal{S}^2 \rightarrow \mathbb{R}^+$ is used to measure the performance of a quantizer. The average distortion $D_{avg}$ for a random i.i.d. source $X$, distortion measure $d(x,y)$, and quantizer $Q$, is given by
+
+A distortion measure $d(x,y) : \mathcal{S}^2 \rightarrow \mathbb{R}^+$ is used to measure the performance of a quantizer. The average distortion $D_{avg}$ for a random i.i.d. source $X$, distortion measure $d(x,y)$, and quantizer $Q$, is given by
 \begin{equation}
   \label{eq:D_avg}
 D_{avg} = E[d(X,Q(X))]
 \end{equation}
-An $N$-level quantizer is \emph{optimal} if its average distortion is less than or equal to the average distortion of all other $N$-level quantizer with respect to the given distortion measure and source distribution.
+An $N$-level quantizer is \emph{optimal} if its average distortion is less than or equal to the average distortion of all other $N$-level quantizer.
+ 
+In general, finding an optimal quantizer is very difficult. There may be quantizers that are locally optimal, but not globally optimal.
 
-In general, solving for an optimal quantizer is very difficult. Moreover, the underlying source distribution may not be known when designing the quantizer, such as when quantizing images. Iterative algorithms in quantizer design are used which operate on a training set of the source, rather than the source distribution itself. Two useful conditions of optimality used in quantizer design will now be discussed, and their application to quantizer design will be presented in Section~\ref{sec:quant_design_algos}.
-
-Before discussed the conditions of optimality, and for the rest of the paper, it will be assumed that $\mathcal{S}=\mathbb{R}^n$. A quantizer with $n=1$ is called a \emph{scalar quantizer}, and a quantizer with $n \ge 1$ is called a \emph{vector quantizer}. The rate $R$ of an $N$-level vector quantizer, in bits, is
+For the rest of the report, it will be assumed that the input space $\mathcal{S}=\mathbb{R}^k$. A quantizer with $k=1$ is called a \emph{scalar quantizer}, and a quantizer with $k \ge 1$ is called a \emph{vector quantizer}. \emph{Squared-error distortion}, denoted by ${\bf {\| x - y \|}}^2$, will be used for the rest of the report. Squared-error distortion is defined as follows:
 \begin{equation}
-R = \frac{1}{n}\log_2 N
+{\bf {\| x - y \|}}^2 = \sum_{i=1}^n{(x_i - y_i)}^2
 \end{equation}
-The distortion measure is assumed to be the \emph{squared-error distortion}, denoted ${\bf \| x - y \|}$ and defined as follows
-\begin{align}
-d(\bf x, \bf y) &= {\bf \| x - y \|} \\
-&= \sum_{i=1}^n{(x_i - y_i)}^2
-\end{align}
-where $x_i$ and $y_i$ are the $i$th coordinates of $\bf x$ and $\bf y$. It should also be mentioned that the following conditions of optimality can be derived for general distortion measures and input spaces, although this will not be discussed in this report.
+where $x_i$ and $y_i$ are the $i$th elements of $\bf x$ and $\bf y$.
 
-The first condition of optimality is the \emph{centroid condition}. The centroid condition states that each code vector should be placed at the centroid of its corresponding encoding region. The formal statement is as follows:
+Two conditions of optimality for optimal quantizers will now be discussed. Their application to quantizer design will be presented in Section~\ref{sec:quant_design_algos}. It should be mentioned that the following conditions of optimality can be derived for general distortion measures and input spaces, although the results will only be given for squared-error distortion over $\mathbb{R}^k$ in this report.
+
+The first condition of optimality is the \emph{centroid condition}. The centroid condition states that each code vector should be placed at the centroid of its corresponding encoding region.
+
 \begin{theorem}
 \label{theo:cent_vq}
 Amongst the set of all $N$-level quantizers with encoding function $\mathcal{E}$, the quantizer with code vectors
@@ -78,155 +74,161 @@ x_i &= E[X | X \in R_i] \\
 \end{align}
 for all $i \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
-It is important to note that although a quantizer satisfying the above condition is optimal, it is not necessarily uniquely optimal.
 
-The second condition of optimality is the \emph{nearest neighbor condition}. The nearest neighbor condition states that the encoder mapping $\mathcal{E}$ should be chosen such that each point should be mapped onto the code vector which results in the lowest distortion. More formally, the nearest neighbor condition can be stated as follows:
-\begin{theorem}
+The second condition of optimality is the \emph{nearest neighbor condition}. The nearest neighbor condition states that the encoder mapping $\mathcal{E}$ should be chosen so each point in $\mathbb{R}^k$ maps onto the code vector of lowest distortion. \begin{theorem}
 Consider all $N$-level quantizers with codebook $\mathcal{C}$. The quantizer with encoding regions satisfying
 \begin{equation}
 R_i \subset \{x : \| x - x_i \| \le \| x - x_j \| \text{ for all } j = 1,\ldots,N \}
 \end{equation}
 for all $i \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
-The subset symbol in the above theorem indicates that ties between nearest neighbors can be broken arbitrarly.
 
-The centroid and nearest neighbor conditions together provide necessary conditions of optimality for an optimal quantizer, although they are not sufficient. A quantizer that satisfies both conditions of optimality is called a Lloyd-Max quantizer. It is also important to note that the centroid condition specifies an optimal codebook for a fixed encoder, and the nearest neighbor condition specifies and optimal encoder for a fixed codebook. The use of these conditions of optimality in quantizer design will be discussed in Section~\ref{sec:quant_design_algos}.
+The centroid and nearest neighbor conditions provide necessary conditions of optimality for an optimal quantizer, but they are not sufficient. A quantizer that satisfies both conditions of optimality is called a Lloyd-Max quantizer.  An optimal quantizer can be defined by its codebook $\mathcal{C}$, since the nearest neighbor condition can be applied to the codebook to determine the encoding regions. The use of the conditions of optimality in quantizer design will be discussed in Section~\ref{sec:quant_design_algos}.
 
-It should also be noted that an optimal quantizer can be defined just by its codebook $\mathcal{C}$, since the encoder can be obtained from the codebook by applying the nearest neighbor condition.
-
-Finally, it is possible to rewrite the average distortion $D_{avg}$ from Equation~\ref{eq:D_avg} for a vector quantizer in the following form:
+It is possible to rewrite the average distortion $D_{avg}$ from (\ref{eq:D_avg}) for a vector quantizer as follows:
 \begin{align}
-D_{avg} &= \sum_{i=1}^{N} E[ \|X - x_i\| | X \in R_i] P(X \in R_i) \\
-&= \sum_{i=1}^{N} \int_{R_i} \|x - x_i\| p(x) dx
+D_{avg} &= \sum_{i=1}^{N} E[ \| \mathbf{X} -  \mathbf{x_i}\| | \mathbf{X} \in R_i] P(\mathbf{X} \in R_i) \\
+&= \sum_{i=1}^{N} \int_{R_i} \|\mathbf{x} - \mathbf{x_i}\| p(\mathbf{x}) d\mathbf{x}
 \end{align}
 
 \subsection{Channel Optimized Quantization}
 \label{sec:channel_optimized}
-How quantization can be using in communication over noisy channels will now be discussed. As with quantization without channel noise, a point is first encoded onto an index. This time, however, the index is transmitted over a channel to a receiver. Channel interference may influence the received index, and so the transmitted index sent may not necessarily correspond with the receivded index. Channel optimized quantization refers a quantizer that is designed to be optimized for a given noisy channel and source distribution. The goal in channel optimized quantizer design is to minimize the distortion between the original source and reconstruction at the receiver.
+The use of quantization in communication systems with noisy channels will now be discussed. In this scenario, the index from the encoder is transmitted over a noisy channel to the receiver, but channel interference can influence which index is received. A channel optimized quantizer is designed according to the channel and source distribution in order to minimize the distortion between the source value and estimate at the receiver. Nearest neighbor and centroid conditions still apply for a channel optimized quantizer, but they now depend on both the channel properties and source distribution.
 
-The codebook $\mathcal{C}$ and encoder $\mathcal{E}$ are still defined in the same way as before. Nearest neighbor and centroid conditions also apply. With channel optimized quantization, however, it is necessary to consider the channel when deriving the conditions of optimality.
+The channel that will be considered in this paper is assumed to be memoryless, which means the properties of the channel do not change after each channel use. It will also be assumed that the channel is binary, so only one of two values can be transmitted at a time. To transmit an index over the channel, the index is first mapped onto a string of binary symbols using a mapping $b$. This binary representation is then transmitted over the channel. The receiver used the inverse mapping of $b$ to obtain the received index. The probability of receiving index $j$ given index $i$ was transmitted is $P(b(j)|b(i))$. These probabilities are called the \emph{channel transition probabilities}.
 
-The channel that will be considered will be assumed to be memoryless with channel transition probabilities denoted by $P(j|i)$, that is, the probability of receiving index $j$ at the receiver given index $i$ was sent from the transmitter, where both $i$ and $j$ are in the set $\{1,\ldots,N\}$. If the code vector to index mapping is denoted by $b = (b(x_1),\ldots,b(x_N))$, then the probability of decoding code vector $x_j$ given the index for code vector $x_i$ was transmitted is $P(b(x_j)|b(x_i))$.
+The nearest neighbor and centroid conditions for the channel optimized quantizer are now given, beginning with the centroid condition.
 
-The nearest neighbor and centroid conditions for the new system can now be given as follows:
 \begin{theorem}
 \label{theo:cent_covq}
-Amongst the set of all $N$-level quantizers with encoding function $\mathcal{E}$, and channel transition probabilities $\{P(j|i)\}$, the quantizer with code vectors
+Amongst the set of all $N$-level channel quantizers with encoding function $\mathcal{E}$, the quantizer with code vectors
 \begin{equation}
   \label{eq:cent_covq}
-  x_j = \sum_{i=1}^N E[X | X \in R_i]P(b(x_j)|b(x_i))
+  x_j = \frac{\sum_{i=1}^N E[X | X \in R_i]P(b(j)|b(i))}{\sum_{i=1}^N P( X \in R_i)P(b(j)|b(i))} 
 \end{equation}
 for all $j \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
-This is similar to the previous centroid condtion in Theorem~\ref{theo:cent_vq}, but note how the centroid depends on both the encoding regions and channel probabilities. Next, the nearest neighbor condition is:
+This is similar to the centroid condition in Theorem~\ref{theo:cent_vq}, but it now depends on both the source distribution and channel probabilities. The nearest neighbor condition for channel optimized quantization is now given.
+
 \begin{theorem}
-Consider all $N$-level quantizers with codebook $\mathcal{C}$, and channel transition probabilities $\{P(j|i)\}$. The quantizer with encoding regions satisfying
+Consider all $N$-level quantizers with codebook $\mathcal{C}$. The quantizer with encoding regions satisfying
 \begin{equation}
-R_j \subset \{x : \sum_{i=1}^N \| x - x_i \|P(j|b(x_i)) \le \sum_{i=1}^N \| x - x_i \|P(k|b(x_i)) \text{ for all } k = 1,\ldots,N \}
+R_j \subset \left\{x : \sum_{i=1}^N {\| x - x_i \|}^2P(b(j)|b(i)) \le \sum_{i=1}^N {\| x - x_i \|}^2P(b(k)|b(i)) \text{ for all } k = 1,\ldots,N \right\}
 \end{equation}
 for all $j \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
-The interpretation for both conditions of optimality are the same as before, although the nearest neighbor and centroid conditions are now taken to be weighed across all encoding regions and code vectors respectively. The average distortion for an $N$-level channel optimized vector quantizer is given by
+
+The average distortion for an $N$-level channel quantizer is
+
 \begin{align}
-D_{avg} &= \sum_{i=1}^{N} \sum_{j=1}^{N} E[ \|X - x_j\| | X \in R_i] P(X \in R_i) P(b(x_j)|b(x_i))\\
-&= \sum_{i=1}^{N} \sum_{j=1}^{N} P(b(x_j)|b(x_i)) \int_{R_i} \|x - x_j\| p(x) dx
+D_{avg} &= \sum_{i=1}^{N} \sum_{j=1}^{N} E[ {\|X - x_j\|}^2 | X \in R_i] P(X \in R_i) P(b(x_j)|b(x_i))\\
+&= \sum_{i=1}^{N} \sum_{j=1}^{N} P(b(x_j)|b(x_i)) \int_{R_i} {\|x - x_j\|}^2 p(x) dx
 \end{align}
-One advantage of using channel optimized quantization in practice is that the scheme performs source and channel coding in a single step, rather than using two separate systems. Which means a channel optimized quantizer is able to compress the incoming data (source coding) and encode the trans missioned information so that it is resilient to channel interference (channel coding). The advantage to jointly performing source and channel coding jointly, rather than in tandem, is that it is typically more computationally efficient.
+
+One advantage of using channel optimized quantization in practice is that it performs source and channel coding in a single step. This means it is able to compress the incoming data while encoding it so it is resilient to channel interference at the same time. Performing source and channel coding jointly, rather than in tandem, is beneficial because it can be more computationally efficient.
 
 \subsection{Quantizer Design Algorithms}
 \label{sec:quant_design_algos}
-The Lloyd-Max and Linde-Buzo-Gray quantizer design algorithms will be discussed in this section. One advantage of using these algorithms is that they do not require knowledge of the underlying source distribution, and instead can be applied to a training set. This is an important practical consideration, which allows these algorithms to be easily applied to images.
+The Lloyd-Max and Linde-Buzo-Gray quantizer design algorithms will be discussed in this section. These two algorithms rely on the previously discuses conditions of optimality. A big advantage for these algorithms is that they do not require knowledge of the underlying source distribution, and can instead be applied to a training set taken from the source. Recall that an optimal quantizer can be defined by its codebook, since the encoder can be obtained from the codebook by applying the nearest neighbor condition.
 
-When discussing the nearest neighbor and centroid conditions, it was remarked that the nearest neighbor condition can be though of as optimizing the encoder for a fixed decoder (the codebook), and the centroid condition can be though of as optimizing the decoder for a fixed encoder. By applying these two conditions iteratively, one after the other, it should be expected that the algorithm will eventually converge onto a good quantizer. This is known as the Lloyd-Max algorithm, and is implemented using a training set $\mathcal{T}$ as follows:
+Recall that the nearest neighbor condition optimizes the encoder for a fixed codebook, and the centroid condition optimizes the codebook for a fixed encoder. The Lloyd-Max algorithm iteratively applies the centroid and nearest neighbor conditions on a training set until the codebook converges. The Lloyd-Max algorithm is implemented using a training set $\mathcal{T}$ taken from the source distribution. An overview of the algorithm follows:
 
-{\sc \noindent Lloyd-Max Algorithm}
+\medskip
+
+{\noindent \bf Lloyd-Max Algorithm}
 \begin{enumerate}
 \item Start with the codebook in some initial state.
-\item For each training point in $\mathcal{T}$, apply the nearest neighbor condition to find the code vector of lowest distortion in the codebook.
-\item For each code vector in $\mathcal{C}$, compute the centroid of the corresponding encoding region by using the set of points that mapped onto that code vector in the previous step.
-\item Return to step (2). Finish once the calculated distortion across the training set has converged.
+\item Apply the nearest neighbor condition to each point in $\mathcal{T}$. Let $S(i) \subset \mathcal{T}$ denote the set of points that map onto index $i$.
+\item Move each code vector $x_i$ to the centroid of $S(i)$ by applying the centroid condition.
+\item Return to step (2). Finish once the training set distortion has converged.
 \end{enumerate}
-One limitation of the Lloyd-Max algorithm is that is does not guarantee convergence onto a globally optimal quantizer. The quality of the quantizer after convergence is highly dependent on the initial state of the codebook. Improper initialization of the codebook may lead to suboptimal quantizers.
 
-Another algorithm is the so-called Linde-Buzo-Gray (LBG) algorithm. The LBG algorithm can be used in conjunction with the Lloyd-Max algorithm to improve initialization conditions with the goal of converging onto a good codebook. In the (LBG) algorithm, code vectors are gradually introduced into the codebook rather than initializing them all at once. More code vectors are introduced only after the quantizer with the reduced codebook has converged. An overview of the LBG algorithm is as follows:
+One limitation of the Lloyd-Max algorithm is that is does not guarantee convergence to an optimal quantizer. The performance quantizer is dependent on the initial state of the codebook. It is important that the codebook is initialized properly to ensure convergence onto a good codebook.
+
+The Linde-Buzo-Gray can be used in conjunction with the Lloyd-Max algorithm to improve initialization conditions. In the LBG algorithm, the codebook initially contains a single code vectors placed at the centroid of the training set. Code vectors are iteratively split in two in between iterations of the Lloyd-Max algorithm until the final codebook size is obtained. A more detailed description of the algorithm follows:
+
+\medskip
 
 {\sc \noindent Linde-Buzo-Gray Algorithm}
 \begin{enumerate}
 \item Begin with an initial codebook $\mathcal{C}$ containing a single code vector placed at the centroid of the training set.
-  \item Let $N$ denote the size of the codebook $\mathcal{C}$ and code vectors denoted by $x_i$. Construct a new codebook $\mathcal{C}^*$ of size $2N$ with code vectors $x_i^* = (1-\epsilon)x_i$, $x_{i+N} = (1+\epsilon)x_i$ for all $1 \le i \le N$ for some small $\epsilon$.
-\item Apply the Lloyd-Max algorithm to the new codebook $\mathcal{C}^*$
+\item Let $N$ denote the size of the codebook $\mathcal{C}$ with code vectors denoted by $x_i$. Construct a new codebook $\mathcal{C}^*$ of size $2N$ with code vectors $x_i^* = (1-\epsilon)x_i$, $x_{i+N}^* = (1+\epsilon)x_i$ for all $1 \le i \le N$ and some small $\epsilon$.
 \item Let $\mathcal{C}=\mathcal{C}^*$
+\item Apply the Lloyd-Max algorithm to $\mathcal{C}$.
 \item Return to step (2). Finish once the desired codebook size has been reached
 \end{enumerate}
-There are a few remarks to make about the LBG algorithm. Firstly, the code vectors are shifted by a factor of $\epsilon$ to break ties when applying the nearest neighbor condition. Secondly, the final codebook size is restricted to a power of 2 since it is doubled each iteration. This is not much of an issue because it can actually allow for a convenient binary representation of the codebook indexes.
 
-By using the LBG algorithm in conjunction with the Lloyd-Max algorithm, there is hopefully a better chance of constructing a good codebook. It should be noted however, that convergence onto an optimal solution is still not guaranteed.
+The LBG algorithm can provide better initialization conditions and therefore a better quantizer. Convergence onto an optimal solution is still not guaranteed, however.
 
-Other ways of improving quantizer performance are discussed in the remaining two subsections.
+Other methods of improving quantizer performance are discussed in the remaining two subsections.
 
 \subsection{Binary Codeword Assignment}
 \label{sec:code_assign}
-An important difference between vector quantization and channel optimized vector quantization is the impact of choosing the binary codeword for each code vector. In vector quantization, this choice has no impact on the quantizer's performance. This is not true for channel optimized quantization however, because the choice of binary codeword directly influences the effect of the channel on the average distortion. In channel optimized quantization, the binary codewords for each code vector should be chosen so the average distortion is minimized.
-
-Recalling the equation for average distortion for the noisy channel in Equation~\ref{eq:channel_dis}, it was shown in~\ref{awd} that  if it is assumed that the code book satisfies the centroid condition the average distortion can be expressed as follows:
+In channel optimized quantization it is important that the index mapping $b$ is chosen appropriately in order to minimize distortion. Recalling the equation for average distortion for the noisy channel in (\ref{eq:channel_dis}), it was shown in (\ref{awd}) that if the codebook satisfies the centroid condition, the average distortion can be expressed as
 \begin{equation}
 \label{eq:codeword_distortion}
-D_{avg}  = \sum_{i=1}^N \int_{R_i} \|x - x_i\|p(x)dx + \sum_{i=1}^N \sum_{j=1}^N P(x_i) P(b(x_j)|b(x_i)) \|x_i - x_j\|
+D_{avg}  = \sum_{i=1}^N \int_{R_i} {\|x - x_i\|}^2p(x)dx + \sum_{i=1}^N \sum_{j=1}^N P(x_i) P(b(x_j)|b(x_i)) {\|x_i - x_j\|}^2
 \end{equation}
-Note how only the second term is dependent on the choice of binary codewords. Therefore, it is possible to minimize the average distortion in $b$ for a fixed code book by only considering this second term. This term may be easier to minimize in practice because it only depends on the probabiliy of transmitting each code vector $P(x_i)$ and the distortions between code vectors.
 
-One interpretation to (\ref{eq:codeword_distortion}) is that the first term on the right-hand side quantifies the amount of distortion caused by the initial quantization onto $x_i$, and the second term corresponds to the distortion caused by transmitting the index over the channel. The second term will be denoted by $D_C$ and is given by
+Only the second term on the right-hand side is dependent on the choice of binary codewords. Therefore, it is possible to minimize the average distortion in $b$ for a fixed codebook by considering only this term. This term may be easier to minimize in practice because it only depends on the probability of transmitting each code vector $P(x_i)$ and the squared-error distortion between the code vectors.
+
+One interpretation to (\ref{eq:codeword_distortion}) is that the first term on the right-hand side quantifies the distortion by quantization onto $x_i$, and the second term corresponds to the distortion from transmitting the index over the channel. The second term will be denoted by $D_C$ and is given by
 \begin{equation}
   \label{eq:channel_dist}
 D_C = \sum_{i=1}^N \sum_{j=1}^N P(x_i) P(b(x_j)|b(x_i)) \|x_i - x_j\|
 \end{equation}
-Minimizing (\ref{eq:channel_dist}) for a fixed codebook lies in the set of problems which are known as being NP-complete, which means they are computationally expensive to solve. This minimization may not be practical for a large codebook, but there are a number of methods to get a good approximate to the optimal solution. The method that will be used here is known as simulated annealing, and will be discussed in more detail in~\ref{sec:sim_anneal}.
+Minimizing (\ref{eq:channel_dist}) for a fixed codebook lies in the set of problems which are NP-complete, which means they are computationally expensive to solve. This minimization may not be practical for a large codebook, but there are a number of methods to get a good approximate to the optimal solution. Simulated annealing will be used in this report, and will be discussed in more detail in~\ref{sec:sim_anneal}.
 
 \subsection{Bit Allocation and Transform Coding}
 \label{sec:bit_alloc}
-Additional quantization techniques will now be discussed with application to images. Consider the problem of scalar quantizing each element in a block of scalaers $X_1,\ldots,X_k$ (which are not necessarily i.i.d.). The overall distortion of the block $D_{block}$ is to be minimized where
+Additional quantization techniques will now be discussed with application to images. A block of scalars $X_1,\ldots,X_k$ is to be quantized. Instead of applying vector quantization to be block, $k$ scalar quantizers will be used instead. One reason for doing this is because scalar quantizers can be more efficient in practice. The overall distortion of the block $D_{block}$ is
 \begin{equation}
-D_{block} = E[\sum_{i=1}^k(X_i - Q(X_i))^2]
+D_{block} = E\left[\sum_{i=1}^k(X_i - Q(X_i))^2\right]
 \end{equation}
-under the constraint that the bits are constrained to $B$ bits per block:
+It is assumed that the quantized block must be constrained to $B$ bits per block:
 \begin{equation}
 \sum_{i=1}^k \log_2 N_i \le B
 \end{equation}
-The previously discussed design algorithms can be applied to design each of the $k$ scalar quantizers, but the bits now need to be allocated amongst the quantizers such that the total distortion is minimized.
+The $k$ scalar quantizers can be design using the previously mentioned algorithms, but the bits now need to be allocated amongst the quantizers such that the total distortion is minimized. This is known as bit allocation, and optimal bit allocation can drastically reduce the block distortion.
 
 \section{Problem Description}
+As mentioned in the Introduction, the system to be analyzed in this report consists of two transmitter that each transmit indices over a channel to a single receiver. The decoder at the receiver uses the received indices to estimate the two original sources. It is assumed that the two sources are dependent, so a joint decoder system which uses both indices to estimate each source can obtain better source estimates. Both noisy and noiseless channels will be analyzed in this report.
 
-A more rigorous description of the problem will be given. As previously mentioned, the system that will be analyzed will consist of two encoders that each transmit indexes over a channel to a single decoder. The decoder uses the received indexes to reconstruct the two original sources. It will be assumed that the two sources share some sort of dependance, so a joint decoder system can use both indecies to optain a better estimate of each of the two original source values. Moreover, both noisy and noiseless channels will be analyzed.
-
-It will be assumed that the source random vector $(X,Y)\in\real^2$ is independent and identically distributed, such that $X$ and $Y$ share a joint density function. In general, the encoder $\mathcal{E}$ which maps $(X,Y)$ onto a pair of indexes $i$ and $j$ for transmission is given by
+It is assumed that each of the two sources is scalar valued. Let $(X,Y)\in\real^2$ denote the random source which has a density function $f(x,y)$. The encoder $\mathcal{E}$ maps $(X,Y)$ onto a pair of indices $i$ and $j$:
 
 \begin{equation*}
     \mathcal{E} : \real^2\to\{1,\ldots,N_X\} \times \{1,\ldots,N_Y\}
 \end{equation*}
-where $N_X$ and $N_Y$ are the number of output levels for the two encoders. If the encoding of the two sources is done independently, $\mathcal{E}$ can be expressed using an encoder for each source:
+where $N_X$ and $N_Y$ are the number of output levels for the two encoders. If the encoding $X$ and $Y$ is performed independently, $\mathcal{E}$ can be expressed as two encoders
 \begin{gather*}
     \mathcal{E}_X : \real\to\{1,\ldots,N_X\} \\
     \mathcal{E}_Y : \real\to\{1,\ldots,N_Y\}
 \end{gather*}
-so that $\mathcal{E}(x,y) = (\mathcal{E}_X(x), \mathcal{E}_Y(y))$. If encoding is not done independently, it is said to be done jointly. If encoding is done jointly, then the encoding region associated with transmitting index $i$ and $j$ is denoted $R_{i,j}$. When encoding is done independently, the encoding regions are denoted $R_i$ for the $X$ encoder and $S_j$ for the $Y$ encoder. Notice that using joint encoder notation, $R_{i,j} = R_i \times S_j$.
+so that $\mathcal{E}(x,y) = (\mathcal{E}_X(x), \mathcal{E}_Y(y))$. If encoding is not done independently, it is said to be done jointly. Let $R_{i,j} \subset \mathbb{R}^2$ denote the encoding region associated with index $i$ and $j$. When encoding is performed independently, the encoding regions can be expressed as $R_{i,j} = R_i^X \times R_j^Y$ where $R_i^X$ is the encoding region for $\mathcal{E}_X$ and index $i$, and $R_j^Y$ is the encoding region for $\mathcal{E}_Y$ for index $j$.
 
-At the decoder, the two received indexes $k$ and $l$ are used to estimate $X$ and $Y$. The codebooks $\mathcal{C}_X$ and $\mathcal{C}_Y$ for $X$ and $Y$ are therefore both of size $N_X N_Y$. The code vectors corresponding to the received indexes $k$ and $l$ denoted by $x_{k,l} \in \mathcal{C}_X$ and $y_{k,l} \in \mathcal{C}_Y$ for $X$ and $Y$ respectively. Decoding of $X$ and $Y$ is done independently if the estimate of $X$ only depends on $k$ and the estimate of $Y$ only depends on $l$. When decoding is not done independently, it is said to be done jointly. When decoding is done independently, let $x_k$ and $y_l$ denote the estimates of $X$ and $Y$ for received indexes $k$ and $l$. Notice when decoding is done independently
+Let $k$ denote the index received at the receiver corresponding to index $i$. Let $l$ denotes the index at the receiver corresponding to index $j$. The indices $k$ and $l$ are used to estimate $X$ and $Y$ by the decoder. Let 
+\begin{equation}
+\mathcal{C} = \{ (x_{k,l},y_{k,l}) : k = 1,\ldots,N_X, l = 1,\ldots,N_Y\}
+\end{equation}
+denote the codebook. The code vector pair $(x_{k,l},y_{k,l})$ corresponds to the estimates of $X$ and $Y$ given indices $k$ and $l$ were received. Decoding of $X$ and $Y$ is done independently if the estimate of $X$ only depends on index $k$ and the estimate of $Y$ only depends on $l$. In this case, let
 \begin{align}
-x_k &= x_{k,j} \text{ for all } j=1,\ldots,N_Y \\
-y_l &= y_{i,l} \text{ for all } i=1,\ldots,N_X
+\mathcal{C}_X &= \{x_k : k = 1,\ldots,N_X\} \\
+\mathcal{C}_Y &= \{y_l : l = 1,\ldots,N_Y\}
 \end{align}
-The distortion that will be used in this scheme will be the sum of the squared-error distortion across both sources:
+denote the codebooks for $X$ and $Y$. Notice that $\mathcal{C} = \mathcal{C}_X \times \mathcal{C}_Y$ when decoding independently.
+
+The sum of the squared-error distortion across both sources will be used to measure performance:
 \begin{equation}
     D_{avg} = E[{(X-\hat{X})}^2 + {(Y-\hat{Y})}^2]
 \end{equation}
-where $\hat{X} \in \mathcal{C}_X$ and $\hat{Y} \in \mathcal{C}_Y$ represent the estimates of $X$ and $Y$ at the receiver.
+where $(\hat X, \hat Y) \in \mathcal{C}$ represent the estimates of $X$ and $Y$ at the receiver.
 
-In this paper, the following systems will be analyzed:
+In this report, different combinations of joint and independent encoders and codebook, over noisy and noiseless channel will be considered. The table below shows the notation that will be used for the different quantizers that will be studied:
 
 \begin{center}
     \begin{tabular}{| l | l | l | l |}
     \hline
-    \bf System & \bf Encoder & \bf Decoder & \bf Channel \\ \hline \hline
+    \bf System & \bf Encoder & \bf Codebook & \bf Channel \\ \hline \hline
     \sysII & Independent & Independent & Noiseless \\ \hline
     \sysIIN & Independent & Independent & Noisy \\ \hline
     \sysIJ & Independent & Joint & Noiseless \\ \hline
@@ -236,15 +238,15 @@ In this paper, the following systems will be analyzed:
     \end{tabular}
 \end{center}
 
-As was mentioned in the introduction, the focus of this project is on the analysis and implementation of the \sysIJ\ and \sysIJN. It is clear for $N_X$ and $N_Y$ fixed, any \sysII\ (\sysIIN) can be implemented using a \sysIJ\ (\sysIJN) system, and any \sysIJ\ (\sysIJN) system can be implemented using a \sysJJ\ (\sysJJN) system. Therefore, an optimal \sysII\ (\sysIIN) system can be  provide a lower bound on performance an optimal \sysIJ\ (\sysIJN) system for similar channel characteristics for the noisy systems. Likewise, an optimal \sysJJ\ (\sysJJN) system provides upper bounds on performance for an optimal \sysIJ\ (\sysIJN) systems with similar channel characteristics.
+% Rewrite this
+As mentioned in the Introduction, the focus of this project is on the analysis and implementation of the \sysIJ\ and \sysIJN. It is clear for $N_X$ and $N_Y$ fixed, any \sysII\ (\sysIIN) can be implemented using a \sysIJ\ (\sysIJN) system, and any \sysIJ\ (\sysIJN) system can be implemented using a \sysJJ\ (\sysJJN) system. Therefore, an optimal \sysII\ (\sysIIN) system can be  provide a lower bound on performance an optimal \sysIJ\ (\sysIJN) system for similar channel characteristics for the noisy systems. Likewise, an optimal \sysJJ\ (\sysJJN) system provides upper bounds on performance for an optimal \sysIJ\ (\sysIJN) systems with similar channel characteristics.
 
-The purpose of this report is to investigate the design and implementation of the \sysIJ\ and \sysIJN\ systems and compare their performance against their respective upper and lower bounds mentioned above.
+The goal of the present study is to design and implement \sysIJ\ and \sysIJN\ quantizers and compare their performance against the other quantizer for this two-source system.
 
 \subsection{Explicit Expressions for Average Distortion}
-The average distortion for the six previously mentioned systems will now be presented using explicit expressions. Doing so will shed light on the problem, while also helping in the derivation of new conditions of optimality for the \sysIJ\ and \sysIJN systems.
+The average distortion for the six systems will now be presented using explicit expressions. Doing so will shed light on the problem, while also helping in the derivation of new conditions of optimality for the \sysIJ\ and \sysIJN\ systems. These expressions are easily derived by conditioning on transmitted and received indices. 
 
-These expressions are easily derived by conditioning on transmitted and received indexes. 
-
+\medskip
 {\sc \noindent Independent Encoders And Decoders, No Noise (\sysII):}
 \begin{equation}
     \label{eq:dist_indep_nonoise}
@@ -252,21 +254,23 @@ These expressions are easily derived by conditioning on transmitted and received
 \end{equation}
 Notice how the average distortion can be expressed as the sum of distortions between both sources. Moreover, each term can be minimized independently using two independent scalar quantizers: one for $X$ and one for $Y$.
 
+\medskip
 {\sc \noindent Independent Encoders And Decoders, With Noise (\sysIIN):}
 \begin{equation}
     \label{eq:dist_indep_noise}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y}
     E[{(X-x_{k})}^2 + {(Y-y_{l})}^2 | X \in R_i, Y \in S_j]P(b(x_k),b(y_l)|b(x_i),b(y_j))P(X \in R_i, Y \in R_j)
 \end{equation}
-Unlike the previous system, the average distortion for the \sysIIN\ system can not be separated into two separate terms unless it is assumed that the two channels for the transmitted indexes are independent: $P(k,l|i,j) = P(k|i)P(l|j)$. Under this assumption we have
+Unlike the previous system, the average distortion for the \sysIIN\ system can not be separated into two separate terms unless it is assumed that the two channels for the transmitted indices are independent: $P(k,l|i,j) = P(k|i)P(l|j)$. Under this assumption we have
 \begin{multline}
     \label{eq:dist_indep_chan}
     D_{avg} = 
     \sum_{i=1}^{N_X}\sum_{k=1}^{N_X} E[{(X-x_{k})}^2 | X \in R_i]P(b(x_k)|b(x_i))P(X \in R_i) + \\
     \sum_{j=1}^{N_Y}\sum_{l=1}^{N_Y} E[{(Y-y_{l})}^2 | Y \in S_j]P(b(y_l)|b(y_j))P(Y \in S_j) 
 \end{multline}
-Two independent channel optimized scalar quantizers can be independently designed to quantize $X$ and $Y$ in order to minimize~\ref{eq:dist_indep_chan}. Although the assumption that the $X$ and $Y$ channels are independent is not necessary in order to study the nature of the other channels, only independent channels will be studied in this paper so the systems can be more easily compared. The assumption that the channels are independent will not be assumed in the remaining analysis of the remaining systems however.
+Two independent channel optimized scalar quantizers can be independently designed to quantize $X$ and $Y$ in order to minimize~(\ref{eq:dist_indep_chan}). Although the assumption that the two channels are independent is not necessary in order to study the nature of the other channels, only independent channels will be studied in this paper so the systems can be more easily compared. The assumption of channel independence will not be made in the analysis of the remaining systems however.
 
+\medskip
 {\sc \noindent Joint Decoder And Joint Encoder, No Noise (\sysJJ):}
 \begin{equation}
   \label{eq:dist_JJ}
@@ -274,21 +278,24 @@ Two independent channel optimized scalar quantizers can be independently designe
 \end{equation}
 The above expression can be minimized using a 2-dimensional vector quantizer with codebook size $N_XN_Y$.
 
+\medskip
 {\sc \noindent Joint Decoder And Joint Encoder, With Noise (\sysJJN):}
 \begin{equation}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}\sum_{k=1}^{N_X}\sum_{l=1}^{N_Y} E[{(X-x_{k,l})}^2 +
     {(Y-y_{k,l})}^2 | (X,Y) \in R_{i,j}]P(k,l|i,j)P((X,Y) \in R_{i,j})
 \end{equation}
-The above expression can be minimized using a 2-dimensional channel optimized quantizer with codebook size $N_XN_Y$. Take note that the transmission indexes are no longer associated with code vectors, like in~\ref{eq:dist_indep_chan}, since a given index because the vectors are defined by two indexes, not just one.
+The above expression can be minimized using a 2-dimensional channel optimized quantizer with codebook size $N_XN_Y$. Note that the transmission indices are no longer associated with code vectors, like in~(\ref{eq:dist_indep_chan}), because code vectors are defined by two indices, not just one.
 
 
+\medskip
 {\sc \noindent Independent Encoders And Joint Decoders, No Noise (\sysIJ):}
 \begin{equation}
     \label{eq:dist_IJ}
     D_{avg} = \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y} E[{(X-x_{i,j})}^2 + {(Y-y_{i,j})}^2 | X \in R_i, Y \in S_j]P(X \in R_i, Y \in S_j)
 \end{equation}
-Unlike with the \sysII\ system, it is not possible to separate the above expression into two terms than can be independently minimized using two separate quantizers. Notice the slight difference between this expression and that of~\ref{eq:dist_JJ}. In both systems it is possible to define the code vectors using both indexes $i$ and $j$, but in the \sysIJ\ system, the encoding regions ($R_i \times R_j$) are restricted in their shape. New conditions for optimality will be derived for this system in the next subsection and the implementation of such a quantizer will be discussed in detail in the following section. 
+Unlike the \sysII\ system, it is not possible to separate the above expression into two terms than can be independently minimized using two separate quantizers. Notice the slight difference between this expression and that of~(\ref{eq:dist_JJ}). New conditions for optimality will be derived for this system in the next subsection and the implementation of such a quantizer will be discussed in detail in the following section. 
 
+\medskip
 {\sc \noindent Independent Encoders And Joint Decoders, With Noise (\sysIJN):}
 \begin{equation}
     \label{eq:dist_IJN}

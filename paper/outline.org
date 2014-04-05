@@ -77,3 +77,12 @@
 * TODO Fix references to other files
 * TODO add table caption
 * TODO add figures
+* TODO Replace independent encoder notation
+* TODO Indices
+* TODO fix equation indentation
+* TODO Reword distortion performace
+* TODO add medskips to mini-titles bf
+* TODO add discussion of BSC?
+* TODO fix COVQ equations
+* TODO check subset notation
+* TODO {0,1} channel notation
