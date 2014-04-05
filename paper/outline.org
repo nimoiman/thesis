@@ -65,7 +65,7 @@
    - I->J (noise)
    - J->J
    - J->J (noise)
-** TODO Conditions of Optimality for Joint Decoder Scheme
+** DONE Conditions of Optimality for Joint Decoder Scheme
    - Centroid Contion
    - Nearest Neighbour Condition
      
@@ -78,12 +78,12 @@
 * TODO add table caption
 * TODO add figures
 * TODO Replace independent encoder notation
-* TODO Indices
+* DONE Indices
 * TODO fix equation indentation
 * TODO Reword distortion performace
 * TODO add medskips to mini-titles bf
 * TODO add discussion of BSC?
-* TODO fix COVQ equations
-* TODO check subset notation
+* DONE fix COVQ equations
+* DONE check subset notation
 * TODO {0,1} channel notation
-* TODO replace b notation
+* DONE replace b notation

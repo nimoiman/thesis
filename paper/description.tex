@@ -90,8 +90,8 @@ The centroid and nearest neighbor conditions provide necessary conditions of opt
 
 It is possible to rewrite the average distortion $D_{avg}$ from (\ref{eq:D_avg}) for a vector quantizer as follows:
 \begin{align}
-D_{avg} &= \sum_{i=1}^{N} E[ \| \mathbf{X} -  \mathbf{x_i}\| | \mathbf{X} \in R_i] P(\mathbf{X} \in R_i) \\
-&= \sum_{i=1}^{N} \int_{R_i} \|\mathbf{x} - \mathbf{x_i}\| p(\mathbf{x}) d\mathbf{x}
+D_{avg} &= \sum_{i=1}^{N} E[ {\| \mathbf{X} -  \mathbf{x_i}\|}^2 | \mathbf{X} \in R_i] P(\mathbf{X} \in R_i) \\
+&= \sum_{i=1}^{N} \int_{R_i} {\|\mathbf{x} - \mathbf{x_i}\|}^2 p(\mathbf{x}) d\mathbf{x}
 \end{align}
 
 \subsection{Channel Optimized Quantization}
@@ -116,7 +116,7 @@ This is similar to the centroid condition in Theorem~\ref{theo:cent_vq}, but it 
 \begin{theorem}
 Consider all $N$-level quantizers with codebook $\mathcal{C}$. The quantizer with encoding regions satisfying
 \begin{equation}
-R_j \subset \left\{x : \sum_{i=1}^N {\| x - x_i \|}^2P(b(j)|b(i)) \le \sum_{i=1}^N {\| x - x_i \|}^2P(b(k)|b(i)) \text{ for all } k = 1,\ldots,N \right\}
+R_j \subset \left\{x : \sum_{i=1}^N {\| \mathbf{x} - \mathbf{x_i} \|}^2P(b(j)|b(i)) \le \sum_{i=1}^N {\| \mathbf{x} - \mathbf{x_i} \|}^2P(b(k)|b(i)) \text{ for all } k = 1,\ldots,N \right\}
 \end{equation}
 for all $j \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
@@ -124,8 +124,8 @@ for all $j \in \{1,\ldots,N\}$ has minimum distortion.
 The average distortion for an $N$-level channel quantizer is
 
 \begin{align}
-D_{avg} &= \sum_{i=1}^{N} \sum_{j=1}^{N} E[ {\|X - x_j\|}^2 | X \in R_i] P(X \in R_i) P(b(x_j)|b(x_i))\\
-&= \sum_{i=1}^{N} \sum_{j=1}^{N} P(b(x_j)|b(x_i)) \int_{R_i} {\|x - x_j\|}^2 p(x) dx
+D_{avg} &= \sum_{i=1}^{N} \sum_{j=1}^{N} E[ {\|\mathbf{X} - \mathbf{x_j}\|}^2 | \mathbf{X} \in R_i] P(\mathbf{X} \in R_i) P(b(j)|b(i))\\
+&= \sum_{i=1}^{N} \sum_{j=1}^{N} P(b(j)|b(i)) \int_{R_i} {\|\mathbf{x} - \mathbf{x_j}\|}^2 p(\mathbf{x}) d\mathbf{x}
 \end{align}
 
 One advantage of using channel optimized quantization in practice is that it performs source and channel coding in a single step. This means it is able to compress the incoming data while encoding it so it is resilient to channel interference at the same time. Performing source and channel coding jointly, rather than in tandem, is beneficial because it can be more computationally efficient.
@@ -170,15 +170,15 @@ Other methods of improving quantizer performance are discussed in the remaining 
 In channel optimized quantization it is important that the index mapping $b$ is chosen appropriately in order to minimize distortion. Recall the equation for average distortion for the noisy channel in (\ref{eq:channel_dis}), it was shown in (\ref{awd}) that if the codebook satisfies the centroid condition, the average distortion can be expressed as
 \begin{equation}
 \label{eq:codeword_distortion}
-D_{avg}  = \sum_{i=1}^N \int_{R_i} {\|x - x_i\|}^2p(x)dx + \sum_{i=1}^N \sum_{j=1}^N P(x_i) P(b(x_j)|b(x_i)) {\|x_i - x_j\|}^2
+D_{avg}  = \sum_{i=1}^N \int_{R_i} {\|\mathbf{x} - \mathbf{x_i}\|}^2p(\mathbf{x})d\mathbf{x} + \sum_{i=1}^N \sum_{j=1}^N P(\mathbf{X} \in R_i) P(b(j)|b(i)) {\|\mathbf{x_i} - \mathbf{x_j}\|}^2
 \end{equation}
 
-Only the second term on the right-hand side is dependent the mapping $b$. Therefore, it is possible to minimize the average distortion in $b$ for a fixed codebook by considering only this term. This term may be easier to minimize in practice because it only depends on the probability of transmitting each code vector $P(x_i)$ and the squared-error distortion between the code vectors.
+Only the second term on the right-hand side is dependent the mapping $b$. Therefore, it is possible to minimize the average distortion in $b$ for a fixed codebook by considering only this term. This term may be easier to minimize in practice because it only depends on the probability of transmitting each index $P(X \in R_i)$ and the squared-error distortion between the code vectors.
 
 One interpretation to (\ref{eq:codeword_distortion}) is that the first term on the right-hand side quantifies the distortion by quantization onto $x_i$, and the second term corresponds to the distortion from transmitting the index over the channel. The second term will be denoted by $D_C$ and is given by
 \begin{equation}
   \label{eq:channel_dist}
-D_C = \sum_{i=1}^N \sum_{j=1}^N P(x_i) P(b(x_j)|b(x_i)) \|x_i - x_j\|
+D_C = \sum_{i=1}^N \sum_{j=1}^N P(\mathbf{X} \in R_i) P(b(j)|b(i)) \|\mathbf{x_i} - \mathbf{x_j}\|
 \end{equation}
 Minimizing (\ref{eq:channel_dist}) for a fixed codebook lies in the set of problems which are NP-complete, which means they are computationally expensive to solve. This minimization may not be practical for a large codebook, but there are a number of methods to get a good approximate to the optimal solution. Simulated annealing will be used in implementation in this report, and will be discussed in more detail in~\ref{sec:sim_anneal}.
 
@@ -321,18 +321,22 @@ y_{i,j} &= E[Y | Y \in R_i, Y \in R_j] \\
 \end{align}
 These equations are analogous to the equations for the centroid condition derived for the quantizer in (\ref{eq:cent_vq}). Similar equations can be given for the centroids for the \sysIJN\ system:
 \begin{align}
-  x_{k,l} &= \sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))E[X | X \in R_i, Y \in R_j] \\
-  &= \sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(k,l|i,j)\int_{S_j} \int_{R_i} xf(x,y)dxdy
+  x_{k,l} &= \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))E[X | X \in R_i, Y \in R_j] P(X \in R_i, Y \in R_j)}
+{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))P(X \in R_i, Y \in R_j)} \\
+  &= \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))\int_{S_j} \int_{R_i} xf(x,y)dxdy}
+{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))\int_{S_j} \int_{R_i} f(x,y)dxdy}
 \end{align}
 
 and
 \begin{align}
-  y_{k,l} &= \sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))E[Y | X \in R_i, Y \in R_j] \\
-  &= \sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))\int_{S_j} \int_{R_i} yf(x,y)dxdy
+  y_{k,l} &= \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))E[Y | X \in R_i, Y \in R_j] P(X \in R_i, Y \in R_j)}
+{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))P(X \in R_i, Y \in R_j)} \\
+  &= \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))\int_{S_j} \int_{R_i} yf(x,y)dxdy}
+{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y} P(b(k),b(l)|b(i),b(j))\int_{S_j} \int_{R_i} f(x,y)dxdy}
 \end{align}
 Again, these equations are similar to the centroid condition for the channel optimized vector quantizer in (\ref{eq:cent_covq}).
 
-Note that in both cases, the codebooks $\mathcal{C}_X$ and $\mathcal{C}_Y$ can be determined independently. In practice, this means that applying the centroid condition for these systems is no different than for the previously analyzed systems. 
+Note that in both systems, the codebooks $\mathcal{C}_X$ and $\mathcal{C}_Y$ can be determined independently. In practice, this means that applying the centroid condition for these systems is no different than for the previously analyzed systems. 
 
 The nearest neighbor conditions can now be introduced beginning with the \sysII\ system. Let $d_X(x,i)$ denote the expected distortion given $X=x$ and index $i$ was encoded at the $X$ encoder:
 
@@ -358,11 +362,11 @@ A similar theorem also applied for $\mathcal{E}_X$, using $d_Y(y,j)$ instead of 
 For the \sysIJN\ system, let denote $d_X^N(x,i)$ the expected distortion at the receiver given $X=x$ and index $i$ was transmitted:
 
 \begin{equation}
-d_X(x,i)= \sum_{j=1}^{N_Y} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(x-x_{k,l})}^2 + E[{(Y-y_{k,l})}^2|X=x,Y\in S_j])P(Y \in S_j|X=x) P(k,l|i,j)
+d_X^N(x,i)= \sum_{j=1}^{N_Y} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(x-x_{k,l})}^2 + E[{(Y-y_{k,l})}^2|X=x,Y\in S_j])P(Y \in S_j|X=x) P(b(k),b(l)|b(i),b(j))
 \end{equation}
 Similarly, let $d_Y(y,j)$ denote the expected distortion at the receiver given $Y=y$ and index $j$ was transmitted:
 \begin{equation}
-d_Y(y,j)= \sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(y-y_{k,l})}^2 + E[{(X-x_{k,l})}^2|Y=y,X\in R_i])P(X \in R_i|Y=y) P(k,l|i,j)
+d_Y^N(y,j)= \sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(y-y_{k,l})}^2 + E[{(X-x_{k,l})}^2|Y=y,X\in R_i])P(X \in R_i|Y=y) P(b(k),b(l)|b(i),b(j))
 \end{equation}
 
 Theorem~\ref{theo:NN_IJ} can be adapted to the \sysIJN\ system by using $d_X^N(x,i)$ and $d_Y^N(y,j)$ instead of $d_X(x,i)$ and $d_Y(y,j)$.
