@@ -86,3 +86,4 @@
 * TODO fix COVQ equations
 * TODO check subset notation
 * TODO {0,1} channel notation
+* TODO replace b notation
