@@ -1,16 +1,3 @@
-\documentclass[10pt]{article}
-\usepackage{fullpage}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{amsfonts}
-\usepackage{graphicx}
-\usepackage{caption}
-\usepackage{subcaption}
-
-\DeclareMathOperator*{\argmin}{arg\,min}
-
-\begin{document}
-
 \section{System Design and Implementation}
 % Section Overview
 % Before we designed our system, we first implemented VQ and covq. We did this so we could expand on our code, but also so we could implement the independent decoders for comparing our system. We did implementation is C and Python, we also did some plotting in MATLAB. Mention that detailed design description is covered in design summary.
@@ -25,10 +12,10 @@ In the subsequent sections we will detail the design challenges that were faced 
 Expanding for the optimality expressions given in [Description], we get that the optimal reconstruction of $X$, given fixed encoders and received codebook indices $k,l$ is given by
 
 \begin{align}
-    x_{(k,l)}&=
+    x_{k,l}&=
     \frac{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            E[X|X\in R_i, Y\in S_j]P(k,l|i,j)
+            E[X|X\in R_i, Y\in S_j]P(k,l|i,j)P(X\in R^X_i, Y\in R^Y_j)
     }{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
             P(X\in R_i, Y\in S_j)P(k,l|i,j)
@@ -51,7 +38,7 @@ Expanding for the optimality expressions given in [Description], we get that the
 Let $\mathcal T$ be a finite training set of ordered pairs drawn from the joint distribution for X and Y. Letting $M_{ij}$ be the number of training vectors in $R_i\times S_j$ we can thus approximate the integral and probabilities as follows:
 
 \begin{align}
-    x_{(k,l)}&=
+    x_{k,l}&=
     \frac{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
             P(k,l|i,j)\sum_{x\in R_i}x
@@ -69,7 +56,7 @@ Let $\mathcal T$ be a finite training set of ordered pairs drawn from the joint 
 By symmetry, the optimal reconstruction for $Y$ is given by
 
 \begin{align}
-    y_{(k,l)}&=
+    y_{k,l}&=
     \frac{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
             P(k,l|i,j)\sum_{y\in S_j}y
@@ -84,7 +71,7 @@ By symmetry, the optimal reconstruction for $Y$ is given by
     }
 \end{align}
 
-Similarly, we write out the nearest neighbour conditions; the idea is the same as in COVQ. The optimal encoding partitions for $X$ given fixed partitions in $Y$, and fixed decoding points $\{(x_{(k,l)},y_{(k,l)})\}$ are given by:
+Similarly, we write out the nearest neighbour conditions; the idea is the same as in COVQ. The optimal encoding partitions for $X$ given fixed partitions in $Y$, and fixed decoding points $\{(x_{k,l},y_{k,l})\}$ are given by:
 
 \begin{align}
     R_i &=
@@ -116,7 +103,7 @@ and $d(y, j)$ is given by
     P(k,l|i,j)\nonumber
 \end{align}
 
-Here, we note how the nearest neighbour condition for $X$ depends on the $Y$ encoding regions $\{S_j\}$, and vice versa. We therefore adapt the Lloyd iteration into three stages. This poses a design issue with respect to (a) order of iteration and (b) initialization of codebook. The former we will address at the end of this section, the latter in the next section.\\
+Here, we note how the nearest neighbour condition for $X$ depends on the $Y$ encoding regions $\{S_j\}$, and vice versa. We therefore adapt the Lloyd-Max iteration into three stages. This poses a design issue with respect to (a) order of iteration and (b) initialization of codebook. The former we will address at the end of this section, the latter in the next section.\\
 
 Focusing on $d(x,i)$, since $d(y, j)$ is analogous, we write out the expectations:
 
@@ -257,7 +244,7 @@ It is also important to note that the computational complexity depends primarily
 
 As was mentioned in this section, the fact that there are now three necessary conditions for optimality necessitates a decision in the order of their application in the quantizer training stage. We chose to give equal opportunities to each condition, beginning with one of the encoders. There are clearly other possible rotation schemes that might provide an advantage. These are not explored in this paper.\\
 
-To summarize this section, we present the procedure which we dub the `Channel Optimized Stage' of our algorithm. Assuming we are given a codebook of size $N_X\cdot N_Y$, and the encoding mappings $I_X, I_Y$, we apply our modified Lloyd iteration to obtain a better set of encoding mappings and codebook.\\
+To summarize this section, we present the procedure which we dub the `Channel Optimized Stage' of our algorithm. Assuming we are given a codebook of size $N_X\cdot N_Y$, and the encoding mappings $I_X, I_Y$, we apply our modified Lloyd-Max algorithm to obtain a better set of encoding mappings and codebook.\\
 
 \begin{enumerate}
     \item Store the previous distortion value, $D_{avg}$.
@@ -389,7 +376,7 @@ We then split in the $X$ and apply a modified Lloyd iteration described as follo
         otherwise finish.
 \end{enumerate}
 
-After convergence of the iteration for our final value of $N_X$, we then apply the symmetric splitting algorithm in $Y$ until we reach our desired codebook size $N_Y$ in the $Y$. This yields an initial codebook optimized with respect to the dependence between $X$ and $Y$. It is worth noting that the properties of the channel do not enter this stage at all; this was a conscious choice that allows for the channel to not be defined for codebooks of size less than $N_X\cdot N_Y$.\\
+After convergence of the algorithm for our final value of $N_X$, we then apply the symmetric splitting algorithm in $Y$ until we reach our desired codebook size $N_Y$ in the $Y$. This yields an initial codebook optimized with respect to the dependence between $X$ and $Y$. It is worth noting that the properties of the channel do not enter this stage at all; this was a conscious choice that allows for the channel to not be defined for codebooks of size less than $N_X\cdot N_Y$.\\
 
 The above routine we dub the `Initialization Stage', we follow this with the `Channel Optimization Stage' which was described in the previous section.
 
@@ -405,7 +392,7 @@ The above routine we dub the `Initialization Stage', we follow this with the `Ch
 % build this up from point-to-point case
 % show minimization objective function of the codeword maps b_X, b_Y
 
-Thus far, our algorithm optimizes the mappings $I_X, I_Y$ from source pairs onto codebook pairs, and the codebook $\{(x_{(k,l)}, y_{(k,l)})\}$ subject to the minimization of our distortion functions $d_X, d_Y$. Since this optimization does not ensure a globally optimal solution, it is possible for the iteration to converge to a sub-optimal configuration. Hence, it ``doesn't hurt'' to find other ways to optimize the system. We introduce the mappings $b_X, b_Y$ as the .\\
+Thus far, our algorithm optimizes the mappings $I_X, I_Y$ from source pairs onto codebook pairs, and the codebook $\{(x_{(k,l)}, y_{(k,l)})\}$ subject to the minimization of our distortion functions $d_X, d_Y$. Since this optimization does not ensure a globally optimal solution, it is possible for the algorithm to converge to a sub-optimal configuration. Hence, it ``doesn't hurt'' to find other ways to optimize the system. We introduce the mappings $b_X, b_Y$ as the .\\
 
 Define the channel index sets of $X$ and $Y$ respectively to be $\{1,\ldots,N_X\}, \{1,\ldots,N_Y\}$; for convenience, these are numbered in the same way as the encoding index sets. We require that there be an invertible mapping (i.e. a permutation) between encoding indices for each source and their respective channel index set. We call these mappings $b_X(i), b_Y(j)$ respectively. We also denote their inverses $b^{-1}_X(i'), b^{-1}_Y(j')$, where we use the convention that ``primed'' indices are channel indices.\\
 
@@ -670,7 +657,3 @@ To recap, and to provide an overall picture, we will now give an overview of the
 % [unif Q_X] -> [enc X] -> [b_X] \
 %                                 --> [MAC]-- [Joint decode]
 % [unif Q_Y] -> [enc Y] -> [b_Y] /
-
-
-
-\end{document}
