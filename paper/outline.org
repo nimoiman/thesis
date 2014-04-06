@@ -1,3 +1,24 @@
+* DONE Mention how we can define quantizer just using codebook
+* DONE Show equations for average distortion for VQ and COVQ
+* TODO Insert references
+* TODO Fix references to other files
+* TODO add table caption
+* TODO add figures
+* DONE Replace independent encoder notation
+* DONE Indices
+* TODO fix equation indentation
+* TODO Reword distortion performace
+* TODO add medskips to mini-titles bf
+* TODO add discussion of BSC?
+* DONE fix COVQ equations
+* DONE check subset notation
+* TODO {0,1} channel notation
+* DONE replace b notation
+* TODO Image description
+* TODO Data, plural
+* TODO move image reference to first paragraph
+* TODO check last paragraph on intro
+
 * Introduction
 ** DONE Purpose and Motivation
 - Communication Systems
@@ -70,24 +91,14 @@
    - Nearest Neighbour Condition
      
      
-
-* DONE Mention how we can define quantizer just using codebook
-* DONE Show equations for average distortion for VQ and COVQ
-* TODO Insert references
-* TODO Fix references to other files
-* TODO add table caption
-* TODO add figures
-* DONE Replace independent encoder notation
-* DONE Indices
-* TODO fix equation indentation
-* TODO Reword distortion performace
-* TODO add medskips to mini-titles bf
-* TODO add discussion of BSC?
-* DONE fix COVQ equations
-* DONE check subset notation
-* TODO {0,1} channel notation
-* DONE replace b notation
-* TODO Image description
-* TODO Data, plural
-* TODO move image reference to first paragraph
-* TODO check last paragraph on intro
+* Results
+* Discussion
+- Discuss results
+    - Got I->J system working. Time permited us from getting I->JN system working
+    - Generated data Results showed that there were significant performance gains given sufficient correlation
+    - Performance gains marginal for lower correlation
+    - Generated data results were consistent with results on images
+    - Measured correlation between stereoscopic images was lower than minimum performance threshold
+    - Consistent with visual results. No visual benefits over I->I system
+    - Large benefits when the same image was at both encoders. Also consistent with generated data results.
+- Discuss improvements that c

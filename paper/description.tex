@@ -397,6 +397,11 @@ d_Y^N(y,j)= \sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(y-y_{k,l})}^2
 
 Theorem~\ref{theo:NN_IJ} can be adapted to the \sysIJN\ system by using $d_X^N(x,i)$ and $d_Y^N(y,j)$ instead of $d_X(x,i)$ and $d_Y(y,j)$.
 
-It is important to note that Theorem~\ref{theo:NN_ij} is different than the nearest neigbour conditions for vector quantization and channel optimized quantization. This is because for the \sysIJ\ and \sysIJN\ systems the two encoders, $\mathcal{E_X}$ and $\mathcal{E}_Y$, cannot be set together, because the nearest neighbour condition for one encoder relies on the other encoder being fixed. This has implecations in terms of application as well. The Lloyd-Max algorithm has to be adjusted to account for this by alternating between three steps: the centroid condtion and the two nearest neighbour conditions. Another issue with the new nearest neighbour condition is that is is no longer independent of the source distribution like in the previous versions, which introducing some new design challenges. These issues and how they are dealt with will be discussed further in the following section.
+It is important to note that Theorem~\ref{theo:NN_ij} is different than the nearest neighbor conditions for vector quantization and channel optimized quantization. This is because for the \sysIJ\ and \sysIJN\ systems the two encoders, $\mathcal{E_X}$ and $\mathcal{E}_Y$, cannot be set together, because the nearest neighbor condition for one encoder relies on the other encoder being fixed. This has implications in terms of application as well. The Lloyd-Max algorithm has to be adjusted to account for this by alternating between three steps: the centroid condition and the two nearest neighbor conditions. Another issue with the new nearest neighbor condition is that is no longer independent of the source distribution like in the previous versions, which introducing some new design challenges. These issues and how they are dealt with will be discussed further in the following section.
+
+\section{Results}
+
+
+\section{Discussion}
 
 \end{document}
