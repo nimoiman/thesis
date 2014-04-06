@@ -23,6 +23,23 @@
 \begin{document}
 
 \section{Introduction}
+Communication systems today play a central part of our lives. Much of this communication is done wirelessly like in deep-space communication and cellular networks. Communication can be done with a variety of different techniques, technologies, and transmission mediums, each presenting unique design challenges. Many of these communication systems are affected by channel noise, where channel interference can impact the data as it is being transmitted which can lead to incorrect decoding at the receiver. Using an encoding scheme to protect the data against channel interference is known as \emph{channel coding}. At the same time, it is also desirable to minimize channel use when communicating in order to save on power and bandwidth. Data can be compressed before it is transmitted over the channel in order to make the best use of the available resources. Compressing data in this way is know as \emph{source coding}.
+
+Both source and channel coding can be performed on data before it is transmitted. This typically involved transforming the data in some way. After the encoded data has been transmitted over the channel, the receiver will have to decode the message to obtain the original data.
+
+After the data has been encoded, it has to be mapped onto a waveform for transmission over the channel. This step can involve shifting the waveforms into a particular frequency bandwidth, and can involve techniques like amplitude or frequency modulation. The communication can be analog or digital.
+
+Figure~\ref{fig:comm_sys} shows a general point-to-point communication system.
+
+Many applications involve more than a single transmitter and receiver. A broadcast channel, for example, consists of a single transmitter and multiple receivers. A multiple access channel, on the other hand, consists of multiple transmitters and a single receiver. A general network can consists of an arbitrary number of transmitters and receivers.
+
+As previously mentioned, there are a number of different ways of encoding and recoding information. Quantization is a method which involves mapping values from a large input set onto a smaller, typically finite set. Quantization is performed by a \emph{quantizer}. Quantization can be used to encode data for transmission over a channel. A quantizer first quantizes the data and maps it onto a corresponding index, which is then transmitted as a waveform to the receiver. The received decodes the waveform onto an estimate of the original data.
+
+This report will focus on a network communication problem consisting of two transmitters and a single receiver. It will also be assumed that the data at the two transmitters will be dependent in some way. An encoding and decoding scheme will be developed which will make use of the data dependence in obtain a better estimate of the source at the receiver than if the decoding of the two sources was done independently, ignoring the source dependence.
+
+In this report the effects of a joint decoder will be explored by comparing it against a similar system that uses independent decoder for the two sources. It will also be compared against a system where the two encoders are able to communicate when they are encoding, while still using joint decoding at the decoder. Moreover, these comparisons will be explored for both noisy channels and noiseless channels.
+
+Applications for this joint decoder system will be explored in images.
 
 \section{Background}
 This section covers the background material related to the project. In particular, scalar and vector quantization with conditions of optimality will be introduced in Section~\ref{sec:quantization}. In Section~\ref{sec:channel_optimized}, quantizers used for transmission of information over noisy channels will be discussed. In Section~\ref{sec:quant_design_algos}, it will be shown how the conditions of optimality can be use in quantizer design. In Section~\ref{sec:code_assign}, proper codeword assignment for transmission over noisy channels will be discussed. Finally, bit allocation and transform coding techniques will be covered in Section~\ref{sec:bit_alloc} with a focus on images. After the above framework is introduced, a formal problem description results will be covered in Section~\ref{sec:design}.
@@ -370,5 +387,7 @@ d_Y^N(y,j)= \sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(y-y_{k,l})}^2
 \end{equation}
 
 Theorem~\ref{theo:NN_IJ} can be adapted to the \sysIJN\ system by using $d_X^N(x,i)$ and $d_Y^N(y,j)$ instead of $d_X(x,i)$ and $d_Y(y,j)$.
+
+It is important to note that Theorem~\ref{theo:NN_ij} is different than the nearest neigbour conditions for vector quantization and channel optimized quantization. This is because for the \sysIJ\ and \sysIJN\ systems the two encoders, $\mathcal{E_X}$ and $\mathcal{E}_Y$, cannot be set together, because the nearest neighbour condition for one encoder relies on the other encoder being fixed. This has implecations in terms of application as well. The Lloyd-Max algorithm has to be adjusted to account for this by alternating between three steps: the centroid condtion and the two nearest neighbour conditions. Another issue with the new nearest neighbour condition is that is is no longer independent of the source distribution like in the previous versions, which introducing some new design challenges. These issues and how they are dealt with will be discussed further in the following section.
 
 \end{document}
