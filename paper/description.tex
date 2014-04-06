@@ -1,6 +1,3 @@
-
-
-
 \documentclass[10pt]{article}
 \usepackage{fullpage}
 \usepackage{amsmath}
@@ -26,33 +23,33 @@
 \begin{document}
 
 \section{Introduction}
-Communication systems play a central part of our lives today. Many communication systems operate wirelessly in a variety of applications ranging from deep-space communication to cellular networks. Communication can be done through a number of different techniques, technologies, and transmission mediums, each presenting their own unique design challenges. Many communication systems are affected by channel noise, where channel interference can impact the data as it is being transmitted leading to incorrect decoding at the receiver. Encoding schemes can be used to protect data against channel interference. This is known as \emph{channel coding}. At the same time, it is also desirable to minimize channel use when communicating in order to save power and bandwidth. Data can be compressed before it is transmitted over the channel to make the best use of channel resources and to save on power. Compressing data in this way is know as \emph{source coding}.
+Communication systems play an important role of our lives today. Many communication systems operate wirelessly and are used in a variety of applications ranging from deep-space communication to cellular networks. Communication is performed with a number of different techniques, technologies, and transmission media, and each presenting their own unique design challenges. Many communication systems are affected by channel noise and such channel interference can impact the data as it is being transmitted leading. This can lead to incorrect decoding at the receiver. Encoding schemes are used to protect data against channel interference. This is known as \emph{channel coding}. At the same time, it is also desirable to minimize channel use when communicating in order to save power and bandwidth. Data can be compressed before it is transmitted over the channel to make the best use of channel resources and to save on power. Compressing data in this way is known as \emph{source coding}.
 
-Both source and channel coding can be performed on data before it is transmitted. This typically involved transforming the data in some way. The receiver is responsible for decoding the message by inversing the transformation to obtain the data.
+Source and channel coding typically involved transforming the data in some way. The receiver is responsible for decoding the message by inverting the transformation to recover the data.
 
-There are a number of different ways of encoding and decoding information. Quantization is a method which involves mapping values from a large input set onto a smaller, typically finite set. Quantization is performed by a \emph{quantizer}. Quantization can be used to encode data for transmission over a channel. A quantizer first quantizes the data and maps it onto a corresponding index, which is then transmitted as a waveform to the receiver. The receiver decodes the waveform onto an index, which corresponds to an estimate of the original data. Quantization is a form of lossy compression, which means that the original data cannot be recovered exactly after it has been quantized.
+There are a number of different ways of encoding and decoding data. Quantization is a method which involves mapping values from a large input set onto a smaller, typically finite set. Quantization is performed by a \emph{quantizer}. When quantization is used in a communication system, a quantizer first quantizes the data and maps it onto a corresponding index which is then transmitted as a waveform to the receiver. The receiver decodes the waveform back to an index, which represents an estimate of the original data. Quantization is a form of lossy compression, which means the original data cannot be recovered exactly after it has been quantized.
 
-After data has been encoded, it has to be mapped onto a waveform for transmission over the channel. This step can involve shifting the waveforms into a particular frequency bandwidth, and can involve techniques like amplitude or frequency modulation. Communication systems can also either be analog or digital. The receiver is responsible for detecting this waveform and for determining the encoded data before it was mapped onto the waveform by the encoder.
+The mapping of the encoding data onto the waveform can involve shifting of the waveform into a particular frequency bandwidth, and can involve techniques like amplitude and frequency modulation. Communication systems can also either be analog or digital. The receiver is responsible for detecting this waveform and recovering the encoded data before it was mapped onto the waveform by the encoder.
 
-Figure~\ref{fig:comm_sys} shows a general point-to-point communication system.
+A schematic showing a general point-to-point communication system is provided in Figure~\ref{fig:comm_sys}.
 
-Many applications involve more than just a single transmitter and receiver. A broadcast channel, for example, consists of a single transmitter and multiple receivers. A multiple access channel on the other hand, consists of multiple transmitters and a single receiver. A general network can consists of an arbitrary number of transmitters and receivers.
+Many applications involve more than just a single transmitter and receiver. A broadcast channel, for example, consists of a single transmitter and multiple receivers. A multiple access channel on the other hand, consists of multiple transmitters and a single receiver. A general network can consist of an arbitrary number of transmitters and receivers.
 
-This report will focus on a network communication problem consisting of two transmitters and a single receiver where that the data at the two transmitters is dependent in some way. It will also be assumed that the encoding at the two transmitters is done independently. This may correspond to the encoding being two separate entities at different locations, for example, or some other physical or technical constraint. An encoding and decoding scheme will be developed which will make use of the data dependence when decoding 
+This report will focus on a network communication problem involving two transmitters and a single receiver where the data presented at the two transmitters are dependent. It will be assumed that the encoding at the two transmitters is done independently. This may correspond to the encoders being geographically separated, for example, or some other physical or technical constraint which forces them to operate independently. However, the receiver may use data dependence when decoding the two data sources.
 
-In this report the performance of this joint decoder system will be investigated by comparing it against a system that uses two independent decoders at the receiver, ignoring source dependence. This system will also be compared to a similar system except where the two encoders are able to communicate with each other before transmitting the information. These comparisons will be made for noisy channels and noiseless channels. 
+In this study, the performance of this system will be investigated by comparing it against a similar system that uses two independent decoders at the receiver that ignore source dependence. This system will also be compared to a similar system where the two encoders are able to communicate with each other before transmitting the information. The performance of these different systems will be made for noisy and noiseless channels. 
 
-Applications for this joint decoder system will be explored in images. In particular, it will be assumed that the two transmitters will be sending two dependent images, such as two images of the same object. The decoder will then reconstruct the two images. Special techniques for dealing with images will be dealt with in this report. Image communication techniques has had a large impact on society in recent years. Figure~\ref{fig:space} shows an image of a planet.
+The performance and practical application of this joint decoder system will be explored in images. In particular, it will be assumed that the two transmitters send to two dependent images, such as two images of the same object. The decoder will be responsible for reconstructing the images. Special techniques for dealing with images will be dealt with in this report. Image communication techniques has had a large impact on society in recent years. Figure~\ref{fig:space} shows an image of a planet.
 
-Background material related to the project will be presented in Section~\ref{seq:background}. A formal problem statement and theoretical results will be given in Section~\ref{sec:prob_desc}. Design and implementation will be covered in Section~\ref{sec:design}, and results will be shown in Section~\ref{sec:results}. Discussion and results, along with areas of future study will be presented in the remaining two section.
+The structure of the report is as follow. Background material related to the project is presented in Section~\ref{seq:background}. A formal problem statement, and some relevant theoretical results will be given in Section~\ref{sec:prob_desc}. Design and implementation will be discussed in Section~\ref{sec:design}, and results are presented in Section~\ref{sec:results}. The results are summarized and discussed, followed by suggestions by areas of future study will be presented in the remaining two section.
 
 \section{Background}
 \label{sec:background}
-This section covers the background material related to the project. In particular, scalar and vector quantization with conditions of optimality will be introduced in Section~\ref{sec:quantization}. In Section~\ref{sec:channel_optimized}, quantizers used for transmission of information over noisy channels will be discussed. In Section~\ref{sec:quant_design_algos}, it will be shown how conditions of optimality can be use in quantizer design. In Section~\ref{sec:code_assign}, proper codeword assignment for transmission over noisy channels will be discussed. Finally, bit allocation and transform coding techniques will be covered in Section~\ref{sec:bit_alloc} with a focus on images. After the above framework is introduced, a formal problem description results will be covered in Section~\ref{sec:design}.
+In this section, scalar and vector quantization with conditions of optimality are introduced in Section~\ref{sec:quantization}. In Section~\ref{sec:channel_optimized}, quantizers used for transmission of information over noisy channels are discussed. In Section~\ref{sec:quant_design_algos}, it is shown how conditions of optimality can be used in quantizer design. In Section~\ref{sec:code_assign}, proper codeword assignment for transmission over noisy channels is discussed. Finally, bit allocation and transform coding techniques are covered in Section~\ref{sec:bit_alloc} with a focus on images. Following the introduction of the above framework, a formal problem description and results is covered in Section~\ref{sec:design}.
 
 \subsection{Quantization}
 \label{sec:quantization}
-Quantization is the process of mapping data from some large set onto a smaller, finite set. Quantization is a form of \emph{lossy compression}, which means the data can not be exactly recovered after quantization is performed on it.
+Quantization is the process of mapping data from some large set onto a smaller, finite set. Quantization is a form of \emph{lossy compression}, which means the data can not be exactly following quantization.
 
 A quantizer with $N$ distinct output levels is called an $N$-level quantizer. The output levels of an $N$-level quantizer can be indexed from $1$ to $N$. The \emph{encoder} is a mapping which maps a point from the input space $\mathcal{S}$ onto one of these indices. The encoder mapping is denoted by $\mathcal{E}$ and can be expressed as
 \begin{equation}
@@ -62,6 +59,7 @@ The \emph{encoding region} $R_i$ is the set of points in $\mathcal{S}$ that the 
 \begin{equation}
 R_i = \{x \in \mathcal{S} : \mathcal{E}(x) = i\}
 \end{equation}
+
 The encoding regions partition $\mathcal{S}$ and uniquely define $\mathcal{E}$.
 
 Each encoder index has an associated point in $\mathcal{S}$ that is used to represent the original value of the data source. These points are called \emph{code vectors}. The set of code vectors is called the \emph{codebook} and is denoted by $\mathcal{C}$. $x_i$ is used to denote the code vector associated with index $i \in \{1,\ldots,N\}$.
@@ -71,20 +69,22 @@ Any $N$-level quantizer can be defined by the encoder-codebook pair $(\mathcal{E
 Q(x) = x_{\mathcal{E}(x)}
 \end{equation}
 
-A distortion measure $d(x,y) : \mathcal{S}^2 \rightarrow \mathbb{R}^+$ is used to measure the performance of a quantizer. The average distortion $D_{avg}$ for a random i.i.d. source $X$, distortion measure $d(x,y)$, and quantizer $Q$, is given by
+A distortion measure $d(x,y) : \mathcal{S}^2 \rightarrow \mathbb{R}^+$ is used to measure the performance of the quantizer. The average distortion $D_{avg}$ for a random i.i.d. source $X$, distortion measure $d(x,y)$, and quantizer $Q$, is given by
 \begin{equation}
   \label{eq:D_avg}
 D_{avg} = E[d(X,Q(X))]
 \end{equation}
-An $N$-level quantizer is \emph{optimal} if its average distortion is less than or equal to the average distortion of all other $N$-level quantizer. In general, finding an optimal quantizer is very difficult. There may be quantizers that are locally optimal, but not globally optimal.
+where $E$ denotes expectation.
 
-For the rest of the report, it will be assumed that the input space $\mathcal{S}=\mathbb{R}^k$. A quantizer with $k=1$ is called a \emph{scalar quantizer}, and a quantizer with $k \ge 1$ is called a \emph{vector quantizer}. \emph{Squared-error distortion}, denoted by ${\bf {\| x - y \|}}^2$, will be the distortion measure used in this report to measure quantizer performance. Squared-error distortion is defined as follows:
+An $N$-level quantizer is \emph{optimal} if its average distortion is less than or equal to the average distortion of all other $N$-level quantizer. In general, finding an optimal quantizer is very difficult. For example, there may be quantizers that are locally optimal, but not globally optimal.
+
+For the rest of the report, it is be assumed that the input space $\mathcal{S}=\mathbb{R}^k$. A quantizer with $k=1$ is called a \emph{scalar quantizer}, and a quantizer with $k \ge 1$ is called a \emph{vector quantizer}. \emph{Squared-error distortion}, denoted by ${\bf {\| x - y \|}}^2$, is the distortion measure used in this report to measure quantizer performance. Squared-error distortion is defined as follows:
 \begin{equation}
 {\bf {\| x - y \|}}^2 = \sum_{i=1}^n{(x_i - y_i)}^2
 \end{equation}
 where $x_i$ and $y_i$ are the $i$th elements of $\bf x$ and $\bf y$.
 
-Two conditions of optimality for optimal quantizers will now be discussed. Their application to quantizer design will be presented in Section~\ref{sec:quant_design_algos}. It should be mentioned that the following conditions of optimality can be derived for general distortion measures and input spaces, although the results will only be given for squared-error distortion over $\mathbb{R}^k$ in this report.
+Two conditions of optimality for quantizers are now be discussed. Their application to quantizer design will be presented in Section~\ref{sec:quant_design_algos}. It should be mentioned that the following conditions of optimality can be derived for more general distortion measures and input spaces. Results will only be given for squared-error distortion over $\mathbb{R}^k$ in this report.
 
 The first condition of optimality is the \emph{centroid condition}. The centroid condition states that each code vector should be placed at the centroid of its corresponding encoding region. A more formal statement is as follows:
 
@@ -93,8 +93,8 @@ The first condition of optimality is the \emph{centroid condition}. The centroid
 Amongst the set of all $N$-level quantizers with encoding function $\mathcal{E}$, the quantizer with code vectors
 \begin{align}
   \label{eq:cent_vq}
-x_i &= E[X | X \in R_i] \\
-&= \frac{ \int_{R_i}xf(x)dx }{ \int_{R_i}f(x)dx }
+  \mathbf{x_i} &= E[\mathbf{X} | \mathbf{X} \in R_i] \\
+&= \frac{ \int_{R_i}\mathbf{x}f(\mathbf{x})d\mathbf{x} }{ \int_{R_i}f(\mathbf{x})d\mathbf{x} }
 \end{align}
 for all $i \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
@@ -109,9 +109,11 @@ R_i \subset \{x : \| x - x_i \| \le \| x - x_j \| \text{ for all } j = 1,\ldots,
 for all $i \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
 
-The centroid and nearest neighbor conditions provide necessary conditions of optimality for an optimal quantizer, but they are not sufficient. A quantizer whose encoder mapping $\mathcal{E}$ and codebook $\mathcal{C}$ satisfy the conditions of optimality is called a Lloyd-Max quantizer. Note that an optimal quantizer can be defined by just its codebook $\mathcal{C}$, since the nearest neighbor condition can be applied to determine $\mathcal{E}$.
+Notice that subsets are used to constrain the encoding regions. This is done to break ties between points of equal distortion between multiple code vectors. In this case, they can be mapped arbitrarily.
 
-Finally, it is possible to rewrite the average distortion $D_{avg}$ from (\ref{eq:D_avg}) for a vector quantizer as follows:
+The centroid and nearest neighbor conditions provide necessary conditions of optimality for an optimal quantizer, but they are not sufficient. A quantizer whose encoder mapping $\mathcal{E}$ and codebook $\mathcal{C}$ satisfy the conditions of optimality is called a Lloyd-Max quantizer. Note that an optimal quantizer can be defined just by its codebook $\mathcal{C}$, because the nearest neighbor condition can be applied to determine $\mathcal{E}$.
+
+Note it is possible to rewrite the average distortion $D_{avg}$ from (\ref{eq:D_avg}) for a vector quantizer as follows:
 \begin{align}
 D_{avg} &= \sum_{i=1}^{N} E[ {\| \mathbf{X} -  \mathbf{x_i}\|}^2 | \mathbf{X} \in R_i] P(\mathbf{X} \in R_i) \\
 &= \sum_{i=1}^{N} \int_{R_i} {\|\mathbf{x} - \mathbf{x_i}\|}^2 p(\mathbf{x}) d\mathbf{x}
@@ -130,7 +132,7 @@ The nearest neighbor and centroid conditions for the channel optimized quantizer
 Amongst the set of all $N$-level channel quantizers with encoding function $\mathcal{E}$, the quantizer with code vectors
 \begin{equation}
   \label{eq:cent_covq}
-  x_j = \frac{\sum_{i=1}^N E[X | X \in R_i]P(b(j)|b(i))}{\sum_{i=1}^N P( X \in R_i)P(b(j)|b(i))} 
+  x_j = \frac{\sum_{i=1}^N E[X | X \in R_i]P(j|i)}{\sum_{i=1}^N P( X \in R_i)P(j|i)} 
 \end{equation}
 for all $j \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}
@@ -139,7 +141,7 @@ This is similar to the centroid condition in Theorem~\ref{theo:cent_vq}, but it 
 \begin{theorem}
 Consider all $N$-level quantizers with codebook $\mathcal{C}$. The quantizer with encoding regions satisfying
 \begin{equation}
-R_j \subset \left\{x : \sum_{i=1}^N {\| \mathbf{x} - \mathbf{x_i} \|}^2P(b(j)|b(i)) \le \sum_{i=1}^N {\| \mathbf{x} - \mathbf{x_i} \|}^2P(b(k)|b(i)) \text{ for all } k = 1,\ldots,N \right\}
+R_j \subset \left\{x : \sum_{i=1}^N {\| \mathbf{x} - \mathbf{x_i} \|}^2P(j|(i)) \le \sum_{i=1}^N {\| \mathbf{x} - \mathbf{x_i} \|}^2P(b(k)|b(i)) \text{ for all } k = 1,\ldots,N \right\}
 \end{equation}
 for all $j \in \{1,\ldots,N\}$ has minimum distortion.
 \end{theorem}

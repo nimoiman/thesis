@@ -88,3 +88,6 @@
 * TODO {0,1} channel notation
 * DONE replace b notation
 * TODO Image description
+* TODO Data, plural
+* TODO move image reference to first paragraph
+* TODO check last paragraph on intro

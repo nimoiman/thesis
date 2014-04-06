@@ -1,11 +1,14 @@
-\documentclass[10pt]{article}
-\usepackage{fullpage}
+\documentclass[10pt,twoside]{article}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
-\usepackage{graphicx}
+\usepackage[pdftex]{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{fancyhdr}
+\setlength{\headheight}{24pt}
+\usepackage[inner=3cm,outer=2cm]{geometry}
+\pagestyle{fancy}
 
 \linespread{1.2}
 \usepackage{parskip}
@@ -24,6 +27,7 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 
 \begin{document}
-\include{description}
-\include{design}
+%\input{description}
+\input{design}
+\input{results}
 \end{document}
