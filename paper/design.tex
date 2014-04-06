@@ -18,7 +18,7 @@ The new centroid condition we presented in equation \eqref{eq:cent_IJN} and the 
             P(k,l|i,j)\int_{R_i^X}xf_X(x)dx
     }{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)P(X\in R_i^X, Y\in R_j^Y)
+            P(k,l|i,j)\int_{R_i^X}\int_{R_j^Y}f(x,y)dydx
     }\\
     \label{eq:int_cent_IJN_y}
     y_{k,l}
@@ -27,19 +27,19 @@ The new centroid condition we presented in equation \eqref{eq:cent_IJN} and the 
             P(k,l|i,j)\int_{R_j^Y}yf_Y(y)dy
     }{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)P(X\in R_i^X, Y\in R_j^Y)
+            P(k,l|i,j)\int_{R_i^X}\int_{R_j^Y}f(x,y)dydx
     }
 \end{align}
-where $f_X(\cdot)$, $f_Y(\cdot)$ are the marginal distributions of $X$ and $Y$ respectively.
+where $f_X(\cdot)$, $f_Y(\cdot)$ are the marginal distributions of $X$ and $Y$ respectively, and $f(\cdot,\cdot)$ is the joint probability density function (pdf) of $X,Y$.
 
-Recall from the Lloyd algorithm of the previous section that we can approximate the expected value integrals, and the probability $P(X\in R_i^X, Y\in R_j^Y)$ with a training set drawn from the source distributions. Let $\mathcal T$ be a finite training set of ordered pairs drawn from the joint distribution for $X$ and $Y$. The integrals and the probability can be approximated as follows:
+Recall from the Lloyd algorithm of the previous section that we can approximate the integrals with a training set drawn from the source distributions. Let $\mathcal T$ be a finite training set of ordered pairs drawn from the joint distribution for $X$ and $Y$. The integrals can be approximated as follows:
 
 \begin{align}
     \int_{R_i^X}xf_X(x)dx&\approx
-        \frac{1}{|\mathcal T|}\sum_{(x,y)\in \mathcal T}x\\
-    \int_{R_i^Y}yf_Y(y)dy&\approx
-        \frac{1}{|\mathcal T|}\sum_{(x,y)\in \mathcal T}y\\
-    P(X\in R_i^X, Y\in R_j^Y)&\approx 
+        \frac{1}{|R_i^X|}\sum_{(x,y)\in \mathcal T|x\in R_i^X}x\\
+    \int_{R_j^Y}yf_Y(y)dy&\approx
+        \frac{1}{|R_j^Y|}\sum_{(x,y)\in \mathcal T|y\in R_j^Y}y\\
+    \int_{R_i^X}\int_{R_j^Y}f(x,y)dydx&\approx 
         \frac{\left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|
         }{
         |\mathcal T|
@@ -52,17 +52,17 @@ Rewriting equations \eqref{eq:int_cent_IJN_x}, \eqref{eq:int_cent_IJN_y} in thes
     x_{k,l}
     &= \frac{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\sum_{(x,y)\in \mathcal T}x
+            P(k,l|i,j)\frac{1}{|R_i^X|}\sum_{(x,y)\in \mathcal T|x\in R_i^X}x
     }{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
             P(k,l|i,j)
-            \left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|
+            \frac{\left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|}{|\mathcal T|}
     }\\
     \label{eq:comp_cent_IJN_y}
     y_{k,l}
     &= \frac{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\sum_{(x,y)\in \mathcal T}y
+            P(k,l|i,j)\frac{1}{|R_j^Y|}\sum_{(x,y)\in \mathcal T|y\in R_j^Y}y
     }{
         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
             P(k,l|i,j)
@@ -184,15 +184,15 @@ Similarly, define $p_X, p_Y, p_{Y|X},p_{X|Y}$ to be respectively, the empirical 
 
 We now rewrite our approximated versions of equations \eqref{eq:problem_1}, \eqref{eq:problem_2}, \eqref{eq:problem_3} (and their counterparts in $Y$). Define $T(x),T(y),M(x,j),M(y,i),S(x,j),S(y,i)$:
 \begin{align*}
-    T(x) &= \sum_{(x',y')\in \mathcal{\bar T}|x'=x}(y')^2p_{Y|X}(y'|x')\\
-    T(y) &= \sum_{(x',y')\in \mathcal{\bar T}|y'=y}(x')^2p_{X|Y}(x'|y')\\
-    M(x,j) &= \frac{|\mathcal{\bar T}|\sum_{(x',y')\in \mathcal{\bar T}|y'\in R_j^Y}y'p_{Y|X}(y|x)}{|\{(x',y')\in \mathcal{\bar T}\ |\ y'\in R_j^Y\}|}\\
-    M(y,i) &= \frac{|\mathcal{\bar T}|\sum_{(x',y')\in \mathcal{\bar T}|x'\in R_i^X}x'p_{X|Y}(x|y)}{|\{(x',y')\in \mathcal{\bar T}\ |\ x'\in R_i^X\}|}\\
-    S(x,j) &= \sum_{(x',y')\in \mathcal{\bar T}|y'\in R_j^Y}p_{Y|X}(y|x)\\
-    S(y,i) &= \sum_{(x',y')\in \mathcal{\bar T}|x'\in R_i^X}p_{X|Y}(x|y)
+    T(x) &= \sum_{(x',y')\in \mathcal{\bar T}|x'=x}(y')^2p_{Y|X}(y'|x') \approx E[Y^2 | X = x]\\
+    T(y) &= \sum_{(x',y')\in \mathcal{\bar T}|y'=y}(x')^2p_{X|Y}(x'|y') \approx E[X^2 | Y = y]\\
+    M(x,j) &= \frac{|\mathcal{\bar T}|\sum_{(x',y')\in \mathcal{\bar T}|y'\in R_j^Y}y'p_{Y|X}(y|x)}{|\{(x',y')\in \mathcal{\bar T}\ |\ y'\in R_j^Y\}|} \approx E[Y|X=x,Y\in R_j^Y]\\
+    M(y,i) &= \frac{|\mathcal{\bar T}|\sum_{(x',y')\in \mathcal{\bar T}|x'\in R_i^X}x'p_{X|Y}(x|y)}{|\{(x',y')\in \mathcal{\bar T}\ |\ x'\in R_i^X\}|} \approx E[X|Y=y,X\in R_i^X]\\
+    S(x,j) &= \sum_{(x',y')\in \mathcal{\bar T}|y'\in R_j^Y}p_{Y|X}(y|x) \approx P(Y\in R_j^Y|X=x)\\
+    S(y,i) &= \sum_{(x',y')\in \mathcal{\bar T}|x'\in R_i^X}p_{X|Y}(x|y) \approx P(X\in R_i^X|Y=y)
 \end{align*}
 
-We now have all the means to rewrite out approximated distortion measures in computable terms via the uniformly quantized training set $\mathcal{\bar T}$. For simplicity of design, we in fact attach the uniform quantizer to the beginning of our system. That is, we essentially transform the sources such that they have (finite) state spaces of size $L_X, L_Y$ before performing the \sysIJN\ , (\sysIJ) training, or simulation (Refer to Modified block diagram). It is important to note that this design simplification affects the values of the distortions of equations \eqref{eq:int_dist_x} and \eqref{eq:int_dist_y} as well as the centroids computed via equations \eqref{eq:comp_cent_IJN_x}, \eqref{eq:comp_cent_IJN_y}; the distance with respect to which we are now optimizing is the expected distance from reconstruction to uniformly quantized source. In the following distortion measures, this is represented by the subscripts $\bar X,\bar Y$. We have:
+We now have all the means to rewrite our approximated distortion measures in computable terms via the uniformly quantized training set $\mathcal{\bar T}$. For simplicity of design, we in fact attach the uniform quantizer to the beginning of our system. That is, we essentially transform the sources such that they have (finite) state spaces of size $L_X, L_Y$ before performing the \sysIJN\ , (\sysIJ) training, or simulation (Refer to Modified block diagram). It is important to note that this design simplification affects the values of the distortions of equations \eqref{eq:int_dist_x} and \eqref{eq:int_dist_y} as well as the centroids computed via equations \eqref{eq:comp_cent_IJN_x}, \eqref{eq:comp_cent_IJN_y}; the distance with respect to which we are now optimizing is the expected distance from reconstruction to uniformly quantized source. In the following distortion measures, this is represented by the subscripts $\bar X,\bar Y$. We have:
 \begin{align}
     \label{eq:NN_X}
     d_{\bar X}(x,i) =
@@ -217,26 +217,26 @@ As mentioned above, applying the uniform quantizer at the beginning of our syste
 Let $M_{(i,j)}$ be the number of training vectors that belong to $R_i\times S_j$:
 \begin{align}
     M_{(i,j)} &=
-    \sum_{\substack{(x,y)\in \mathcal{\bar T}:\\x\in R_i^X,y\in R_j^Y}}p(x,y)
+    \sum_{(x,y)\in R_i^X\times R_j^Y}p(x,y)
 \end{align}
 and let $S_{(i,j)}^X$, $S_{(i,j)}^Y$ be given by:
 \begin{align}
     S^X_{(i,j)} &=
-    \sum_{\substack{(x,y)\in \mathcal{\bar T}:\\x\in R_i^X,y\in R_j^Y}}x p(x,y)\\
+    \sum_{(x,y)\in R_i^X\times R_j^Y}x p(x,y)\\
     S^Y_{(i,j)} &=
-    \sum_{\substack{(x,y)\in \mathcal{\bar T}:\\x\in R_i^X,y\in R_j^Y}}y p(x,y)
+    \sum_{(x,y)\in R_i^X\times R_j^Y}y p(x,y)
 \end{align}
 
 With the above notation, the reconstructions that minimize distortion from $\mathcal{\bar T}$ to reconstruction are:
 \begin{align}
     \label{eq:C_X}
-    x_{(k,l)} = 
+    x_{k,l} = 
         \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
         S_{(i,j)}^X P(k,l|i,j)}
         {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
         M_{(i,j)} P(k,l|i,j)}\\
     \label{eq:C_Y}
-    y_{(k,l)} = 
+    y_{k,l} = 
         \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
         S_{(i,j)}^Y P(k,l|i,j)}
         {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
