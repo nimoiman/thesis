@@ -45,6 +45,18 @@ def ster2arr(filename_1, filename_2, block_size=8):
            (new_dim_x, new_dim_y)
 
 
+def arr_idct(arr, block_size=8):
+    """Accept np.array of dct coefficients return array of pixels"""
+    for block in iter_array(arr, (block_size, block_size)):
+        block_idct = _2d_idct(block)
+
+        # copy block_idct into block
+        for i in range(block_size):
+            for j in range(block_size):
+                block[i,j] = block_idct[i,j]
+    return arr
+
+
 def _img_dct(img_1, img_2, block_size=8):
     """Accept 2 grayscale 8bit PIL.Images, convert to np.array of
     floats, subtract 128 from each pixel value, perform 2D DCT-II,
@@ -368,8 +380,8 @@ def csv2ster(csv_filename_1, csv_filename_2, out_filenames_1, out_filenames_2,
     import numpy as np
 
     # Find how many lines in csv_filename_{1,2}
-    lines_1 = _count_lines(csv_filename_1)
-    lines_2 = _count_lines(csv_filename_2)
+    lines_1 = count_lines(csv_filename_1)
+    lines_2 = count_lines(csv_filename_2)
 
     if lines_1 != lines_2:
         stderr_("The provided csv files do not have the same number of " +
