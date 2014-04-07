@@ -1,9 +1,9 @@
 * DONE Mention how we can define quantizer just using codebook
 * DONE Show equations for average distortion for VQ and COVQ
 * DONE Insert citations
-* TODO Fix references
+* DONE Fix references
 * DONE add table caption
-* TODO add figures
+* DONE add figures
 * DONE Replace independent encoder notation
 * DONE Indices
 * DONE fix equation indentation
@@ -20,20 +20,21 @@
 * TODO check last paragraph on intro
 * TODO Transofrm coding, Images
 * DONE Do we need C_X and C_Y notation? Used on page 17, 18
-* TODO Need to mention there are TWO encoders, one for X and one for Y
-* TODO Need to define encoder for quantizer
-* TODO Planet Image
-* TODO performance discussion of different systems / bounds
+* DONE Need to mention there are TWO encoders, one for X and one for Y
+* DONE Need to define encoder for quantizer
+* DONE Planet Image
+* DONE performance discussion of different systems / bounds
 * DONE fix appendix
 
 
 
 
 
+* TODO Add references
 
 * DONE Acknowledgements
 * DONE Abstract
-* Introduction
+* DONE Introduction
 ** DONE Purpose and Motivation
 - Communication Systems
 - Quantization
@@ -105,8 +106,8 @@
    - Nearest Neighbour Condition
      
      
-* Results
-* Discussion
+* DONE Results
+* DONE Discussion
 - Design Discussion
   - New challenges
 - Discuss results
@@ -118,8 +119,9 @@
   - Consistent with visual results. No visual benefits over I->I system
   - Large benefits when the same image was at both encoders. Also consistent with generated data results.
 - Discuss improvements that could be made
-    - I->JN system
-    - Quantizer parameters
-    - Further gains could be achieved
-    - Bit Allocation
-    - different image types
+  - I->JN system
+  - Quantizer parameters
+  - Further gains could be achieved
+  - Bit Allocation
+  - different image types
+  - Is DCT best transform for I->J system?
