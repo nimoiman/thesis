@@ -10,12 +10,16 @@
 \usepackage[inner=3cm,outer=2cm]{geometry}
 \pagestyle{fancy}
 
-\linespread{1.2}
+\linespread{2}
 \usepackage{parskip}
 \setlength{\parindent}{15pt}
 
 \newtheorem{theorem}{Theorem}[section]
 
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bY}{\mathbf{Y}}
 \newcommand{\real}{\mathbb{R}}
 \newcommand{\sysIIN}{\mbox{$I \overset{N}{\rightarrow} I$}}
 \newcommand{\sysII}{\mbox{$I \rightarrow I$}}
@@ -27,7 +31,7 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 
 \begin{document}
-% \input{description}
+\input{description}
 \input{design}
 \input{results}
 \input{ending}

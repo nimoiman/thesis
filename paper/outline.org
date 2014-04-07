@@ -6,26 +6,34 @@
 * TODO add figures
 * DONE Replace independent encoder notation
 * DONE Indices
-* TODO fix equation indentation
-* TODO Reword distortion performace
+* DONE fix equation indentation
+* DONE Reword distortion performace
 * TODO add medskips to mini-titles bf
-* TODO add discussion of BSC?
+* DONE add discussion of BSC?
 * DONE fix COVQ equations
 * DONE check subset notation
-* TODO {0,1} channel notation
+* DONE {0,1} channel notation
 * DONE replace b notation
-* TODO Image description
+* DONE Image description
 * TODO Data, plural
 * TODO move image reference to first paragraph
 * TODO check last paragraph on intro
-
+* TODO Transofrm coding, Images
+* DONE Do we need C_X and C_Y notation? Used on page 17, 18
+* TODO Need to mention there are TWO encoders, one for X and one for Y
+* TODO Need to define encoder for quantizer
+* TODO Planet Image
+* TODO performance discussion of different systems / bounds
+* TODO fix appendix
 * Introduction
+
+
 ** DONE Purpose and Motivation
 - Communication Systems
 - Quantization
 - Channel Noise
 - Muliple Agents in Network
-** TODO Overview of Project
+** DONE Overview of Project
 - Consider two encoders and joint decoder
 - Compare results against independent decoder
 - Vector Quantization
@@ -93,12 +101,19 @@
      
 * Results
 * Discussion
+- Design Discussion
+  - New challenges
 - Discuss results
-    - Got I->J system working. Time permited us from getting I->JN system working
-    - Generated data Results showed that there were significant performance gains given sufficient correlation
-    - Performance gains marginal for lower correlation
-    - Generated data results were consistent with results on images
-    - Measured correlation between stereoscopic images was lower than minimum performance threshold
-    - Consistent with visual results. No visual benefits over I->I system
-    - Large benefits when the same image was at both encoders. Also consistent with generated data results.
-- Discuss improvements that c
+  - Got I->J system working. Time permited us from getting I->JN system working
+  - Generated data Results showed that there were significant performance gains given sufficient correlation
+  - Performance gains marginal for lower correlation
+  - Generated data results were consistent with results on images
+  - Measured correlation between stereoscopic images was lower than minimum performance threshold
+  - Consistent with visual results. No visual benefits over I->I system
+  - Large benefits when the same image was at both encoders. Also consistent with generated data results.
+- Discuss improvements that could be made
+    - I->JN system
+    - Quantizer parameters
+    - Further gains could be achieved
+    - Bit Allocation
+    - different image types
