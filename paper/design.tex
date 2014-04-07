@@ -2,77 +2,75 @@
 \section{System Design and Implementation}
 % Section Overview
 % Before we designed our system, we first implemented VQ and covq. We did this so we could expand on our code, but also so we could implement the independent decoders for comparing our system. We did implementation is C and Python, we also did some plotting in MATLAB. Mention that detailed design description is covered in design summary.
-The new conditions of optimality presented in \eqref{} \eqref{} introduce some unique design problems, which we will discuss in this section.
+The new conditions of optimality presented in \eqref{} and \eqref{} introduce some unique design problems. In the subsequent sections we will detail the design challenges that were faced along the way towards implementation and how they were addressed.
 
-In the subsequent sections we will detail the design challenges that were faced along the way and how they were addressed.
-
-In the course of implementating this project, we began by writing a C program to perform simple \sysII\ Vector Quantization, and adapted it to an implementation of \sysIIN\ Channel-Optimized Vector Quantization by modifying the optimality conditions as was outlined in the Description section. We then wrote a C implementation of the \sysIJ\ system without a channel. To interface with images, we wrote a Python wrapper program. We also used GNU Octave, MathWorks MATLAB, and Python to produce data and create plots.
+Over the course of implementating this project, we began by writing a C program to perform simple \sysII\ Vector Quantization, and adapted it to an implementation of \sysIIN\ Channel-Optimized Vector Quantization by modifying the optimality conditions as was outlined in the Description section. We then wrote a C implementation of the \sysIJ\ system without a channel. To interface with images, we wrote a Python wrapper program. We also used GNU Octave, MathWorks MATLAB, and Python to produce data and create plots.
 
 \subsection{Conditions of Optimality}
-The new centroid condition we presented in equation \eqref{eq:cent_IJN} and the distortion measure of \eqref{eq:dist_IJN} can be expanded to reveal the relevant implementation issues. We begin by expanding the centroid condition of equation \eqref{eq:cent_IJN}: the optimal $X$ ($Y$ respectively) codebook $\{x_{k,l}\}$ ($\{y_{k,l}\}$ respectively) for an \sysIJN\ system with fixed encoder regions $R_i^X, R_j^Y$ is given by:
-\begin{align}
-    \label{eq:int_cent_IJN_x}
-    x_{k,l}
-    &= \frac{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\int_{R_i^X}xf_X(x)dx
-    }{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\int_{R_i^X}\int_{R_j^Y}f(x,y)dydx
-    }\\
-    \label{eq:int_cent_IJN_y}
-    y_{k,l}
-    &= \frac{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\int_{R_j^Y}yf_Y(y)dy
-    }{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\int_{R_i^X}\int_{R_j^Y}f(x,y)dydx
-    }
-\end{align}
-where $f_X(\cdot)$, $f_Y(\cdot)$ are the marginal distributions of $X$ and $Y$ respectively, and $f(\cdot,\cdot)$ is the joint probability density function (pdf) of $X,Y$.
+% The new centroid condition we presented in equation \eqref{eq:cent_IJN} and the distortion measure of \eqref{eq:dist_IJN} can be expanded to reveal the relevant implementation issues. We begin by expanding the centroid condition of equation \eqref{eq:cent_IJN}: the optimal $X$ ($Y$ respectively) codebook $\{x_{k,l}\}$ ($\{y_{k,l}\}$ respectively) for an \sysIJN\ system with fixed encoder regions $R_i^X, R_j^Y$ is given by:
+% \begin{align}
+%     \label{eq:int_cent_IJN_x}
+%     x_{k,l}
+%     &= \frac{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)\int_{R_i^X}xf_X(x)dx
+%     }{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)\int_{R_i^X}\int_{R_j^Y}f(x,y)dydx
+%     }\\
+%     \label{eq:int_cent_IJN_y}
+%     y_{k,l}
+%     &= \frac{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)\int_{R_j^Y}yf_Y(y)dy
+%     }{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)\int_{R_i^X}\int_{R_j^Y}f(x,y)dydx
+%     }
+% \end{align}
+% where $f_X(\cdot)$, $f_Y(\cdot)$ are the marginal distributions of $X$ and $Y$ respectively, and $f(\cdot,\cdot)$ is the joint probability density function (pdf) of $X,Y$.
 
-Recall from the Lloyd algorithm of the previous section that we can approximate the integrals with a training set drawn from the source distributions. Let $\mathcal T$ be a finite training set of ordered pairs drawn from the joint distribution for $X$ and $Y$. The integrals can be approximated as follows:
+% Recall from the Lloyd algorithm of the previous section that we can approximate the integrals with a training set drawn from the source distributions. Let $\mathcal T$ be a finite training set of ordered pairs drawn from the joint distribution for $X$ and $Y$. The integrals can be approximated as follows:
 
-\begin{align}
-    \int_{R_i^X}xf_X(x)dx&\approx
-        \frac{1}{|R_i^X|}\sum_{(x,y)\in \mathcal T|x\in R_i^X}x\\
-    \int_{R_j^Y}yf_Y(y)dy&\approx
-        \frac{1}{|R_j^Y|}\sum_{(x,y)\in \mathcal T|y\in R_j^Y}y\\
-    \int_{R_i^X}\int_{R_j^Y}f(x,y)dydx&\approx 
-        \frac{\left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|
-        }{
-        |\mathcal T|
-        }
-\end{align}
+% \begin{align}
+%     \int_{R_i^X}xf_X(x)dx&\approx
+%         \frac{1}{|R_i^X|}\sum_{(x,y)\in \mathcal T|x\in R_i^X}x\\
+%     \int_{R_j^Y}yf_Y(y)dy&\approx
+%         \frac{1}{|R_j^Y|}\sum_{(x,y)\in \mathcal T|y\in R_j^Y}y\\
+%     \int_{R_i^X}\int_{R_j^Y}f(x,y)dydx&\approx 
+%         \frac{\left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|
+%         }{
+%         |\mathcal T|
+%         }
+% \end{align}
 
-Rewriting equations \eqref{eq:int_cent_IJN_x}, \eqref{eq:int_cent_IJN_y} in these terms, we get:
-\begin{align}
-    \label{eq:comp_cent_IJN_x}
-    x_{k,l}
-    &= \frac{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\frac{1}{|R_i^X|}\sum_{(x,y)\in \mathcal T|x\in R_i^X}x
-    }{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)
-            \frac{\left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|}{|\mathcal T|}
-    }\\
-    \label{eq:comp_cent_IJN_y}
-    y_{k,l}
-    &= \frac{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)\frac{1}{|R_j^Y|}\sum_{(x,y)\in \mathcal T|y\in R_j^Y}y
-    }{
-        \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
-            P(k,l|i,j)
-            \left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|
-    }
-\end{align}
+% Rewriting equations \eqref{eq:int_cent_IJN_x}, \eqref{eq:int_cent_IJN_y} in these terms, we get:
+% \begin{align}
+%     \label{eq:comp_cent_IJN_x}
+%     x_{k,l}
+%     &= \frac{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)\frac{1}{|R_i^X|}\sum_{(x,y)\in \mathcal T|x\in R_i^X}x
+%     }{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)
+%             \frac{\left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|}{|\mathcal T|}
+%     }\\
+%     \label{eq:comp_cent_IJN_y}
+%     y_{k,l}
+%     &= \frac{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)\frac{1}{|R_j^Y|}\sum_{(x,y)\in \mathcal T|y\in R_j^Y}y
+%     }{
+%         \sum_{i=1}^{N_X}\sum_{j=1}^{N_Y}
+%             P(k,l|i,j)
+%             \left|\{(x,y)\in \mathcal T\ |\ x\in R_i^X, y\in R_j^Y\}\right|
+%     }
+% \end{align}
 
-These terms are simple to compute, and as in the more simple \sysJJN\ case, depend only on the encoding regions $R_i^X, R_J^Y$, the channel probability $P(k,l|i,j)$, and the training set $\mathcal T$.
+% These terms are simple to compute, and as in the more simple \sysJJN\ case, depend only on the encoding regions $R_i^X, R_J^Y$, the channel probability $P(k,l|i,j)$, and the training set $\mathcal T$.
 
-Similarly, we write out the nearest neighbour conditions; the idea is the same as in COVQ. The optimal encoding partitions $R_i^X$ for $X$ (respectively $R_j^Y$ for $Y$) given fixed partitions in $Y$ (respecitvley $X$), and fixed codebook $\mathcal C=\{(x_{k,l},y_{k,l})\}$ are given by:
+We begin by writing out the nearest neighbour conditions; the idea is the same as in COVQ. To recap, optimal encoding partitions $R_i^X$ for $X$ (respectively $R_j^Y$ for $Y$) given fixed partitions in $Y$ (respecitvely $X$), and fixed codebook $\mathcal C=\{(x_{k,l},y_{k,l}), k=1,\ldots,N_X, l=1,\ldots,N_Y\}$ are given by:
 \begin{align}
     \label{eq:NN_part_X}
     R_i^X &=
@@ -84,20 +82,20 @@ Similarly, we write out the nearest neighbour conditions; the idea is the same a
 where, expanding for $d(x,i), d(y,j)$ from equations \eqref{eq:dist_IJN_x}, \eqref{eq:dist_IJN_y} gives us:
 \begin{align}
     \label{eq:int_dist_x}
-    d(x,i)=&E[Y^2 | X = x] +\\
+    d_X(x,i)=&E[Y^2 | X = x] +\\
     &\sum_{j=1}^{N_Y} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(x-x_{(k,l)})}^2 -
     2y_{(k,l)}E[Y|X=x,Y\in R_j^Y] + y_{(k,l)}^2 )P(Y\in R_j^Y|X=x)
     P(k,l|i,j)\nonumber\\
     \label{eq:int_dist_y}
-        d(y,j)=&E[X^2 | Y = y] +\\
+        d_Y(y,j)=&E[X^2 | Y = y] +\\
     &\sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y} ( {(y-y_{(k,l)})}^2 -
     2x_{(k,l)}E[X|Y=y,X\in R_i^X] + x_{(k,l)}^2 )P(X\in R_i^X|Y=y)
     P(k,l|i,j)\nonumber
 \end{align}
 
-Here, we note how the nearest neighbour condition for $X$ depends on the $Y$ encoding regions $\{R_j^Y\}$, and vice versa. It is therefore necessary to adapt the Lloyd-Max iteration into three stages: the optimization of the $R_i^X$, the optimization of the $R_j^Y$, and the optimization of the codebook $\mathcal C=\{x_{k,l},y_{k,l}\}$. It is not clear what order of rotation between the three conditions is best, so in our system, we have chosen to give each one a single turn per Lloyd iteration.
+Here, we note how the nearest neighbour condition for $X$ depends on the $Y$ encoding regions $\{R_j^Y\}$, and vice versa. It is therefore necessary to adapt the Lloyd-Max iteration into three stages: the optimization of the $R_i^X$, the optimization of the $R_j^Y$, and the optimization of the codebook $\mathcal C$. It is not clear what order of rotation between the three conditions is best, so in our system, we have chosen to give each one a single turn per Lloyd iteration.
 
-There is another more pressing matter with regards to computing equations \eqref{eq:int_dist_x} and \eqref{eq:int_dist_y}. Focusing on $d(x,i)$, since $d(y, j)$ is analogous, the terms that present a new problem are:
+There is another more pressing matter with regards to computing equations \eqref{eq:int_dist_x} and \eqref{eq:int_dist_y}. Focusing on $d_X(x,i)$, since $d_Y(y, j)$ is analogous, the terms that present a new problem are:
 \begin{align}
     \label{eq:problem_1}
     E[Y^2 | X = x]&=\int_{-\infty}^{\infty}y^2f_{Y|X}(y|x)\\
@@ -107,124 +105,114 @@ There is another more pressing matter with regards to computing equations \eqref
     P(Y\in R_j^Y|X=x)&=\int_{R_j^Y}f_{Y|X}(y|x)dy
 \end{align}
 
-Each one of these terms will need to be computed for a given $x$ in the support of $X$. Specifically, we need to approximate the conditional density function $f_{Y|X}(y|X=x)$ for all $x$ in the support of $X$. Otherwise, there will be some $x$ in the support of $X$ which we will not be able to encode via our nearest neighbour condition \eqref{eq:NN_part_X}. In order to ensure that this problem does not occur, we can approximate the conditional density with a discretized density function, in essence a probability mass function (pmf) of a discretized pair of random variables. To do so, we uniformly quantize the sources into `bins' that cover the supports of $X$ and $Y$.
+Each one of these terms will need to be computed approximately for a given $x$ in the support of $X$. Specifically, we need to approximate the conditional density function $f_{Y|X}(y|X=x)$ for all $x$ in the support of $X$. Otherwise, there will be some $x$ in the support of $X$ which we will not be able to encode via our nearest neighbour condition \eqref{eq:NN_part_X}. In order to ensure that this problem does not occur, we can approximate the conditional density with a discretized density function, in essence a probability mass function (pmf) of a discretized pair of random variables. To do so, we uniformly quantize the sources into `bins' that cover the supports of $X$ and $Y$. This is formalized below.
 
 Define
 $q_X(x):\mathbb{R} \rightarrow \{\bar x_1,\ldots,\bar x_{L_X}\}$
 and
 $q_Y(y):\mathbb{R} \rightarrow \{\bar y_1,\ldots,\bar y_{L_Y}\}$
-to be the $L_X$- and $L_Y$-level uniform quantizers for the sources $X$ and $Y$ respectively, where the $\bar x_i-\bar x_{i-1}$ is constant for all $i\in \{2,\ldots,L_X\}$, and $\bar y_i-\bar y_{i-1}$ constant for all $i\in \{2,\ldots,L_Y\}$. Call these constants respectively $\Delta_X, \Delta_Y$.
+to be $L_X$- and $L_Y$-level uniform quantizers for the sources $X$ and $Y$ respectively, where the $\bar x_i-\bar x_{i-1}$ is constant for all $i\in \{2,\ldots,L_X\}$, and $\bar y_i-\bar y_{i-1}$ constant for all $i\in \{2,\ldots,L_Y\}$. Call these constants respectively $\Delta_X, \Delta_Y$.
 \begin{align}
     q_X(x) = \bar x_i \in \{\bar x_1,\ldots,\bar x_{L_X}\} &\iff x \in  \left[\bar x_{i}-\frac{\Delta_X}{2},\ \bar x_i+\frac{\Delta_X}{2}\right)\\
     q_Y(y) = \bar y_i \in \{\bar y_1,\ldots,\bar y_{L_Y}\} &\iff y \in  \left[\bar y_{i}-\frac{\Delta_Y}{2},\ \bar y_i+\frac{\Delta_Y}{2}\right)
 \end{align}
 with the convention that $\bar x_{0}=\bar y_{0}=-\infty$, and $\bar x_{L_X+1}=\bar y_{L_Y+1}=+\infty$.
 
-Call the uniformly quantized random variables $\bar X, \bar Y$. We can then approximate the conditional densities $f_{Y|X}, f_{X|Y}$ with the densities of the $\bar X, \bar Y$ as follows. Define $f_{\bar Y|\bar X},f_{\bar X|\bar Y}$ to be the conditional densities of the pair $\bar X, \bar Y$:
+We begin our approximation by defining the uniformly quantized random variables $\bar X, \bar Y$ as follows:
 \begin{align}
-    \label{eq:quant_pdf_x}
-    f_{\bar Y|\bar X}(y|x) =\frac{f_{\bar X,\bar Y}(x,y)}{f_{\bar X}(x)}=
-        \frac{
-            \int_{q_X(x)-\Delta_X}^{q_X(x)+\Delta_X}
-            \int_{q_Y(y)-\Delta_Y}^{q_Y(y)+\Delta_Y}
-                f_{X,Y}(x',y')dy'dx'
-        }{
-            \int_{q_X(x)-\Delta_X}^{q_X(x)+\Delta_X}f_X(x')dx'
-        }\approx f_{Y|X}(y|x)\\
-    \label{eq:quant_pdf_y}
-    f_{\bar X|\bar Y}(x|y) =\frac{f_{\bar X,\bar Y}(x,y)}{f_{\bar Y}(y)}=
-        \frac{
-            \int_{q_X(x)-\Delta_X}^{q_X(x)+\Delta_X}
-            \int_{q_Y(y)-\Delta_Y}^{q_Y(y)+\Delta_Y}
-                f(x',y')dy'dx'
-        }{
-            \int_{q_Y(y)-\Delta_Y}^{q_Y(y)+\Delta_Y}f_Y(y')dy'
-        }\approx f_{Y|X}(y|x)
-\end{align}
-Notice that \eqref{eq:quant_pdf_x} (\eqref{eq:quant_pdf_y} resp.) is well defined and is a valid density assuming that $x$ ($y$ resp.) is in the support of $\bar X$ ($\bar Y$ resp.).
-
-We can now approximate these two equations with a uniformly quantized training set from the sources $X, Y$. We call this uniformly quantized training set $\mathcal{\bar T}$:
-\begin{align}
-    \mathcal{\bar T}=\{(q_X(x'),q_Y(y'))\ |\ (x',y')\in \mathcal T\}
-\end{align}
-Define $p(x,y)$ as the joint \emph{empirical} distribution of $\mathcal{\bar T}$:
-\begin{align}
-    p(x,y) = \frac{
-        |\{(x',y')\in \mathcal{\bar T}\ |\ (x',y')=(x,y)\}|
-        }{
-        |\mathcal{\bar T}|
-        }
-\end{align}
-Similarly, define $p_X, p_Y, p_{Y|X},p_{X|Y}$ to be respectively, the empirical marginal distribution of $\bar X$, empirical marginal distribution of $\bar Y$, and empirical conditional distributions from the training set $\mathcal{\bar T}$:
-\begin{align}
-    p_X(x) &= \frac{
-        |\{(x',y')\in\mathcal{\bar T}\ |\ x'=x\}|
-    }{
-        |\mathcal{\bar T}|
-    }\\
-    p_Y(y) &= \frac{
-        |\{(x',y')\in\mathcal{\bar T}\ |\ y'=y\}|
-    }{
-        |\mathcal{\bar T}|
-    }\\
-    \label{eq:cond_pmf_y}
-    p_{Y|X}(y|x) = \frac{p(x,y)}{p_X(x)}
-    &= \frac{
-            |\{(x',y')\in \mathcal T\ |\ q_X(x')=q_X(x),\ q_Y(y')=q_Y(y)\}|
-        }{
-            |\{(x',y')\in \mathcal T\ |\ q_X(x')=q_X(x)\}|
-        }\approx f_{\bar Y|\bar X}(y|x)\\\
-    p_{X|Y}(x|y) = \frac{p(x,y)}{p_Y(y)}
-    &=  \frac{
-            |\{(x',y')\in \mathcal T\ |\ q_X(x')=q_X(x),\ q_Y(y')=q_Y(y)\}|
-        }{
-            |\{(x',y')\in \mathcal T\ |\ q_Y(y')=q_Y(y)\}|
-        }\approx f_{\bar X|\bar Y}(x|y)
+    \bar X = q_X(X)\\
+    \bar Y = q_Y(Y)
 \end{align}
 
-We now rewrite our approximated versions of equations \eqref{eq:problem_1}, \eqref{eq:problem_2}, \eqref{eq:problem_3} (and their counterparts in $Y$). Define $T(x),T(y),M(x,j),M(y,i),S(x,j),S(y,i)$:
+With these uniformly quantized random variables in hand, we can now approximate the conditional densities $f_{Y|X}, f_{X|Y}$ by approximating the conditional pmfs of the $\bar X, \bar Y$ pair with the empirical distributions of a uniformly quantized training set $\mathcal{\bar T}$. Define $\mathcal{\bar T}$ to be the finite training set drawn from the joint pmf of the uniformly quantized pair $\bar X, \bar Y$. Define $p_{\bar Y|\bar X}(\bar y|\bar x),p_{\bar X|\bar Y}(\bar x|\bar y)$ respectively as the conditional \emph{empirical} pmfs of $\bar Y$ given $\bar X$ and $\bar X$ given $\bar Y$ according to the training set $\mathcal{\bar T}$. Our approximation is thus in two stages, namely the uniform quantization step, and the training set estimation step. Each of these contributes in a different way to the approximation error. We have:
+\begin{align}
+    p_{\bar Y|\bar X}(q_Y(y)|q_X(x)) \approx 
+        P(\bar Y=q_Y(y) | \bar X=q_X(x)) \approx
+            f_{Y|X}(y|x)\\
+    p_{\bar X|\bar Y}(q_X(x)|q_Y(y)) \approx 
+        P(\bar X=q_X(x) | \bar Y=q_Y(y)) \approx
+            f_{X|Y}(x|y)
+\end{align}
+
+Writing out $p_{\bar Y|\bar X}, p_{\bar X|\bar Y}$ in terms of our uniformly quantized training set $\mathcal{\bar T}$ gives:
+\begin{align}
+    p_{\bar Y|\bar X}(\bar y_n | \bar x_m)=\frac{
+            \left|\{(\bar x,\bar y)\in \mathcal{\bar T}\ |\ \bar x = \bar x_m, \bar y = \bar y_n\}\right|
+        }{
+            \left|\{(\bar x,\bar y)\in \mathcal{\bar T}\ |\ \bar x = \bar x_m\}\right|
+        },\quad (\bar x_n, \bar y_m)\in \{x_1,\ldots,x_{L_X}\}\times\{y_1,\ldots,y_{L_Y}\}\\
+    p_{\bar X|\bar Y}(\bar x_m | \bar y_n)=\frac{
+            \left|\{(\bar x,\bar y)\in \mathcal{\bar T}\ |\ \bar x = \bar x_m, \bar y = \bar y_n\}\right|
+        }{
+            \left|\{(\bar x,\bar y)\in \mathcal{\bar T}\ |\ \bar y = \bar y_n\}\right|
+        },\quad (\bar x_n, \bar y_m)\in \{x_1,\ldots,x_{L_X}\}\times\{y_1,\ldots,y_{L_Y}\}
+\end{align}
+
+We now rewrite our approximated versions of equations \eqref{eq:problem_1}, \eqref{eq:problem_2}, \eqref{eq:problem_3} (and their counterparts in $Y$). Define $T_{\bar X}(q_X(x)),T_{\bar Y}(q_Y(y)),M_{\bar X}(q_X(x),j),M_{\bar Y}(q_Y(y),i),S_{\bar X}(q_X(x),j),S_{\bar Y}(q_Y(y),i)$ as these approximations:
 \begin{align*}
-    T(x) &= \sum_{(x',y')\in \mathcal{\bar T}|x'=x}(y')^2p_{Y|X}(y'|x') \approx E[Y^2 | X = x]\\
-    T(y) &= \sum_{(x',y')\in \mathcal{\bar T}|y'=y}(x')^2p_{X|Y}(x'|y') \approx E[X^2 | Y = y]\\
-    M(x,j) &= \frac{|\mathcal{\bar T}|\sum_{(x',y')\in \mathcal{\bar T}|y'\in R_j^Y}y'p_{Y|X}(y|x)}{|\{(x',y')\in \mathcal{\bar T}\ |\ y'\in R_j^Y\}|} \approx E[Y|X=x,Y\in R_j^Y]\\
-    M(y,i) &= \frac{|\mathcal{\bar T}|\sum_{(x',y')\in \mathcal{\bar T}|x'\in R_i^X}x'p_{X|Y}(x|y)}{|\{(x',y')\in \mathcal{\bar T}\ |\ x'\in R_i^X\}|} \approx E[X|Y=y,X\in R_i^X]\\
-    S(x,j) &= \sum_{(x',y')\in \mathcal{\bar T}|y'\in R_j^Y}p_{Y|X}(y|x) \approx P(Y\in R_j^Y|X=x)\\
-    S(y,i) &= \sum_{(x',y')\in \mathcal{\bar T}|x'\in R_i^X}p_{X|Y}(x|y) \approx P(X\in R_i^X|Y=y)
+    T_{\bar X}(q_X(x)) &= \sum_{n=1}^{L_Y}(\bar y_n)^2p_{\bar Y|\bar X}(\bar y_n|q_X(x)) \approx E[Y^2 | X = x]\\
+    T_{\bar Y}(q_Y(y)) &= \sum_{m=1}^{L_X}(\bar x_m)^2p_{\bar X|\bar Y}(\bar x_m|q_Y(y)) \approx E[X^2 | Y = y]\\
+    M_{\bar X}(q_X(x),j) &= 
+        \frac{
+            |\mathcal{\bar T}|
+        }{
+            |\{(\bar x, \bar y)\in \mathcal{\bar T}\ |\ \bar y\in R_j^{\bar Y}\}|
+        } \sum_{\bar y_n\in R_j^{\bar Y}}\bar y_np_{\bar Y|\bar X}(\bar y_n|q_X(x))
+        \approx E[Y|X=x,Y\in R_j^{Y}]\\
+    M_{\bar Y}(q_Y(y),i) &= 
+        \frac{
+            |\mathcal{\bar T}|
+        }{
+            |\{(\bar x,\bar y)\in \mathcal{\bar T}\ |\ \bar x\in R_i^{\bar X}\}|
+        } \sum_{\bar x_m\in R_i^{\bar X}}\bar xp_{\bar X|\bar Y}(\bar x_m|q_Y(y))
+        \approx E[X|Y=y,X\in R_i^{X}]\\
+    S_{\bar X}(q_X(x),j) &= 
+        \sum_{\bar y_n\in \{\bar y_1,\ldots,\bar y_{L_Y}\}\cap R_j^{\bar Y}}p_{\bar Y|\bar X}(\bar y_n|q_X(x)) 
+        \approx P(Y\in R_j^{Y}|X=x)\\
+    S_{\bar Y}(q_Y(y),i) &= 
+        \sum_{\bar x_m\in \{\bar x_1,\ldots,\bar x_{L_X}\}\cap R_i^{\bar X}}p_{\bar X|\bar Y}(\bar x_m|q_Y(y)) 
+        \approx P(X\in R_i^{X}|Y=y)
 \end{align*}
+Note that we used the notation $R_i^{\bar X}, R_j^{\bar Y}$ to indicate that these are the encoding partitions for the uniformly quantized random variables $\bar X$ and $\bar Y$ respectively.
 
-We now have all the means to rewrite our approximated distortion measures in computable terms via the uniformly quantized training set $\mathcal{\bar T}$. For simplicity of design, we in fact attach the uniform quantizer to the beginning of our system. That is, we essentially transform the sources such that they have (finite) state spaces of size $L_X, L_Y$ before performing the \sysIJN\ , (\sysIJ) training, or simulation (Refer to Modified block diagram). It is important to note that this design simplification affects the values of the distortions of equations \eqref{eq:int_dist_x} and \eqref{eq:int_dist_y} as well as the centroids computed via equations \eqref{eq:comp_cent_IJN_x}, \eqref{eq:comp_cent_IJN_y}; the distance with respect to which we are now optimizing is the expected distance from reconstruction to uniformly quantized source. In the following distortion measures, this is represented by the subscripts $\bar X,\bar Y$. We have:
+We now have all the means to concisely rewrite our approximated distortion measures in computable terms via the uniformly quantized training set $\mathcal{\bar T}$. For simplicity of design, we in fact attach the uniform quantizer to the beginning of our system. That is, we essentially transform the sources such that they have (finite, uniform) state spaces of size $L_X, L_Y$ before performing the \sysIJN\ , (\sysIJ) training, or simulation (Refer to Modified block diagram). It is important to note that this design simplification affects the values of the distortions of equations \eqref{eq:int_dist_x} and \eqref{eq:int_dist_y} as well as the centroids computed via equations \eqref{eq:comp_cent_IJN_x}, \eqref{eq:comp_cent_IJN_y}; the distance with respect to which we are now optimizing is the expected distance from reconstruction to uniformly quantized source. In the following distortion measures, this is represented by the subscripts $\bar X,\bar Y$. We have, for $\bar x_m\in \{\bar x_1,\ldots,\bar x_{L_X}\}$, $i=1,\ldots,N_X$ and $\bar y_n\in \{\bar y_1,\ldots,\bar y_{L_Y}\}$, $j=1,\ldots,N_Y$ respectively:
 \begin{align}
     \label{eq:NN_X}
-    d_{\bar X}(x,i) =
-            T(x) + 
+    d_{\bar X}(\bar x_m,i) &=
+            T_{\bar X}(\bar x_m) + 
             \sum_{j=1}^{N_Y} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y}
-            \left(\left({(x-x_{k,l})}^2 +
-            y_{k,l}^2\right)M(x,j) -2y_{k,l}S(x,j)\right)P(k,l|i,j)\\
+            \left(\left({(\bar x_m-x_{k,l})}^2 +
+            y_{k,l}^2\right)M_{\bar X}(\bar x_m,j) -2y_{k,l}S_{\bar X}(\bar x_m,j)\right)P(k,l|i,j)
+    \\
     \label{eq:NN_Y}
-    d_{\bar Y}(y,j) =
-            T(y) + 
+    d_{\bar Y}(\bar y_n,j) &=
+            T_{\bar Y}(\bar y_n) + 
             \sum_{i=1}^{N_X} \sum_{k=1}^{N_X} \sum_{l=1}^{N_Y}
-            \left(\left({(y-y_{k,l})}^2 +
-            x_{k,l}^2\right)M(y,i) -2x_{k,l}S(y,j)\right)P(k,l|i,j)
+            \left(\left({(\bar y_n-y_{k,l})}^2 +
+            x_{k,l}^2\right)M_{\bar Y}(\bar y_n,i) -2x_{k,l}S_{\bar Y}(\bar y_n,j)\right)P(k,l|i,j)
 \end{align}
 
-\eqref{eq:NN_X} and \eqref{eq:NN_Y} are now easily computable for given pair $(x, i)$ or $(y, j)$, so the nearest neighbour optimization steps reduce to performing a search over codebook indicies $i$ ($j$ respectively) for the minimizing argument to $d_{\bar X}(x,i)$ ($d_{\bar Y}(y,j)$ respectively) for a given source pair $(x,y)\in \mathcal{\bar T}$.
+\eqref{eq:NN_X} and \eqref{eq:NN_Y} are now easily computable for given pair $(\bar x_m, i)$ or $(\bar y_n, j)$, so the nearest neighbour optimization steps reduce to performing a search over codebook indicies $i$ ($j$ respectively) for the minimizing argument to $d_{\bar X}(\bar x_m,i)$ ($d_{\bar Y}(\bar y_n,j)$ respectively) for a given quantized source pair $(\bar x_m,\bar y_n)\in \mathcal{\bar T}$.
 
-We also note that, besides aiding notation, the terms $M(x,j),S(x,j),T(x)$, and their counterparts $M(y,i),S(y,i),T(y)$ can be computed initially, independent of $x, y$ respectively, reducing the computational complexity of the nearest neighbour search.
+We also note that, besides aiding notation, the terms $M_{\bar X}(\bar x_m,j),S_{\bar X}(\bar x_m,j),T_{\bar X}(\bar x_m)$, and their counterparts $M_{\bar Y}(\bar y_n,i),S_{\bar Y}(\bar y_n,i),T_{\bar Y}(\bar y_n)$ can be computed initially, independent of $\mathcal C=\{(x_{k,l}, y_{k,l})\}$, reducing the computational complexity of the nearest neighbour search.
 
-As mentioned above, applying the uniform quantizer at the beginning of our system also modifies the calculation of the centroids. We now write out the centroid condition in terms of the uniformly quantized training set $\mathcal{\bar T}$. We reiterate that the encoding partitions $\{R_i^X\}_{i=1}^{N_X}, \{R_j^Y\}_{j=1}^{N_Y}$ are held constant in the application of this condition.
+As mentioned above, applying the uniform quantizer at the beginning of our system also modifies the calculation of the centroids. We now write out the centroid condition in terms of the uniformly quantized training set $\mathcal{\bar T}$. We reiterate that the encoding partitions $\{R_i^{\bar X}\}_{i=1}^{N_X}, \{R_j^{\bar Y}\}_{j=1}^{N_Y}$ are held constant in the application of this condition.
 
-Let $M_{(i,j)}$ be the number of training vectors that belong to $R_i\times S_j$:
+Let $M_{(i,j)}$ be given by:
 \begin{align}
     M_{(i,j)} &=
-    \sum_{(x,y)\in R_i^X\times R_j^Y}p(x,y)
+    \sum_{(\bar x_m,\bar y_n)\in R_i^{\bar X}\times R_j^{\bar Y}}p(\bar x_m,\bar y_n)
 \end{align}
-and let $S_{(i,j)}^X$, $S_{(i,j)}^Y$ be given by:
+and let $S_{(i,j)}^{\bar X}$, $S_{(i,j)}^{\bar Y}$ be given by:
 \begin{align}
-    S^X_{(i,j)} &=
-    \sum_{(x,y)\in R_i^X\times R_j^Y}x p(x,y)\\
-    S^Y_{(i,j)} &=
-    \sum_{(x,y)\in R_i^X\times R_j^Y}y p(x,y)
+    S^{\bar X}_{(i,j)} &=
+    \sum_{(\bar x_m,\bar y_n)\in R_i^{\bar X}\times R_j^{\bar Y}}\bar x_m p(\bar x_m,\bar y_n)\\
+    S^{\bar Y}_{(i,j)} &=
+    \sum_{(\bar x_m,\bar y_n)\in R_i^{\bar X}\times R_j^{\bar Y}}\bar y_n p(\bar x_m,\bar y_n)
+\end{align}
+where $p(\bar x_m,\bar y_n)$ is the joint empirical distribution of $\bar X,\bar Y$ according to $\mathcal{\bar T}$:
+\begin{align}
+    p(\bar x_m,\bar y_n)=\frac{1}{|\mathcal{\bar T}|}\left|\{(\bar x,\bar y)\in\mathcal{\bar T}\ |\ (\bar x,\bar y)=(\bar x_m,\bar y_n)\}\right|
 \end{align}
 
 With the above notation, the reconstructions that minimize distortion from $\mathcal{\bar T}$ to reconstruction are:
@@ -232,27 +220,27 @@ With the above notation, the reconstructions that minimize distortion from $\mat
     \label{eq:C_X}
     x_{k,l} = 
         \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
-        S_{(i,j)}^X P(k,l|i,j)}
+        S_{(i,j)}^{\bar X} P(k,l|i,j)}
         {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
         M_{(i,j)} P(k,l|i,j)}\\
     \label{eq:C_Y}
     y_{k,l} = 
         \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
-        S_{(i,j)}^Y P(k,l|i,j)}
+        S_{(i,j)}^{\bar Y} P(k,l|i,j)}
         {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
         M_{(i,j)} P(k,l|i,j)}
 \end{align}
-Equations \eqref{eq:C_X}, \eqref{eq:C_Y} are again easily computable when our encoders are fixed.
+Equations \eqref{eq:C_X}, \eqref{eq:C_Y} are also easily computable when our encoders are fixed.
 
-Adding the uniform quantizer to the system presents us with new parameters. These are namely the choice of $\{\bar x_1, \bar y_1, \bar x_{L_X}, \bar y_{L_Y}, L_X, L_Y\}$ from the definitions of $q_X,q_Y$. Together, these parameters control the granularity of quantization, and position of the quantizer. For our simulations, we chose to (a) center the quantizer about the sample mean of $\mathcal T$, (b) pick $\{x_1, y_1, x_{L_X}, y_{L_Y}\}$ such that all of $\mathcal T$ lies within the square defined by the four terms. With these decisions, the only remaining parameter is simply how fine the quantizer ought to be.
+Adding the uniform quantizer to the system presents us with new parameters. These are namely the choice of $\{\bar x_1, \bar y_1, \bar x_{L_X}, \bar y_{L_Y}, L_X, L_Y\}$ from the definitions of $q_X,q_Y$. Together, these parameters control the granularity of quantization, and position of the quantizer. For our simulations, we chose to (a) center the quantizer about the sample mean of $\mathcal T$, (b) pick $\{\bar x_1, \bar y_1, \bar x_{L_X}, \bar y_{L_Y}\}$ such that all of $\mathcal T$ lies within the square defined by the four terms. With these decisions, the only remaining parameter is simply how fine the quantizer ought to be.
 
 For a given training set $\mathcal T$, we want fine enough quantization so to not distort the equations \eqref{eq:NN_X} and \eqref{eq:NN_Y} from the true source-to-reconstruction distortions, but coarse enough so that the conditional probabilities are well-defined for most bins. It is clearly the case that with a larger training set $\mathcal T$, we can use finer quantizations while maintaining well-defined bins. For our purposes, we iterate through values of $L_X, L_Y$, choosing the result with lowest average distortion.
 
-It is also important to note that the computational complexity depends primarily on the numbers $L_X, L_Y$, not the size of $\mathcal T$, as was the case in the I$\rightarrow$I system.
+It is also important to note that the computational complexity depends primarily on the numbers $L_X, L_Y$, not the size of $\mathcal T$, as was the case in the \sysII\ system.
 
-As was mentioned in this section, the fact that there are now three necessary conditions for optimality necessitates a decision in the order of their application in the quantizer training stage. We chose to give equal opportunities to each condition, beginning with one of the encoders. There are clearly other possible rotation schemes that might provide an advantage. These are not explored in this paper.
+As was mentioned in this section, the fact that there are now three necessary conditions for optimality necessitates a decision in the order of their application in the quantizer training stage. We mentioned that we chose to give equal opportunities to each condition. There are clearly other possible rotation schemes that might provide an advantage. These are not explored in this paper.
 
-To summarize this section, we present the procedure which we dub the `Channel Optimized Stage' of our algorithm. Assuming we are given a codebook of size $N_X N_Y$, and the encoding mappings $\mathcal E_X, \mathcal E_Y$, we apply our modified Lloyd-Max algorithm to obtain a better set of encoding mappings and codebook.
+To summarize this section, we present the procedure which we dub the `Channel Optimized Stage' of our algorithm. Assuming we are given a codebook of size $N_X N_Y$, and the encoding mappings $\mathcal E_{\bar X}, \mathcal E_{\bar Y}$, we apply our modified Lloyd-Max algorithm to obtain a better set of encoding mappings and codebook.
 
 \begin{enumerate}
     \item Store the previous distortion value, $D_{avg}$.
@@ -270,16 +258,16 @@ To summarize this section, we present the procedure which we dub the `Channel Op
     \end{align}
     \item Update the codebook; for each $k\in\{1,\ldots,N_X\}$, $l\in\{1,\ldots,N_Y\}$ let
     \begin{align}
-        x_{(k,l)} = 
-            \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
-            S_{(i,j)}^X P(k,l|i,j)}
-            {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
-            M_{(i,j)} P(k,l|i,j)}\\
-        y_{(k,l)} = 
-            \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
-            S_{(i,j)}^Y P(k,l|i,j)}
-            {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
-            M_{(i,j)} P(k,l|i,j)}
+    x_{k,l} = 
+        \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
+        S_{(i,j)}^{\bar X} P(k,l|i,j)}
+        {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
+        M_{(i,j)} P(k,l|i,j)}\\
+    y_{k,l} = 
+        \frac{\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
+        S_{(i,j)}^{\bar Y} P(k,l|i,j)}
+        {\sum_{i=1}^{N_X} \sum_{j=1}^{N_Y}
+        M_{(i,j)} P(k,l|i,j)}
     \end{align}
     \item Repeat until the average distortion changes less than a desired positive threshold, $\delta$; repeat if
     \begin{align}
@@ -309,7 +297,7 @@ To summarize this section, we present the procedure which we dub the `Channel Op
 % Describe problem
 % Considered different methods of codebook initialization.
 
-Since each nearest neighbour condition depends on the encoding regions of the other source and the codebook pairs $(x_{(k,l)},y_{(k,l)})$ of the decoder, and the joint centroid conditions depend on the encoding regions for both sources, it is necessary to appropriately find either (a) initial encoding regions $\{R_i\}, \{S_j\}$ for the encoders or (b) initial encoding regions for one of the sources and initial reconstruction points $\{(x_{(k,l)}, y_{(k,l)})\}$ for the decoder. We decided to do both, exploring a couple strategies.
+Since each nearest neighbour condition depends on the encoding regions of the other source and the codebook $\mathcal C$, and the joint centroid conditions depend on the encoding regions for both sources, it is necessary to appropriately find either (a) initial encoding regions $\{R_i^{\bar X}\}, \{S_j^{\bar Y}\}$ for the encoders or (b) initial encoding regions for one of the sources and initial reconstruction points $\{(x_{(k,l)}, y_{(k,l)})\}$ for the decoder. We decided to do both, exploring a couple strategies.
 
 % How did this work? we initialize reconstruction points, but then we still need to initialize one of the encoders..
 % One method we tried was to initialize the reconstruction points $\{(x_{(k,l)}, y_{(k,l)})\}$ to the first $N_X\cdot N_Y$ training pairs in $\mathcal T$. This would ensure that the initial codebook would have the same distribution as $\mathcal T$ assuming that samples of $\mathcal T$ are independent and identically distributed. However, we found that 
