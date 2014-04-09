@@ -1,5 +1,6 @@
 #include <math.h>
 #include <limits.h>
+#include <float.h>
 #include <stdio.h>
 #include "covq.h"
 
@@ -48,6 +49,7 @@ double run(int N_X, int N_Y, int L, double min_x, double max_x, double min_y, do
 
     covq2 v;
     unif_quant q;
+    // printf("initializing quant\n");
 
     quantizer_init( &q, L, L, min_x, max_x, min_y, max_y);
 
@@ -63,7 +65,7 @@ double run(int N_X, int N_Y, int L, double min_x, double max_x, double min_y, do
     char line[LINE_LEN];
     while(fgets(line, LINE_LEN, pFile) != NULL){
         double x, y;
-        int param_count = sscanf(line, "%lf, %lf", &x, &y);
+        int param_count = sscanf(line, "%lf,%lf", &x, &y);
         if( param_count != 2 ){
             fprintf(stderr, "Invalid training set format.\n");
             return 0;
@@ -75,8 +77,10 @@ double run(int N_X, int N_Y, int L, double min_x, double max_x, double min_y, do
     }
 
     fclose(pFile);
+    // printf("finished reading training set\n");
 
     initilization_stage_covq2(&v, &q, N_X, N_Y);
+    // printf("finished initializing stage\n");
 
     /*
      * Read simulation set from file.
@@ -106,7 +110,7 @@ double run(int N_X, int N_Y, int L, double min_x, double max_x, double min_y, do
 
     while(fgets(line, LINE_LEN, simFile) != NULL){
         double x, y;
-        int param_count = sscanf(line, "%lf, %lf", &x, &y);
+        int param_count = sscanf(line, "%lf,%lf", &x, &y);
         num_sim++;
         if( param_count != 2 ){
             fprintf(stderr, "Invalid simulation set format.\n");
@@ -171,9 +175,10 @@ int main(int argc, const char **argv)
     min_y = atof(argv[5]);
     max_y = atof(argv[6]);
 
-    double err_best = MAXFLOAT;
+    double err_best = DBL_MAX;
     int L_best;
     for(int L = 25; L <= 600; L+= 25){
+        // printf("helloooo\n");
         double err = run(N_X, N_Y, L, min_x, max_x, min_y, max_y, argv[7]);
         if(err == 0){
             fprintf(stderr,"An error occured\n");

@@ -39,7 +39,7 @@ t_out_2D_r = "t_out_2D_r.csv"
 
 
 @command
-def png_train_1d(*pngs, bep=0.001, block_rate=256, seed=1234,
+def png_train_ii(*pngs, bep=0.001, block_rate=256, seed=1234,
         lbg_eps=0.001, train_dir="training_1d", block_size=8, make=True):
     """Train 2*1D COSQ on DCT coefficients of pairs of pngs in *pngs
     Store training output in :param:`train_dir`
@@ -95,8 +95,10 @@ def png_train_1d(*pngs, bep=0.001, block_rate=256, seed=1234,
 
     # Find optimal bit allocation for left, right images independently
     # See Julien Cheng's MSc Ch. 3
-    bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate,
-                                          dims, block_size=block_size)
+    # bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate,
+    #                                       dims, block_size=block_size)
+    bit_allocs = [np.zeros((block_size, block_size), dtype=int) + 4,
+                  np.zeros((block_size, block_size), dtype=int) + 4]
 
     stderr_("DCT Coefficient Bit Allocation Matrix Left:")
     stderr_(bit_allocs[0])
@@ -161,7 +163,7 @@ def png_train_1d(*pngs, bep=0.001, block_rate=256, seed=1234,
     [os.remove(p) for p in (tmp_l, tmp_r)]
 
 @command
-def png_test_1d(*pngs, test_dir="testing_1d", train_dir="training_1d", block_size=8,
+def png_test_ii(*pngs, test_dir="testing_1d", train_dir="training_1d", block_size=8,
                 bep=0.001, seed=1234):
     """Accept png filenames in pairs"""
     if len(pngs) % 2 != 0:
@@ -313,9 +315,9 @@ def png_test_1d(*pngs, test_dir="testing_1d", train_dir="training_1d", block_siz
 
 
 @command
-def png_train_1_5d(*pngs, bep=0.001, vector_dim=1, block_rate=256, seed=1234,
-        lbg_eps=0.01, train_dir="training_1_5d", block_size=8, make=True):
-    """Train 2*1.5D COVQ on pairs of pngs in *pngs
+def png_traintest_ij(train_pngs, sim_pngs, block_rate=64,
+                     dir_="training_1_5d", block_size=8, make=True):
+    """Train & Simulate I->J COVQ on pairs of pngs in *pngs
     Store training output in :param:`train_dir`
 
     e.g.
@@ -323,11 +325,9 @@ def png_train_1_5d(*pngs, bep=0.001, vector_dim=1, block_rate=256, seed=1234,
     :code::
         python run.py train left_1.png right_1.png left_2.png right_2.png
     """
-    bep = float(bep)
-    vector_dim = int(vector_dim)
+    # vector_dim = int(vector_dim)
     block_rate = int(block_rate)
-    seed = int(seed)
-    lbg_eps = float(lbg_eps)
+    # lbg_eps = float(lbg_eps)
     block_size = int(block_size)
     if make in ['True', True]:
         make = True
@@ -337,12 +337,19 @@ def png_train_1_5d(*pngs, bep=0.001, vector_dim=1, block_rate=256, seed=1234,
         stderr_("Invalid value for kwarg 'make'")
         raise SystemExit(1)
 
-    if len(pngs) % 2 != 0:
+    train_pngs = [s.strip() for s in train_pngs.split(',')]
+    sim_pngs = [s.strip() for s in sim_pngs.split(',')]
+
+    if len(train_pngs) % 2 != 0:
         stderr_("Please provide a training images in pairs")
+        raise SystemExit(1)
+    elif len(sim_pngs) % 2 != 0:
+        stderr_("Please provide a simulation images in pairs")
         raise SystemExit(1)
 
     # Pair up the images
-    imgs = zip(pngs[0::2], pngs[1::2])
+    train_imgs = zip(train_pngs[0::2], train_pngs[1::2])
+    sim_imgs = zip(sim_pngs[0::2], sim_pngs[1::2])
     if make:
         # Make COVQ_2 program
         os.chdir("../")
@@ -351,39 +358,59 @@ def png_train_1_5d(*pngs, bep=0.001, vector_dim=1, block_rate=256, seed=1234,
         os.chdir("python/")
 
     dims = []
-    for idx, img_pair in enumerate(imgs):
+    for idx, train_pair in enumerate(train_imgs):
         # Convert images to 1 column csvs of DCT coefficients
         if idx == 0:
-            dim = ster2csv(img_pair[0], img_pair[1], csv_src_l, csv_src_r,
+            dim = ster2csv(train_pair[0], train_pair[1], csv_src_l, csv_src_r,
                            mode='w')
         else:
-            dim = ster2csv(img_pair[0], img_pair[1], csv_src_l, csv_src_r,
+            dim = ster2csv(train_pair[0], train_pair[1], csv_src_l, csv_src_r,
                            mode='a')
         # Store the image pair dimensions in dims
         dims.append(dim)
     # Convert to (block_size * block_size) sources (one for each type of
     # coefficient)
-    left = csv_read(csv_src_l, dims)
-    right = csv_read(csv_src_r, dims)
+    left_train = csv_read(csv_src_l, dims)
+    right_train = csv_read(csv_src_r, dims)
 
     # Find optimal bit allocation for left, right images independently
     # See Julien Cheng's MSc Ch. 3
     # TODO: derive optimal scheme for bit allocation in the 2 source case
     # - for now, bits are allocated in same way as independent scheme
-    bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate, dims,
-                                          block_size=block_size)
-
+    # bit_allocs, var_blocks = bit_allocate(csv_src_l, csv_src_r, block_rate, dims,
+                                          # block_size=block_size)
+    bit_allocs = [np.zeros((block_size, block_size), dtype=int) + 2,
+                  np.zeros((block_size, block_size), dtype=int) + 2]
     stderr_("DCT Coefficient Bit Allocation Matrix Left:")
     stderr_(bit_allocs[0])
     stderr_("DCT Coefficient Bit Allocation Matrix Right:")
     stderr_(bit_allocs[1])
 
+    dims = []
+    for idx, sim_pair in enumerate(sim_imgs):
+        # Convert images to 1 column csvs of DCT coefficients
+        if idx == 0:
+            dim = ster2csv(sim_pair[0], sim_pair[1], csv_src_l, csv_src_r,
+                           mode='w')
+        else:
+            dim = ster2csv(sim_pair[0], sim_pair[1], csv_src_l, csv_src_r,
+                           mode='a')
+        # Store the image pair dimensions in dims
+        dims.append(dim)
+
+    left_sim = csv_read(csv_src_l, dims)
+    right_sim = csv_read(csv_src_r, dims)
+
+
     # mkdir for training sets
-    mkdir_(train_dir)
+    mkdir_(dir_)
 
     # Write bit_allocs to binary pickled file for use in testing code
-    with open(os.path.join(train_dir, bit_allocs_pickle), "wb") as f:
-        pickle.dump(bit_allocs, f)
+    # with open(os.path.join(train_dir, bit_allocs_pickle), "wb") as f:
+    #     pickle.dump(bit_allocs, f)
+
+    print("Training on {}".format(train_pngs))
+    print("Testing on {}".format(sim_pngs))
 
     # Send each DCT frequency into the COSQ training code as a set
     for i in range(block_size):
@@ -391,42 +418,120 @@ def png_train_1_5d(*pngs, bep=0.001, vector_dim=1, block_rate=256, seed=1234,
             # mkdir train_dir/ij
             # This dir is for storing the results of the training phase
             # namely, the codebook and codeword map for DCT frequency ij
-            mkdir_(os.path.join(train_dir, str(i)+str(j)))
+            mkdir_(os.path.join(dir_, str(i)+str(j)))
 
             # Write DCT coefficients i,j to tmp csv files for training
+            for p in (tmp_l, tmp_r):
+                try:
+                    os.remove(p)
+                except Exception:
+                    pass
+
             n = 0
-            for el in left:
-                with open(tmp_l, 'w') as f:
+            x_min = np.Inf
+            x_max = -np.Inf
+            y_min = np.Inf
+            y_max = -np.Inf
+            for el in left_train:
+                with open(tmp_l, 'a') as f:
                     for block in iter_array(el, (block_size, block_size)):
+                        if block[i,j] > x_max:
+                            x_max = block[i,j] + 0.0001
+                        if block[i,j] < x_min:
+                            x_min = block[i,j] - 0.0001
                         f.write(str(block[i, j]) + "\n")
                         n += 1
-            for r in right:
-                with open(tmp_r, 'w') as f:
+            for r in right_train:
+                with open(tmp_r, 'a') as f:
                     for block in iter_array(r, (block_size, block_size)):
+                        if block[i,j] > y_max:
+                            y_max = block[i,j] + 0.0001
+                        if block[i,j] < y_min:
+                            y_min = block[i,j] - 0.0001
                         f.write(str(block[i, j]) + "\n")
 
             stderr_("training on DCT coefficient ({},{})".format(i, j))
-            stderr_("with {} bits per sample".format(bit_allocs[0][i,j]))
+            stderr_("with {} bits per X sample".format(bit_allocs[0][i,j]))
+            stderr_("with {} bits per Y sample".format(bit_allocs[1][i,j]))
 
             # Zip the two csvs
-            csv_zip(tmp_l, tmp_r, tmp_both)
+            csv_zip(tmp_l, tmp_r, os.path.join(dir_, str(i)+str(j), tmp_both + ".train"))
 
-            # # Train on vector covq
-            # subprocess.check_call(["../covq/covq", "--train", tmp_both,
-            #                        os.path.join(train_dir, str(i)+str(j),
-            #                                      cb_2D_both),
-            #                        os.path.join(train_dir, str(i)+str(j),
-            #                                      cwmap_2D_both),
-            #                        "--bep", str(bep), "--dim", str(2*vector_dim),
-            #                        "--nsplits", str(bit_allocs[0][i,j]*2),
-            #                        "--seed", str(seed), "--lbg-eps",
-            #                        str(lbg_eps)])
+            os.remove(tmp_r)
+            os.remove(tmp_l)
+            # Now get the simulation set
+            for el in left_sim:
+                with open(tmp_l, 'a') as f:
+                    for block in iter_array(el, (block_size, block_size)):
+                        if block[i,j] > x_max:
+                            block[i,j] = x_max - 0.0001
+                        if block[i,j] < x_min:
+                            block[i,j] = x_min + 0.0001
+                        f.write(str(block[i, j]) + "\n")
+                        n += 1
+            for r in right_sim:
+                with open(tmp_r, 'a') as f:
+                    for block in iter_array(r, (block_size, block_size)):
+                        if block[i,j] > y_max:
+                            block[i,j] = y_max - 0.0001
+                        if block[i,j] < y_min:
+                            block[i,j] = y_min + 0.0001
+                        f.write(str(block[i, j]) + "\n")
 
-            # TODO: Here, train on 2-source covq
-            # subprocess.check_call(["../covq_2/covq_2", "_tmp_both.csv"])
+            # Zip the two csvs
+            csv_zip(tmp_l, tmp_r, os.path.join(dir_, str(i)+str(j), tmp_both + ".sim"))
 
-    # Cleanup tmp files
-    [os.remove(p) for p in (tmp_l, tmp_r)]#, tmp_both)]
+            # Usage:
+            # ./covq_2/covq_2 $N_X $N_Y $X_MIN $X_MAX $Y_MIN $Y_MAX corr_0.$i
+            # Train on vector covq
+            subprocess.check_call(["../covq_2/covq_2", str(2**bit_allocs[0][i,j]),
+                                   str(2**bit_allocs[1][i,j]), str(x_min),
+                                   str(x_max), str(y_min), str(y_max),
+                                   os.path.join(dir_, str(i)+str(j), tmp_both)])
+
+            # Now read this ij component back into the sim image:
+            # Now we have a tmp_both.out in the directory os.path.join(dir_, str(i)+str(j)):
+            # unzip into two
+            csv_unzip(os.path.join(dir_, str(i)+str(j), tmp_both + ".out"), tmp_l, tmp_r)
+            with open(tmp_l, 'r') as f:
+                for el in left_sim:
+                    for block in iter_array(el, (block_size, block_size)):
+                        block[i,j] = float(f.readline().strip())
+            with open(tmp_r, 'r') as f:
+                for r in right_sim:
+                    for block in iter_array(r, (block_size, block_size)):
+                        block[i,j] = float(f.readline().strip())
+
+    # Now do inverse DCT on each image pair.
+    print("Saving images...")
+    from PIL import Image
+    for idx, (el, r) in enumerate(zip(left_sim, right_sim)):
+        el = arr_idct(el).astype(int) + 128
+        print(el)
+        for thing in iter_array(el, (1,1)):
+            if thing < 0:
+                # print("thing={}->0".format(thing))
+                thing[0,0] = 0
+            if thing > 255:
+                # print("thing={}->255".format(thing))
+                thing[0,0] = 255
+        el = el.astype(np.uint8)
+        r = arr_idct(r).astype(int) + 128
+        print(r)
+        for thing in iter_array(r, (1,1)):
+            if thing < 0:
+                # print("thing={}->0".format(thing))
+                thing[0,0] = 0
+            if thing > 255:
+                # print("thing={}->255".format(thing))
+                thing[0,0] = 255
+        r = r.astype(np.uint8)
+        print("{}{}_ij.png".format(sim_pngs[2*idx], idx))
+        Image.fromarray(el).save("{}{}_ij.png".format(sim_pngs[2*idx], idx))
+        print("{}{}_ij.png".format(sim_pngs[2*idx+1], idx))
+        Image.fromarray(r).save("{}{}_ij.png".format(sim_pngs[2*idx+1], idx))
+
+
 
 @command
 def png_test(*pngs, test_dir="testing", train_dir="training", block_size=8,
@@ -702,6 +807,74 @@ def iter_gaussian_epsilon(psnr_out_1D, psnr_out_2D, snr_out_1D,
     psnrs = []
     snrs = []
 
+
+@command
+def iter_gaussian_bitrate_ij(filebase, psnr_out, snr_out):
+    """Assumes the filebase.train and filebase.sim sets are in cwd"""
+    x_min=-4
+    x_max=4
+    y_min=-4
+    y_max=4
+    for N_X in range(5):
+        for N_Y in range(5):
+            subprocess.check_call(["../covq_2/covq_2", str(N_X),
+                                   str(N_Y), str(x_min),
+                                   str(x_max), str(y_min), str(y_max),
+                                   filebase])
+            if N_X == 0 and N_Y == 0:
+                mode = 'w'
+            else:
+                mode = 'a'
+            import os
+           
+            with open(psnr_out, mode) as f:
+                f.write("{}".format(get_snr(filebase+".sim", filebase+".out")))
+                if N_Y < 4:
+                    f.write("\t")
+                else:
+                    f.write("\n")
+            with open(snr_out, mode) as f:
+                f.write("{}".format(get_snr(filebase+".sim", filebase+".out")))
+                if N_Y < 4:
+                    f.write("\t")
+                else:
+                    f.write("\n")
+            os.rename(filebase+".out", filebase+str(N_X)+str(N_Y)+".out")
+
+@command
+def iter_gaussian_bitrate_jj(filebase, psnr_out, snr_out):
+    """Assumes the filebase.train and filebase.sim sets are in cwd"""
+    x_min=-4
+    x_max=4
+    y_min=-4
+    y_max=4
+    for N_X in range(5):
+        for N_Y in range(5):
+            subprocess.check_call(["../covq/covq", "--train", filebase+".train",
+                                                cb_1D_r,
+                                                cwmap_1D_r,
+                                   "--bep", "0.0", "--dim", "1",
+                                   "--nsplits", str(N_X+N_Y),
+                                   "--seed", "1234", "--lbg-eps",
+                                   "0.001", "--test", filebase+".sim", cb_1D_r,
+                                                cwmap_1D_r, filebase+".out"])
+
+            if N_X == 0 and N_Y == 0:
+                mode = 'w'
+            else:
+                mode = 'a'
+            with open(psnr_out, mode) as f:
+                f.write("{}".format(get_snr(filebase+".sim", filebase+".out")))
+                if N_Y < 4:
+                    f.write("\t")
+                else:
+                    f.write("\n")
+            with open(snr_out, mode) as f:
+                f.write("{}".format(get_snr(filebase+".sim", filebase+".out")))
+                if N_Y < 4:
+                    f.write("\t")
+                else:
+                    f.write("\n")
 
 @command
 def iter_gaussian_bitrate(rho, psnr_out_1D, psnr_out_2D, snr_out_1D,

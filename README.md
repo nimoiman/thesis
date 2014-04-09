@@ -3,6 +3,12 @@ thesis
 
 Implementation of Thesis
 
+By Jamie Macdonald, Peter Thompson
+
+## Version
+You might be running an old version! (especially if it came from a CD).
+Note that the latest version of this software will be hosted on Github at https://github.com/MacdonaldThompson/thesis
+
 ## Shell scripts
 
 ### Correlation

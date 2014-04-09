@@ -104,9 +104,15 @@ void update_centroids(vectorset *train, vectorset *codebook,
             denominator += p_ij * partition_probability;
         }
 
-        assert(denominator > 0);
-        for (dim = 0; dim < codebook->dim; dim++) {
-            codebook->v[i][dim] = numerator[dim] / denominator;
+        if (denominator > 0) {
+            for (dim = 0; dim < codebook->dim; dim++) {
+                codebook->v[i][dim] = numerator[dim] / denominator;
+            }
+        }
+        else {
+            for (dim = 0; dim < codebook->dim; dim++) {
+                codebook->v[i][dim] = 0;
+            }
         }
     }
     free(numerator);
