@@ -8,7 +8,7 @@
 * DONE Indices
 * DONE fix equation indentation
 * DONE Reword distortion performace
-* TODO add medskips to mini-titles bf
+* DONE add medskips to mini-titles bf
 * DONE add discussion of BSC?
 * DONE fix COVQ equations
 * DONE check subset notation
@@ -16,9 +16,9 @@
 * DONE replace b notation
 * DONE Image description
 * TODO Data, plural
-* TODO move image reference to first paragraph
+* DONE move image reference to first paragraph
 * TODO check last paragraph on intro
-* TODO Transofrm coding, Images
+* DONE Transofrm coding, Images
 * DONE Do we need C_X and C_Y notation? Used on page 17, 18
 * DONE Need to mention there are TWO encoders, one for X and one for Y
 * DONE Need to define encoder for quantizer
@@ -65,7 +65,7 @@
    - Lloyd's Algorithm
    - Linde-Buzo-Gray Splitting Algorithm
 ** DONE Binary Codeword Assignment
-** TODO Bit Allocation and Transform Coding
+** DONE Bit Allocation and Transform Coding
    - Perform preprocessing to improve quantizer performance
    - Bit Allocation
    - Transform Coding
